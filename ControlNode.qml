@@ -23,9 +23,9 @@ Loader {
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
-    "cursor_surface", "widget_button", "list_view"].indexOf(node ? node.type : "") >= 0
+    "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -217,6 +217,7 @@ Loader {
     if (node.type === "cursor_surface") return cursorSurfaceComponent
     if (node.type === "widget_button") return widgetButtonComponent
     if (node.type === "list_view") return listViewComponent
+    if (node.type === "key_catcher") return keyCatcherComponent
     return null
   }
   source: node && !builtIn ? bridge.componentSource(node.type) : ""
@@ -521,6 +522,26 @@ Loader {
           }
         }
         return Border.flat(root.prop("color", root.foreground), root.prop("width_spec", Style.normalBorderWidth))
+      }
+    }
+  }
+
+  Component {
+    id: keyCatcherComponent
+    OmarchyUi.PanelKeyCatcher {
+      blocked: root.prop("blocked", false) === true
+      implicitWidth: keyContent.implicitWidth
+      implicitHeight: keyContent.implicitHeight
+      onMoveRequested: function(dx, dy) { root.bridge.sendEvent(root.surfaceName, root.controlId, "move", { dx: dx, dy: dy }) }
+      onActivateRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", {})
+      onReturnRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "return", {})
+      onCloseRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "close", {})
+      onDeleteRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "delete", {})
+      onTabRequested: function(direction) { root.bridge.sendEvent(root.surfaceName, root.controlId, "tab", { direction: direction }) }
+      onTextKey: function(text) { root.bridge.sendEvent(root.surfaceName, root.controlId, "text", { text: text }) }
+      Column {
+        id: keyContent
+        Repeater { model: root.node.children || []; delegate: childDelegate }
       }
     }
   }

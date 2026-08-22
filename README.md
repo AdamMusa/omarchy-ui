@@ -233,6 +233,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `cursor_surface` | `cursor`, `current`, `outline`, `bordered`, `foreground`, `accent`, `fill`, `current_fill` | `click` |
 | `widget_button` | text/font/colors, active state, dimensions, rotation, visibility states, interaction flags, tooltip | `click`, `right_click`, `middle_click`, `wheel` |
 | `list_view` | `items`, key/label/description/icon fields, `selected`, `orientation`, `spacing`, `empty_text` | `change`, `activate`, `scroll` |
+| `key_catcher` | `blocked`; contains keyboard-driven panel content | `move`, `activate`, `return`, `close`, `delete`, `tab`, `text` |
 
 Convenience methods return their node, so it can be bound, animated, or passed to `on`:
 

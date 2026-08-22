@@ -130,6 +130,28 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_key_catcher_is_a_container_with_semantic_keyboard_events
+    application = OmarchyUI::Application.new do
+      app do
+        key_catcher blocked: false do
+          text "Keyboard content"
+          on(:move) { |_event| }
+          on(:text) { |_event| }
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "key_catcher", node.fetch("type")
+    assert_equal "text", node.dig("children", 0, "type")
+    assert_includes node.fetch("events"), "move"
+    assert_includes node.fetch("events"), "text"
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0

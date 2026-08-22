@@ -50,7 +50,8 @@ module OmarchyUI
     optical_glyph: [%i[text size color debug_bounds visible], [], false],
     cursor_surface: [%i[cursor current outline bordered foreground accent fill current_fill], %i[click], true],
     widget_button: [%i[text font_family font_size foreground active_color active horizontal_margin vertical_padding fixed_width fixed_height text_rotation keep_space dimmed concealed interactive pressable use_active_color maintain_indicator_reveal label_visible has_visual_content tooltip], %i[click right_click middle_click wheel], false],
-    list_view: [%i[items key_field label_field description_field icon_field selected orientation spacing width height empty_text visible], %i[activate change scroll], false]
+    list_view: [%i[items key_field label_field description_field icon_field selected orientation spacing width height empty_text visible], %i[activate change scroll], false],
+    key_catcher: [%i[blocked visible], %i[move activate return close delete tab text], true]
   }.freeze
 
   DEFAULT_COMPONENTS = ComponentRegistry.new

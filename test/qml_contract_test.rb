@@ -166,6 +166,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'gradient: { colors: colors, angle: Number(root.prop("gradient_angle", 0)), enabled: true }'
   end
 
+  def test_key_catcher_maps_all_native_keyboard_signals
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "key_catcher"'
+    assert_includes renderer, "OmarchyUi.PanelKeyCatcher"
+    assert_includes renderer, '"move", { dx: dx, dy: dy }'
+    assert_includes renderer, '"tab", { direction: direction }'
+    assert_includes renderer, '"text", { text: text }'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")
