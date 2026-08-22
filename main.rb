@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "lib/omarchy_ui"
+require_relative "lib/omarchy_ui" unless Object.const_defined?(:OmarchyUI)
 
 OmarchyUI.plugin do
   state :count, 0
@@ -32,6 +32,17 @@ OmarchyUI.plugin do
         button "Reset", id: :reset do
           state.count = 0
         end
+      end
+    end
+  end
+
+  app :main, title: "Omarchy UI Counter", width: 640, height: 420,
+      min_width: 420, min_height: 300 do
+    column spacing: 12 do
+      text "Native Omarchy UI application", style: :heading
+      text(id: :app_count) { "Count: #{state.count}" }
+      button "Increment", id: :app_increment do
+        state.count += 1
       end
     end
   end

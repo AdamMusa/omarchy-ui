@@ -4,8 +4,6 @@ module OmarchyUI
   module Value
     MAX_DEPTH = 32
     MAX_ITEMS = 10_000
-    module_function
-
     def normalize(value, property: nil, depth: 0, seen: {}, count: [0])
       raise ArgumentError, "property value exceeds #{MAX_DEPTH} levels: #{property}" if depth > MAX_DEPTH
       count[0] += 1
@@ -40,6 +38,7 @@ module OmarchyUI
     ensure
       seen.delete(identity)
     end
-    private_class_method :guard_cycle
+
+    module_function :normalize, :guard_cycle
   end
 end

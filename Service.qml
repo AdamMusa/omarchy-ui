@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 
 Item {
@@ -10,11 +11,14 @@ Item {
     ? String(manifest.__sourceDir)
     : ""
   readonly property string rubyProgram: pluginDir + "/main.rb"
+  property string program: ""
+  readonly property string effectiveRubyProgram: program !== "" ? program : rubyProgram
 
   property bool ready: false
   property bool stopping: false
   property string lastError: ""
   property var surfaces: ({})
+  property var surfaceOptions: ({})
   property var nodeIndex: ({})
   property var componentDefinitions: ({})
   property int revision: 0
@@ -81,7 +85,8 @@ Item {
       var definition = components[name]
       if (!/^[a-z][a-z0-9_]*$/.test(name) || !plainObject(definition)) return false
       if (!/^[A-Z][A-Za-z0-9]*\.qml$/.test(String(definition.qml || ""))) return false
-      if (!Array.isArray(definition.properties) || !Array.isArray(definition.events)) return false
+      if (!Array.isArray(definition.properties) || !Array.isArray(definition.events)
+          || !plainObject(definition.property_map || {}) || !plainObject(definition.event_map || {})) return false
       var propertyMap = ({})
       for (var p = 0; p < definition.properties.length; p++) {
         var propertyName = String(definition.properties[p])
@@ -92,7 +97,10 @@ Item {
         qml: definition.qml,
         properties: propertyMap,
         events: definition.events,
-        container: definition.container === true
+        propertyMap: definition.property_map || {},
+        eventMap: definition.event_map || {},
+        container: definition.container === true,
+        autoBind: definition.auto_bind !== false
       }
     }
     componentDefinitions = validated
@@ -101,6 +109,8 @@ Item {
 
   function installRender(message) {
     if (!plainObject(message.surfaces)) return reject("render surfaces must be an object")
+    if (message.surface_options !== undefined && !validateSurfaceOptions(message.surface_options))
+      return reject("invalid surface options")
     if (!validateComponents(message.components)) return reject("invalid component registry")
     var dynamicTypes = ({})
     var dynamicProperties = ({})
@@ -121,9 +131,29 @@ Item {
     }
 
     surfaces = message.surfaces
+    surfaceOptions = message.surface_options || ({})
     nodeIndex = nextIndex
     revision += 1
     lastError = ""
+  }
+
+  function validateSurfaceOptions(options) {
+    if (!plainObject(options)) return false
+    var allowed = {
+      title: true, width: true, height: true, min_width: true, min_height: true,
+      max_width: true, max_height: true, color: true, visible: true,
+      maximized: true, fullscreen: true
+    }
+    for (var surfaceName in options) {
+      if (!validId(surfaceName) || !plainObject(options[surfaceName])) return false
+      for (var key in options[surfaceName]) {
+        if (!allowed[key]) return false
+        var value = options[surfaceName][key]
+        if (value !== null && typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean")
+          return false
+      }
+    }
+    return true
   }
 
   function applyPatch(message) {
@@ -208,6 +238,7 @@ Item {
     props[message.property] = value
     replacement.props = props
     if (node.children !== undefined) replacement.children = node.children
+    if (node.events !== undefined) replacement.events = node.events
     if (animation !== undefined) {
       replacement.transition = {
         property: message.property,
@@ -292,6 +323,11 @@ Item {
     return surface && validId(surface.id) ? surface.id : ""
   }
 
+  function optionsFor(surfaceName) {
+    var options = surfaceOptions[String(surfaceName || "")]
+    return plainObject(options) ? options : ({})
+  }
+
   function nodeFor(controlId) {
     return nodeIndex[String(controlId || "")] || null
   }
@@ -299,6 +335,10 @@ Item {
   function componentSource(typeName) {
     var definition = componentDefinitions[String(typeName || "")]
     return definition ? pluginDir + "/Components/" + definition.qml : ""
+  }
+
+  function componentDefinition(typeName) {
+    return componentDefinitions[String(typeName || "")] || null
   }
 
   function sendEvent(surfaceName, controlId, eventName, payload) {
@@ -323,10 +363,8 @@ Item {
   function startRuby() {
     if (stopping || pluginDir === "" || rubyProcess.running) return
     rubyProcess.command = [
-      "ruby",
-      "-I", pluginDir + "/lib",
-      "-I", pluginDir + "/vendor/omarchy_ui/lib",
-      rubyProgram
+      String(Quickshell.env("OMARCHY_UI_RUNTIME") || "omarchy-ui-runtime"),
+      effectiveRubyProgram
     ]
     rubyProcess.workingDirectory = pluginDir
     rubyProcess.running = true
@@ -365,6 +403,13 @@ Item {
       restartTimer.start()
       root.restartDelayMs = Math.min(30000, root.restartDelayMs * 2)
     }
+  }
+
+  Timer {
+    interval: 100
+    repeat: true
+    running: rubyProcess.running
+    onTriggered: rubyProcess.write('{"v":1,"type":"tick"}\n')
   }
 
   Timer {

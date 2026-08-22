@@ -41,6 +41,7 @@ class CLITest < Minitest::Test
         assert_equal 0, status
         assert File.file?(File.join(destination, "main.rb"))
         assert File.file?(File.join(destination, "Service.qml"))
+        refute File.exist?(File.join(destination, "vendor")), "plugins use the shared native runtime"
         refute File.exist?(File.join(destination, ".git"))
         refute Dir.children(File.join(home, ".config/omarchy/plugins")).any? { |name| name.include?("backup") }
         assert_includes output.string, "Pushed test.plugin"
@@ -48,23 +49,23 @@ class CLITest < Minitest::Test
     end
   end
 
-  def test_new_scaffolds_a_valid_runnable_framework_plugin
+  def test_new_scaffolds_only_application_owned_files
     Dir.mktmpdir do |directory|
       output = StringIO.new
       Dir.chdir(directory) do
-        status = OmarchyUI::CLI.run(["new", "Weather Board", "--id", "test.weather-board"],
+        status = OmarchyUI::CLI.run(["new", "Weather Board"],
                                     out: output, err: StringIO.new)
         assert_equal 0, status
       end
       project = File.join(directory, "weather-board")
-      manifest = JSON.parse(File.read(File.join(project, "manifest.json")))
-      assert_equal "test.weather-board", manifest.fetch("id")
-      %w[Service.qml ControlNode.qml Panel.qml BarWidget.qml main.rb].each do |file|
-        assert File.file?(File.join(project, file)), "missing generated #{file}"
-      end
+      assert_equal %w[Components README.md main.rb], Dir.children(project).sort
+      assert_equal ["Welcome.qml"], Dir.children(File.join(project, "Components"))
+      refute File.exist?(File.join(project, "manifest.json"))
+      assert_includes File.read(File.join(project, "main.rb")), "register_component :welcome"
+      assert_includes File.read(File.join(project, "README.md")), "omarchy_ui launch main.rb"
 
       stdout, stderr, status = Open3.capture3(
-        RbConfig.ruby, File.join(project, "main.rb")
+        RbConfig.ruby, "-I", File.join(ROOT, "lib"), File.join(project, "main.rb")
       )
       assert status.success?, stderr
       assert_equal %w[ready render], stdout.lines.map { |line| JSON.parse(line).fetch("type") }
@@ -83,7 +84,7 @@ class CLITest < Minitest::Test
       File.write(omarchy, <<~SH)
         #!/bin/sh
         test -f "$3/Service.qml" || exit 2
-        test -f "$3/vendor/omarchy_ui/lib/omarchy_ui.rb" || exit 3
+        test ! -e "$3/vendor" || exit 3
         cp "$3/Service.qml" #{inspected}
       SH
       FileUtils.chmod(0o755, omarchy)

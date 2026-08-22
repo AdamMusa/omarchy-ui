@@ -56,6 +56,51 @@ Loader {
     return node && Array.isArray(node.events) && node.events.indexOf(eventName) >= 0
   }
 
+  function nativeDefinition() {
+    return bridge && node ? bridge.componentDefinition(node.type) : null
+  }
+
+  function syncNativeProperties() {
+    var definition = nativeDefinition()
+    if (!item || !definition || !definition.autoBind) return
+    var props = node && node.props ? node.props : ({})
+    var common = { visible: true, enabled: true, opacity: true, scale: true, rotation: true, z: true, width: true, height: true }
+    for (var protocolName in props) {
+      if (common[protocolName]) continue
+      var qmlName = definition.propertyMap[protocolName] || protocolName
+      if (item.hasOwnProperty(qmlName)) item[qmlName] = props[protocolName]
+    }
+  }
+
+  function nativeEventPayload(args) {
+    if (args.length === 0) return ({})
+    if (args.length === 1 && args[0] !== null && typeof args[0] === "object" && !Array.isArray(args[0])) return args[0]
+    var values = []
+    for (var i = 0; i < args.length; i++) {
+      var value = args[i]
+      if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+          || Array.isArray(value)) values.push(value)
+      else values.push(String(value))
+    }
+    return values.length === 1 ? { value: values[0] } : { arguments: values }
+  }
+
+  function connectNativeEvents() {
+    var definition = nativeDefinition()
+    if (!item || !definition || !definition.autoBind || !node || !Array.isArray(node.events)) return
+    for (let i = 0; i < node.events.length; i++) {
+      let protocolName = String(node.events[i])
+      if (protocolName === "mount" || protocolName === "unmount") continue
+      let qmlName = definition.eventMap[protocolName] || protocolName
+      let signal = item[qmlName]
+      if (signal && typeof signal.connect === "function") {
+        signal.connect(function() {
+          root.bridge.sendEvent(root.surfaceName, root.controlId, protocolName, root.nativeEventPayload(arguments))
+        })
+      }
+    }
+  }
+
   function runTransition() {
     var transitions = node && Array.isArray(node.transitions)
       ? node.transitions
@@ -67,12 +112,15 @@ Loader {
 
   function runTrack(transition) {
     var commonProperties = ["opacity", "scale", "rotation", "z", "width", "height"]
+    var definition = nativeDefinition()
+    var animationProperty = definition && definition.propertyMap[transition.property]
+      ? definition.propertyMap[transition.property] : transition.property
     var animationTarget = commonProperties.indexOf(transition.property) >= 0 ? root : item
-    if (!animationTarget.hasOwnProperty(transition.property)) return
+    if (!animationTarget.hasOwnProperty(animationProperty)) return
     if (transition.from === undefined || transition.from === null) return
     var animation = propertyAnimationFactory.createObject(root, {
       target: animationTarget,
-      property: String(transition.property),
+      property: String(animationProperty),
       from: transition.from,
       to: transition.to,
       duration: Number(transition.duration)
@@ -132,13 +180,26 @@ Loader {
       if (item.hasOwnProperty("surfaceName")) item.surfaceName = surfaceName
       if (item.hasOwnProperty("controlId")) item.controlId = controlId
       if (item.hasOwnProperty("node")) item.node = node
+      syncNativeProperties()
+      connectNativeEvents()
     }
     runTransition()
     if (subscribed("mount")) bridge.sendEvent(surfaceName, controlId, "mount", {})
   }
   onNodeChanged: {
     if (item && !builtIn && item.hasOwnProperty("node")) item.node = node
+    if (!builtIn) syncNativeProperties()
     Qt.callLater(runTransition)
+  }
+
+  Repeater {
+    id: nativeChildren
+    parent: root.item && root.item.hasOwnProperty("contentHost") && root.item.contentHost
+      ? root.item.contentHost
+      : root
+    model: !root.builtIn && root.node && root.nativeDefinition() && root.nativeDefinition().container
+      && Array.isArray(root.node.children) ? root.node.children : []
+    delegate: childDelegate
   }
 
   Component {
@@ -228,7 +289,7 @@ Loader {
 
       Repeater {
         model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-        delegate: childDelegate
+        delegate: rowChildDelegate
       }
     }
   }
@@ -241,7 +302,7 @@ Loader {
 
       Repeater {
         model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-        delegate: childDelegate
+        delegate: columnChildDelegate
       }
     }
   }
@@ -348,6 +409,44 @@ Loader {
     id: childDelegate
     Loader {
       required property var modelData
+      source: Qt.resolvedUrl("ControlNode.qml")
+      onLoaded: {
+        item.bridge = root.bridge
+        item.surfaceName = root.surfaceName
+        item.controlId = String(modelData.id)
+        item.foreground = root.foreground
+        item.fontFamily = root.fontFamily
+      }
+    }
+  }
+
+  Component {
+    id: rowChildDelegate
+    Loader {
+      required property var modelData
+      readonly property string crossAlignment: String(root.prop("alignment", "center"))
+      anchors.top: crossAlignment === "start" || crossAlignment === "top" ? parent.top : undefined
+      anchors.verticalCenter: crossAlignment === "center" ? parent.verticalCenter : undefined
+      anchors.bottom: crossAlignment === "end" || crossAlignment === "bottom" ? parent.bottom : undefined
+      source: Qt.resolvedUrl("ControlNode.qml")
+      onLoaded: {
+        item.bridge = root.bridge
+        item.surfaceName = root.surfaceName
+        item.controlId = String(modelData.id)
+        item.foreground = root.foreground
+        item.fontFamily = root.fontFamily
+      }
+    }
+  }
+
+  Component {
+    id: columnChildDelegate
+    Loader {
+      required property var modelData
+      readonly property string crossAlignment: String(root.prop("alignment", "start"))
+      anchors.left: crossAlignment === "start" || crossAlignment === "left" ? parent.left : undefined
+      anchors.horizontalCenter: crossAlignment === "center" ? parent.horizontalCenter : undefined
+      anchors.right: crossAlignment === "end" || crossAlignment === "right" ? parent.right : undefined
       source: Qt.resolvedUrl("ControlNode.qml")
       onLoaded: {
         item.bridge = root.bridge

@@ -35,11 +35,11 @@ module OmarchyUI
       define_method(type) { |id: nil, **props, &block| component(type, id:, **props, &block) }
     end
 
-    def register_component(name, qml:, properties: [], events: [], container: false)
+    def register_component(name, qml:, properties: [], events: [], property_map: {}, event_map: {}, container: false, auto_bind: true)
       unless @stack.empty? && @application.surfaces.empty?
         raise ArgumentError, "components must be registered before a surface"
       end
-      @application.components.register(name, qml:, properties:, events:, container:)
+      @application.components.register(name, qml:, properties:, events:, property_map:, event_map:, container:, auto_bind:)
     end
 
     def state(name = nil, initial = UNSET)
@@ -48,9 +48,16 @@ module OmarchyUI
       @application.define_state(name, initial)
     end
 
+    APP_OPTIONS = %i[title width height min_width min_height max_width max_height color visible maximized fullscreen].freeze
+
     def bar_widget(&block) = surface("bar", id: "bar", &block)
     def panel(name, &block) = surface(name.to_s, id: "panel.#{name}", &block)
-    def app(name = :main, &block) = surface(name.to_s, id: "app.#{name}", &block)
+
+    def app(name = :main, **options, &block)
+      unknown = options.keys - APP_OPTIONS
+      raise ArgumentError, "unsupported app options: #{unknown.join(', ')}" unless unknown.empty?
+      surface(name.to_s, id: "app.#{name}", options:, &block)
+    end
 
     def dynamic(type: :column, id: nil, **props, &renderer)
       raise ArgumentError, "dynamic requires a block" unless renderer
@@ -168,10 +175,10 @@ module OmarchyUI
 
     private
 
-    def surface(name, id:, &block)
+    def surface(name, id:, options: {}, &block)
       raise ArgumentError, "surface requires a block" unless block
       node = @application.build_node(:container, explicit_id: id)
-      @application.add_surface(name, node)
+      @application.add_surface(name, node, options:)
       within(node, &block)
       node
     end

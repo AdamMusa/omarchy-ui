@@ -1,124 +1,339 @@
-# Omarchy UI for Ruby
+# Omarchy UI
 
-Omarchy UI is a Ruby-first application framework for native Omarchy plugins and apps. Ruby
-owns state, events, tasks, commands, models, and lifecycle; the packaged QML runtime renders
-the component tree inside Omarchy. Application code stays ordinary, readable Ruby—there is no
-generated Ruby source and no attempt to reproduce QML syntax as a giant DSL.
+Omarchy UI is the official-style Ruby application framework for building native Omarchy
+interfaces. Ruby owns application state, events, tasks, commands, and models; a shared mruby
+runtime communicates with QML over a validated protocol. Applications do not need system Ruby
+and do not copy the framework runtime into every project.
 
 ```ruby
-require "omarchy_ui"
+require "omarchy_ui" unless Object.const_defined?(:OmarchyUI)
 
 OmarchyUI.plugin do
   state :count, 0
 
-  bar_widget do
-    text { "Count: #{state.count}" }
-    on_click { open_panel :counter }
-  end
-
-  panel :counter do
+  app :main, title: "Counter", width: 640, height: 420 do
     column spacing: 12 do
-      label = text "", style: :heading
-      bind(label, :text, animation: animation(duration: 180)) { "Count: #{state.count}" }
+      text "Official Omarchy UI", style: :heading
+      text { "Count: #{state.count}" }
       button("Increment") { state.count += 1 }
     end
   end
 end
 ```
 
-## Run, create, validate, and push
+## Requirements and runtime
 
-From this checkout, both supported execution forms work:
+- Omarchy with Quickshell and the `qs.Commons` / `qs.Ui` modules.
+- The shared `omarchy-ui-runtime` executable on `PATH`.
+- Ruby is needed only for framework development and MRI tests, not for generated applications.
 
-```bash
-ruby main.rb
-bin/omarchy_ui run main.rb
-```
-
-When installed as a gem, use `omarchy_ui` instead of `bin/omarchy_ui`.
+Build the pinned mruby 4.0 runtime:
 
 ```bash
-omarchy_ui new "My Plugin" --id local.my-plugin
-omarchy_ui validate my-plugin
-omarchy_ui push my-plugin
+./scripts/build-mruby-runtime.sh
+install -Dm755 build/runtime/omarchy-ui-runtime ~/.local/bin/omarchy-ui-runtime
 ```
 
-`push` copies into a staging directory, vendors the Ruby library and QML runtime, runs
-Omarchy's validator, backs up an existing installation under
-`~/.local/state/omarchy-ui/backups`, installs atomically, enables the plugin, and restarts the
-shell. `--no-enable` and `--no-restart` are available for controlled deployments.
+The stripped runtime is approximately 1.8 MB and embeds the Ruby framework, JSON, regular
+expressions, process support, and the native safe-command bridge.
 
-## Framework capabilities
+## Create and run an application
 
-- Surfaces: bar widgets, panels, and application surfaces.
-- Layout/display: rows, columns, grids, stacks, scrolling, containers, rectangles, text,
-  icons, images, progress, separators, and spacers.
-- Inputs/actions: buttons, action buttons, toggles, text and number fields, sliders,
-  dropdowns, searchable dropdowns, multi-select, button groups, dialogs, and list views.
-- State: validated values, atomic transactions, reactive properties, dynamic conditional and
-  repeated subtrees, and incremental child reconciliation.
-- Events: typed built-in events and arbitrary declared adapter events, with surface ownership
-  checks and acknowledgements.
-- Models: primitive or object list models, selection, activation, and scroll events.
-- Motion: easing, delay, reactive transitions, direct animation, parallel tracks, and
-  sequential animation steps.
-- Runtime: `async`, cancellable `after`/`every` tasks, safe argv commands with timeouts,
-  lifecycle supervision, crash restart, and structured errors.
+```bash
+omarchy_ui new "My App"
+cd my-app
+omarchy_ui launch main.rb
+```
 
-The canonical escape hatch is a native component adapter. It makes the framework capable of
-using any QML component—QtQuick, QtQuick.Controls, Quickshell, Omarchy `qs.Ui`, Canvas,
-shaders, particles, or a third-party module—without adding every QML class name to Ruby:
+The standalone generator creates no plugin manifest or copied runtime files:
+
+```text
+my-app/
+├── Components/
+│   └── Welcome.qml
+├── README.md
+└── main.rb
+```
+
+`launch` opens a compositor-managed window. Drag its title bar or use Super+drag, and close it
+with Super+W. For protocol debugging without a window, use `omarchy_ui run main.rb`.
+
+An Omarchy Shell plugin is a separate packaging mode. It requires `manifest.json` so the shell
+can discover its ID, entry points, bar placement, and lifecycle. For a project that intentionally
+contains a manifest:
+
+```bash
+omarchy_ui validate path/to/plugin
+omarchy_ui push path/to/plugin
+```
+
+`push` stages and validates the project, injects the shared QML bridge files, backs up an existing
+installation, installs atomically, optionally enables it, and restarts Omarchy Shell. Use
+`--no-enable` or `--no-restart` when needed.
+
+## Surfaces and windows
+
+```ruby
+bar_widget do
+  text "Weather"
+  on_click { open_panel :weather }
+end
+
+panel :weather do
+  text "Panel content"
+end
+
+app :main,
+    title: "Weather",
+    width: 900,
+    height: 600,
+    min_width: 480,
+    min_height: 320,
+    max_width: 1600,
+    max_height: 1200,
+    color: "#101713",
+    visible: true,
+    maximized: false,
+    fullscreen: false do
+  text "Application content"
+end
+```
+
+`app` supports `title`, `width`, `height`, `min_width`, `min_height`, `max_width`, `max_height`,
+`color`, `visible`, `maximized`, and `fullscreen`.
+
+## State and reactivity
+
+```ruby
+state :enabled, false
+state :profile, { "name" => "Ada" }
+
+toggle_control = toggle "Enabled", checked: state.enabled do |event|
+  state.enabled = event.fetch("value")
+end
+bind(toggle_control, :checked) { state.enabled }
+
+text { state.enabled ? "Enabled" : "Disabled" }
+
+transaction do
+  state.enabled = true
+  state.profile = { "name" => "Grace" }
+end
+```
+
+State accepts protocol-safe values: `nil`, booleans, finite numbers, strings, arrays, and hashes
+with string/symbol keys. Bindings are reevaluated after changes and emit small property patches.
+`transaction` batches related state writes.
+
+Use `dynamic` when state changes the structure rather than only a property:
+
+```ruby
+dynamic id: :results, spacing: 8 do
+  if state.items.empty?
+    text "Nothing found"
+  else
+    state.items.each { |item| text item.fetch("name") }
+  end
+end
+```
+
+## Common properties
+
+Every component supports `visible`, `enabled`, `opacity`, `scale`, `rotation`, `z`, `width`, and
+`height`. Component-specific properties are listed below. Names use Ruby `snake_case`; the QML
+bridge maps them to native property names.
+
+## Built-in component reference
+
+### Layout and display
+
+| Ruby component | Component-specific properties | Events | Container |
+| --- | --- | --- | --- |
+| `container` | `spacing`, `padding`, `bordered` | `click` | yes |
+| `row` | `spacing`, `alignment` (`start`, `center`, `end`) | `click` | yes |
+| `column` | `spacing`, `alignment` (`start`, `center`, `end`) | `click` | yes |
+| `grid` | `columns`, `rows`, `spacing`, `row_spacing`, `column_spacing` | `click` | yes |
+| `stack` | — | `click` | yes |
+| `scroll` | `clip` | `click` | yes |
+| `rectangle` | `color`, `radius`, `border_color`, `border_width`, `padding` | `click` | yes |
+| `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
+| `icon` | `name`, `text`, `size`, `color` | — | no |
+| `image` | `source`, `fill_mode` | — | no |
+| `spacer` | — | — | no |
+| `progress` | `value`, `minimum`, `maximum`, `color` | — | no |
+| `separator` | `strength` | — | no |
+| `section_header` | `text` | — | no |
+| `panel_hero` | `title`, `meta`, `detail`, `foreground`, `font_family`, `icon_size`, `icon_opacity`, `meta_opacity` | — | no |
+| `optical_glyph` | `text`, `size`, `color`, `debug_bounds` | — | no |
+
+### Inputs and actions
+
+| Ruby component | Component-specific properties | Events |
+| --- | --- | --- |
+| `button` | `text`, `icon`, `tooltip`, `selected`, `active`, `cursor`, `focusable`, `bordered`, colors, font/icon sizes, padding, `left_align` | `click`, `right_click`, `hover` |
+| `action_button` | `icon`, `tooltip`, `foreground`, `hover_color`, font/size, `focusable`, `cursor`, `bordered` | `click`, `hover` |
+| `toggle` | `label`, `description`, `checked`, `cursor`, `rounded`, colors, font/title/description sizes | `change`, `hover` |
+| `toggle_switch` | `checked`, `busy`, `interactive`, `cursor`, `cursor_ring`, `cursor_pad`, `rounded`, colors, track/knob geometry | `change`, `hover` |
+| `text_field` | `text`, `placeholder`, `password`, colors, selection tint, padding, `cursor` | `input`, `change`, `submit`, `focus`, `blur` |
+| `number_field` | `label`, `value`, `from`, `to`, `step`, colors, font/field width, `cursor` | `change`, `hover` |
+| `slider` | `value`, `minimum`, `maximum`, `step`, `integer`, track/fill/knob colors and sizes, `ticks`, `tick_color` | `input`, `change`, `right_click` |
+| `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
+| `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
+| `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |
+| `button_group` | `value`, `options`, colors, font, `focusable`, `cursor_index` | `change`, `hover` |
+| `confirm_dialog` | `opened`, `message`, cancel/confirm labels, `selected_index`, colors, font, `corner_radius` | `cancel`, `confirm` |
+| `cursor_surface` | `cursor`, `current`, `outline`, `bordered`, `foreground`, `accent`, `fill`, `current_fill` | `click` |
+| `widget_button` | text/font/colors, active state, dimensions, rotation, visibility states, interaction flags, tooltip | `click`, `right_click`, `middle_click`, `wheel` |
+| `list_view` | `items`, key/label/description/icon fields, `selected`, `orientation`, `spacing`, `empty_text` | `change`, `activate`, `scroll` |
+
+Convenience methods return their node, so it can be bound, animated, or passed to `on`:
+
+```ruby
+field = text_field "", id: :query, placeholder: "Search" do |event|
+  state.query = event.fetch("value")
+end
+
+on(field, :submit) { |event| state.query = event.fetch("value") }
+```
+
+Typical event payloads are:
+
+- `click`, `right_click`, `confirm`, `cancel`: `{}`
+- `change`, `input`, `submit`, `hover`: `{ "value" => ... }`
+- `wheel`: `{ "delta" => number }`
+- `list_view` change/activate: value, index, and original item
+- `list_view` scroll: x and y offsets
+
+Only declared and subscribed events cross the QML/Ruby boundary.
+
+## Bindings and properties
+
+```ruby
+label = text "", id: :status
+bind(label, :text) { state.message }
+
+container do
+  property :opacity, 0.8
+end
+```
+
+`text { ... }` is shorthand for a reactive text binding. `property` binds or sets a property on
+the current component. Explicit IDs are recommended for controls targeted by tests or external
+effects; generated IDs are stable for the lifetime of one render.
+
+## Animation
+
+Reactive binding transition:
+
+```ruby
+card = rectangle width: 240, height: 120, opacity: 1.0
+bind(card, :opacity, animation: animation(duration: 180, easing: :out_cubic)) do
+  state.visible ? 1.0 : 0.0
+end
+```
+
+Animate one or several properties immediately:
+
+```ruby
+animate card,
+  { opacity: 0.25, scale: 1.08, rotation: 2 },
+  duration: 220,
+  easing: :in_out_quad,
+  delay: 40
+```
+
+Sequential animation:
+
+```ruby
+animate_sequence card, [
+  { to: { scale: 1.12 }, duration: 120, easing: :out_back },
+  { to: { scale: 1.0 }, duration: 160, easing: :out_cubic, pause: 30 }
+]
+```
+
+Animation durations and delays are milliseconds from `0` to `60_000`. Supported easing names:
+
+```text
+linear
+in_quad, out_quad, in_out_quad
+in_cubic, out_cubic, in_out_cubic
+in_back, out_back, in_out_back
+in_elastic, out_elastic, in_out_elastic
+in_bounce, out_bounce, in_out_bounce
+```
+
+All common numeric visual properties and declared numeric custom-adapter properties can be
+animated. Parallel property hashes become parallel QML animation tracks.
+
+## Tasks and commands
+
+```ruby
+after(0.5) { state.message = "Ready" }
+every(5, immediate: true) { state.updated_at = Time.now.to_i }
+async { state.result = run_command(["uname", "-r"], timeout: 2).stdout.strip }
+```
+
+`after`, `every`, and `async` return cancellable task objects. MRI uses worker threads; mruby
+uses cooperative ticks from the QML host. Command execution always takes an argv array and does
+not invoke a shell. Results expose `stdout`, `stderr`, `exitstatus`, and `success?`; timeout raises
+`OmarchyUI::CommandTimeout`.
+
+## Custom QML components
+
+Any QtQuick, QtQuick.Controls, Quickshell, Omarchy `qs.Ui`, Canvas, shader, particle, or
+third-party QML component can be exposed through a validated adapter contract:
 
 ```ruby
 register_component :sparkline,
   qml: "Sparkline.qml",
   properties: %i[values color line_width],
+  property_map: { color: :strokeColor, line_width: :lineWidth },
   events: %i[click point_hover],
-  container: false
+  event_map: { point_hover: :pointHovered },
+  container: false,
+  auto_bind: true
 
 chart = component :sparkline, values: [2, 8, 5], color: "#ff6655"
 on(chart, :point_hover) { |event| state.hovered = event.fetch("index") }
 ```
 
-Adapters live in `Components/`. Explicit property and event contracts preserve validation and
-prevent executable QML from crossing the JSON bridge. See [QML support](docs/qml-support.md)
-and `Components/Sparkline.qml`.
+Place adapter files under `Components/`. Declared properties are assigned to the QML root and
+declared signals are forwarded to Ruby. A container adapter can expose an `Item` property named
+`contentHost`; framework children are parented into it automatically. See
+[the QML support matrix](docs/qml-support.md) and [Sparkline.qml](Components/Sparkline.qml).
 
-## Architecture
+## Architecture and safety
 
-`Service.qml` supervises one long-lived Ruby process and exchanges versioned NDJSON over its
-stdin/stdout. `ControlNode.qml` recursively renders registered nodes. `Panel.qml` and
-`BarWidget.qml` reuse the same persistent service, so closing a panel does not reset Ruby
-state. Property changes send small patches; dynamic branches replace only the affected
-children; animations execute in QML.
+`Service.qml` supervises one long-lived mruby process and exchanges versioned NDJSON through
+stdin/stdout. `ControlNode.qml` recursively renders validated component nodes. Property changes
+send incremental patches; dynamic branches replace only affected children; animations run in
+QML. Closing a window or panel does not evaluate Ruby or QML received over the protocol.
 
-Incoming protocol values are never evaluated. Component types, properties, events, IDs,
-effects, and value shapes are validated on both sides. Commands are argv arrays and never use
-a shell. Plugins still run with the user's permissions, as all third-party Omarchy plugins do.
+Component names, QML filenames, properties, events, IDs, effects, values, message sizes, and
+animation limits are validated. Commands use argv arrays without a shell. Applications and
+plugins still run with the current user's permissions.
 
-## Omarchy Phone in Ruby
+## Omarchy Phone example
 
-`examples/omarchy-phone` is a framework application replacing the earlier Python/QML phone
-plugin. It supports ADB USB and mDNS discovery, wireless pairing, connect/disconnect/forget,
-scrcpy control and media options, trusted iPhone discovery, libimobiledevice pairing, and
-UxPlay AirPlay mirroring.
+`examples/omarchy-phone` demonstrates reactive controls, background discovery, safe commands,
+ADB pairing and connection, scrcpy launching, iPhone discovery, and UxPlay AirPlay mirroring.
 
 ```bash
-ruby examples/omarchy-phone/main.rb
-omarchy_ui run examples/omarchy-phone/main.rb
-omarchy_ui push examples/omarchy-phone
+omarchy_ui launch examples/omarchy-phone/main.rb
 ```
 
-## Verification
+## Development and verification
 
 ```bash
 ./scripts/test.sh
-./scripts/smoke-test.sh   # inside a live Omarchy session
 ruby script/benchmark.rb
+./scripts/smoke-test.sh  # live Omarchy session
 ```
 
-The suite covers the protocol, registry, state, events, models, dynamic reconciliation,
-animation composition, scheduling, safe commands, project generation, staged deployment,
-manifest/QML contracts, the phone backend, Ruby syntax, `qmllint`, and Omarchy validation.
-The live smoke test verifies the supervised process, summons a panel, and scans the shell
-journal for QML/runtime failures.
+The suite covers state, bindings, repeated structures, event persistence, component schemas,
+animation tracks and sequences, tasks, command safety, mruby compatibility, standalone project
+generation, packaging, manifests, QML contracts, QML lint, and the phone backend.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
-require "json"
-require "thread"
+require "json" unless Object.const_defined?(:JSON)
+require "thread" unless Object.const_defined?(:Mutex)
 
 module OmarchyUI
   class Application
     ANIMATION_DEFAULTS = { "opacity" => 1.0, "scale" => 1.0, "rotation" => 0.0, "z" => 0.0 }.freeze
-    attr_reader :state, :surfaces, :components
+    attr_reader :state, :surfaces, :surface_options, :components
 
     def initialize(components: DEFAULT_COMPONENTS, &definition)
       @surfaces = {}
+      @surface_options = {}
       @nodes = {}
       @bindings = []
       @structures = []
@@ -43,11 +44,12 @@ module OmarchyUI
       Node.new(type:, id:, props: normalized_props).tap { |node| @nodes[id] = node }
     end
 
-    def add_surface(name, node)
+    def add_surface(name, node, options: {})
       key = name.to_s
       validate_id!(key)
       raise ArgumentError, "duplicate surface: #{key}" if @surfaces.key?(key)
       @surfaces[key] = node
+      @surface_options[key] = options.transform_keys(&:to_s).transform_values { |value| normalize_value(value) }
     end
 
     def register_binding(node, property, reader, animation: nil)
@@ -119,8 +121,10 @@ module OmarchyUI
       @output.sync = true if @output.respond_to?(:sync=)
       @error.sync = true if @error.respond_to?(:sync=)
       @running = true
-      emit("v" => PROTOCOL_VERSION, "type" => "ready", "pid" => Process.pid, "surfaces" => @surfaces.keys)
-      emit("v" => PROTOCOL_VERSION, "type" => "render", "components" => @components.protocol_schema, "surfaces" => tree)
+      pid = Object.const_defined?(:Process) && Process.respond_to?(:pid) ? Process.pid : 0
+      emit("v" => PROTOCOL_VERSION, "type" => "ready", "pid" => pid, "surfaces" => @surfaces.keys)
+      emit("v" => PROTOCOL_VERSION, "type" => "render", "components" => @components.protocol_schema,
+           "surfaces" => tree, "surface_options" => @surface_options)
       @scheduler.start
       self
     end
@@ -149,6 +153,10 @@ module OmarchyUI
     def receive(raw_line)
       raise ProtocolError, "message exceeds #{MAX_MESSAGE_BYTES} bytes" if raw_line.bytesize > MAX_MESSAGE_BYTES
       message = JSON.parse(raw_line)
+      if message.is_a?(Hash) && message["v"] == PROTOCOL_VERSION && message["type"] == "tick"
+        @scheduler.tick
+        return
+      end
       validate_message!(message)
       dispatch_event(message)
     rescue JSON::ParserError => exception
@@ -265,7 +273,8 @@ module OmarchyUI
     end
 
     def process_rss_kib
-      File.read("/proc/self/status")[/^VmRSS:\s+(\d+)\s+kB$/, 1].to_i
+      line = File.read("/proc/self/status").each_line.find { |entry| entry.start_with?("VmRSS:") }
+      line ? line.split[1].to_i : 0
     rescue SystemCallError
       0
     end

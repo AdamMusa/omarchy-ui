@@ -1,13 +1,10 @@
 import QtQuick
 
 Canvas {
-  property var bridge: null
-  property string surfaceName: ""
-  property string controlId: ""
-  property var node: ({})
-
-  readonly property var values: node.props && Array.isArray(node.props.values) ? node.props.values : []
-  readonly property color strokeColor: node.props && node.props.color ? node.props.color : "white"
+  property var values: []
+  property color strokeColor: "white"
+  property real lineWidth: 2
+  signal click(var payload)
   implicitWidth: 160
   implicitHeight: 48
 
@@ -21,7 +18,7 @@ Canvas {
     var maximum = Math.max.apply(Math, values)
     var span = Math.max(0.000001, maximum - minimum)
     context.strokeStyle = strokeColor
-    context.lineWidth = 2
+    context.lineWidth = lineWidth
     context.beginPath()
     for (var i = 0; i < values.length; i++) {
       var x = i * width / (values.length - 1)
@@ -34,6 +31,6 @@ Canvas {
 
   MouseArea {
     anchors.fill: parent
-    onClicked: bridge.sendEvent(surfaceName, controlId, "click", {})
+    onClicked: parent.click({ button: button })
   }
 }

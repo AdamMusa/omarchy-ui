@@ -58,6 +58,30 @@ class OmarchyUITest < Minitest::Test
     assert_equal "Count: 0", render.dig("surfaces", "counter", "children", 0, "children", 0, "props", "text")
   end
 
+  def test_app_surface_serializes_window_options_separately_from_controls
+    application = OmarchyUI::Application.new do
+      app :main, title: "Dashboard", width: 900, height: 600, min_width: 480 do
+        text "Ready"
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    render = output.string.lines.map { |line| JSON.parse(line) }.find { |message| message["type"] == "render" }
+
+    assert_equal({ "title" => "Dashboard", "width" => 900, "height" => 600, "min_width" => 480 },
+                 render.dig("surface_options", "main"))
+    refute_includes(render.dig("surfaces", "main").fetch("props", {}), "title")
+  ensure
+    application&.stop
+  end
+
+  def test_app_surface_rejects_unknown_window_options
+    error = assert_raises(ArgumentError) do
+      OmarchyUI::Application.new { app(:main, decorations: false) { text "No" } }
+    end
+    assert_includes error.message, "unsupported app options"
+  end
+
   def test_click_executes_ruby_handler_and_emits_only_set_patch_plus_ack
     app = build_counter
     output = StringIO.new
@@ -152,7 +176,7 @@ class OmarchyUITest < Minitest::Test
 
   def test_form_widgets_keep_typed_properties_and_deliver_change_payloads
     selected = nil
-    app = OmarchyUI::Application.new do
+    application = OmarchyUI::Application.new do
       panel :settings do
         dropdown "dark", id: :theme, options: [
           { value: :dark, label: "Dark" },
@@ -167,18 +191,18 @@ class OmarchyUITest < Minitest::Test
       end
     end
     output = StringIO.new
-    app.start(output: output, error: StringIO.new)
+    application.start(output: output, error: StringIO.new)
 
-    props = app.tree.dig("settings", "children")
+    props = application.tree.dig("settings", "children")
     assert_equal [{ "value" => "dark", "label" => "Dark" }, { "value" => "light", "label" => "Light" }], props[0].dig("props", "options")
     assert_equal %w[wifi bluetooth], props[1].dig("props", "values")
 
-    app.receive(event("theme", surface: "settings", name: "change", payload: { "value" => "light" }))
+    application.receive(event("theme", surface: "settings", name: "change", payload: { "value" => "light" }))
     assert_equal "light", selected
   end
 
   def test_arbitrary_properties_can_be_reactively_bound
-    app = OmarchyUI::Application.new do
+    application = OmarchyUI::Application.new do
       state :enabled, false
       panel :settings do
         control = toggle "Feature", id: :feature
@@ -187,11 +211,11 @@ class OmarchyUITest < Minitest::Test
       end
     end
     output = StringIO.new
-    app.start(output: output, error: StringIO.new)
+    application.start(output: output, error: StringIO.new)
     output.truncate(0)
     output.rewind
 
-    app.receive(event("enable", surface: "settings"))
+    application.receive(event("enable", surface: "settings"))
     patch = messages(output).first
     assert_equal "checked", patch.fetch("property")
     assert_equal true, patch.fetch("value")
@@ -225,6 +249,24 @@ class OmarchyUITest < Minitest::Test
         app { component :text, executable: "oops" }
       end
     end
+  end
+
+  def test_native_component_protocol_includes_property_and_event_maps
+    application = OmarchyUI::Application.new do
+      register_component :dial, qml: "Dial.qml", properties: %i[current_value],
+                         property_map: { current_value: :value }, events: %i[change],
+                         event_map: { change: :moved }
+      app { component :dial, current_value: 42 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    render = messages(output).find { |message| message["type"] == "render" }
+    schema = render.dig("components", "dial")
+    assert_equal "value", schema.dig("property_map", "current_value")
+    assert_equal "moved", schema.dig("event_map", "change")
+    assert schema.fetch("auto_bind")
+  ensure
+    application&.stop
   end
 
   def test_reactive_binding_emits_a_validated_animation_descriptor

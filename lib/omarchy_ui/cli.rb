@@ -21,12 +21,13 @@ module OmarchyUI
       command = arguments.shift
       case command
       when "run" then run_file(arguments)
+      when "launch" then launch_file(arguments)
       when "new" then new_project(arguments)
       when "push" then push(arguments)
       when "validate" then validate(arguments)
       when "version", "--version", "-v" then @out.puts(OmarchyUI::VERSION); 0
       else
-        @err.puts("Usage: omarchy_ui <new NAME [--id ID]|run FILE|push [DIRECTORY]|validate [DIRECTORY]|version>")
+        @err.puts("Usage: omarchy_ui <new NAME|run FILE|launch FILE|push [DIRECTORY]|validate [DIRECTORY]|version>")
         command.nil? ? 0 : 64
       end
     rescue ArgumentError, SystemCallError, JSON::ParserError => error
@@ -42,13 +43,38 @@ module OmarchyUI
       exec(RbConfig.ruby, "-I", File.join(FRAMEWORK_ROOT, "lib"), file, *arguments)
     end
 
+    def launch_file(arguments)
+      file = File.expand_path(arguments.shift || raise(ArgumentError, "launch requires a Ruby file"))
+      raise ArgumentError, "Ruby file not found: #{file}" unless File.file?(file)
+      raise ArgumentError, "launch does not accept Ruby arguments" unless arguments.empty?
+
+      project_dir = File.dirname(file)
+      Dir.mktmpdir("omarchy-ui-app-") do |runtime_dir|
+        Project::RUNTIME_FILES.each do |name|
+          source = File.file?(File.join(project_dir, name)) ? File.join(project_dir, name) : File.join(FRAMEWORK_ROOT, name)
+          FileUtils.cp(source, runtime_dir)
+        end
+        %w[Commons Ui].each do |module_name|
+          source = File.join("/usr/share/omarchy/shell", module_name)
+          raise ArgumentError, "Omarchy QML module not found: #{source}" unless File.directory?(source)
+          FileUtils.ln_s(source, File.join(runtime_dir, module_name))
+        end
+
+        environment = ENV.to_h.merge(
+          "OMARCHY_UI_PROJECT_DIR" => project_dir,
+          "OMARCHY_UI_RUBY_PROGRAM" => file
+        )
+        success = system(environment, "quickshell", "--path", File.join(runtime_dir, "App.qml"))
+        return success ? 0 : ($?&.exitstatus || 1)
+      end
+    end
+
     def new_project(arguments)
       name = arguments.shift || raise(ArgumentError, "new requires a project name")
-      id_index = arguments.index("--id")
-      plugin_id = id_index ? arguments.fetch(id_index + 1) : "local.#{slug(name)}"
+      raise ArgumentError, "new accepts only an application name" unless arguments.empty?
       destination = File.expand_path(slug(name))
-      Project.new(path: destination, id: plugin_id, name: name).create
-      @out.puts("Created #{plugin_id} in #{destination}")
+      Project.new(path: destination, name: name).create
+      @out.puts("Created standalone Omarchy UI app in #{destination}")
       0
     end
 

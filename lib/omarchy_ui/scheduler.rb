@@ -18,8 +18,15 @@ module OmarchyUI
     def start(evaluator, on_error)
       @mutex.synchronize do
         return self if @cancelled || @thread
-        @thread = Thread.new { run(evaluator, on_error) }
-        @thread.name = "omarchy-ui-#{kind}" if @thread.respond_to?(:name=)
+        if Object.const_defined?(:Thread)
+          @thread = Thread.new { run(evaluator, on_error) }
+          @thread.name = "omarchy-ui-#{kind}" if @thread.respond_to?(:name=)
+        else
+          @thread = :cooperative
+          @evaluator = evaluator
+          @on_error = on_error
+          @next_due = Time.now.to_f + ((kind == :async || @immediate) ? 0 : interval)
+        end
       end
       self
     end
@@ -34,8 +41,19 @@ module OmarchyUI
 
     def join(timeout = nil)
       thread = @mutex.synchronize { @thread }
-      thread&.join(timeout)
+      thread.join(timeout) if thread && thread != :cooperative
       self
+    end
+
+    def tick(now = Time.now.to_f)
+      return unless @thread == :cooperative || !Object.const_defined?(:Thread)
+      return if cancelled? || now < @next_due
+      invoke(@evaluator, @on_error)
+      if kind == :every
+        @next_due = now + interval
+      else
+        cancel
+      end
     end
 
     def cancelled?
@@ -106,6 +124,12 @@ module OmarchyUI
       end
       tasks.each(&:cancel)
       tasks.each { |task| task.join(1) }
+      self
+    end
+
+    def tick(now = Time.now.to_f)
+      tasks = @lock.synchronize { @tasks.dup }
+      tasks.each { |task| task.tick(now) }
       self
     end
   end

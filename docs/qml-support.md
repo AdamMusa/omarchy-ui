@@ -1,10 +1,17 @@
 # QML support matrix
 
-The framework has two support levels:
+The framework has two support levels. The built-in list is deliberately not a list of every
+QML type: QML is an extensible language, and several Omarchy `Ui` files require shell-owned
+windows or controllers that cannot be safely instantiated as ordinary tree controls.
 
 - **Built-in adapter:** Ruby can use the component immediately through `component`.
 - **Native adapter:** any QML type can be registered from `Components/`, including QtQuick,
   QtQuick.Controls, Quickshell, `qs.Ui`, third-party modules, shaders, Canvas, and particles.
+
+Native adapters are universal rather than hand-wired: declared properties are assigned to the
+QML root object, declared signals are forwarded to Ruby, mapped names support Ruby snake_case,
+and every declared property can participate in bindings and animations. A native container can
+expose an `Item` property named `contentHost`; framework children are parented there automatically.
 
 ## Portable `qs.Ui` controls
 

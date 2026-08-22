@@ -15,7 +15,8 @@ class QmlContractTest < Minitest::Test
     assert_includes qml, "stdinEnabled: true"
     assert_includes qml, "rubyProcess.write(JSON.stringify("
     assert_includes qml, "stdout: SplitParser"
-    assert_includes qml, 'pluginDir + "/vendor/omarchy_ui/lib"'
+    assert_includes qml, '"omarchy-ui-runtime"'
+    refute_includes qml, '"ruby",'
     refute_includes qml, "execDetached"
     refute_includes qml, '["bash"'
   end
@@ -26,6 +27,17 @@ class QmlContractTest < Minitest::Test
     assert_includes qml, "componentDefinitions = validated"
     assert_includes qml, "allowedTypes = dynamicTypes"
     assert_includes qml, "allowedProperties = dynamicProperties"
+    assert_includes qml, "propertyMap: definition.property_map"
+    assert_includes qml, "eventMap: definition.event_map"
+  end
+
+  def test_native_qml_bridge_maps_properties_events_children_and_animations
+    qml = source("ControlNode.qml")
+    assert_includes qml, "function syncNativeProperties()"
+    assert_includes qml, "function connectNativeEvents()"
+    assert_includes qml, "definition.propertyMap[transition.property]"
+    assert_includes qml, 'hasOwnProperty("contentHost")'
+    assert_includes qml, "delegate: childDelegate"
   end
 
   def test_panel_exposes_omarchy_loader_lifecycle
@@ -33,6 +45,17 @@ class QmlContractTest < Minitest::Test
     assert_match(/function open\(payloadJson\)/, qml)
     assert_match(/function close\(\)/, qml)
     assert_includes qml, "property var service: null"
+  end
+
+  def test_application_surface_is_a_compositor_managed_floating_window
+    qml = source("App.qml")
+    assert_includes qml, "FloatingWindow {"
+    assert_includes qml, "window.startSystemMove()"
+    assert_includes qml, "Qt.quit()"
+    refute_includes qml, "PanelWindow {"
+    refute_includes qml, "WlrLayershell"
+    assert_includes qml, 'root.option("title"'
+    assert_includes qml, 'root.option("min_width"'
   end
 
   def test_renderer_supports_validated_native_property_animations
@@ -75,5 +98,21 @@ class QmlContractTest < Minitest::Test
     assert_includes service, "message.tracks.length > 64"
     assert_includes renderer, "propertyAnimationFactory.createObject"
     assert_includes renderer, "delayedAnimationFactory.createObject"
+  end
+
+  def test_reactive_patch_preserves_event_subscriptions
+    service = File.read(File.join(ROOT, "Service.qml"))
+
+    assert_includes service, "if (node.events !== undefined) replacement.events = node.events"
+  end
+
+  def test_rows_and_columns_apply_cross_axis_alignment
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, "delegate: rowChildDelegate"
+    assert_includes renderer, 'root.prop("alignment", "center")'
+    assert_includes renderer, "anchors.verticalCenter"
+    assert_includes renderer, "delegate: columnChildDelegate"
+    assert_includes renderer, "anchors.horizontalCenter"
   end
 end

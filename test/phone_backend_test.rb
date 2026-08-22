@@ -6,7 +6,7 @@ require_relative "../lib/omarchy_ui"
 require_relative "../examples/omarchy-phone/lib/phone_backend"
 
 class PhoneBackendTest < Minitest::Test
-  FakeCommandResult = Struct.new(:stdout, :stderr, :success?)
+  FakeCommandResult = Struct.new(:stdout, :stderr, :success?, :exitstatus)
 
   class FakeBackend < PhoneBackend
     attr_reader :commands
@@ -21,7 +21,7 @@ class PhoneBackendTest < Minitest::Test
 
     def command(argv, timeout:)
       @commands << [argv, timeout]
-      @responses.fetch(argv, FakeCommandResult.new("", "", false))
+      @responses.fetch(argv, FakeCommandResult.new("", "", false, 1))
     end
 
     def available?(_program) = true
@@ -61,5 +61,5 @@ class PhoneBackendTest < Minitest::Test
 
   private
 
-  def success(stdout) = FakeCommandResult.new(stdout, "", true)
+  def success(stdout) = FakeCommandResult.new(stdout, "", true, 0)
 end

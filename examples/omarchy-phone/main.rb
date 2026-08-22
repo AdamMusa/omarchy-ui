@@ -1,13 +1,10 @@
 # frozen_string_literal: true
 
-begin
-  require "omarchy_ui"
-rescue LoadError
-  vendored = File.expand_path("vendor/omarchy_ui/lib/omarchy_ui", __dir__)
-  source = File.expand_path("../../lib/omarchy_ui", __dir__)
-  require File.file?("#{vendored}.rb") ? vendored : source
+require_relative "../../lib/omarchy_ui" unless Object.const_defined?(:OmarchyUI)
+unless Object.const_defined?(:PhoneBackend)
+  backend_path = File.join(File.dirname(__FILE__), "lib", "phone_backend.rb")
+  eval(File.read(backend_path))
 end
-require_relative "lib/phone_backend"
 
 backend = PhoneBackend.new
 
@@ -54,7 +51,7 @@ OmarchyUI.plugin do
   end
 
   panel :phone do
-    scroll width: 540, height: 680 do
+    scroll width: 570, height: 680 do
       column spacing: 12 do
       row spacing: 10 do
         text "Phone", style: :heading

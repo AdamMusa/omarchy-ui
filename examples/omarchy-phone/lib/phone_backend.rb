@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require "fileutils"
-require "json"
-require "thread"
+require "fileutils" unless Object.const_defined?(:MRUBY_VERSION)
+require "json" unless Object.const_defined?(:JSON)
+require "thread" unless Object.const_defined?(:Mutex)
 
 class PhoneBackend
   Result = Struct.new(:ok, :message, keyword_init: true)
@@ -11,8 +11,18 @@ class PhoneBackend
     @state_dir = state_dir
     @action_lock = Mutex.new
     @airplay_pid = nil
-    FileUtils.mkdir_p(@state_dir)
-    at_exit { stop_airplay }
+    if Object.const_defined?(:FileUtils)
+      FileUtils.mkdir_p(@state_dir)
+    else
+      parts = @state_dir.split("/")
+      current = @state_dir.start_with?("/") ? "/" : ""
+      parts.each do |part|
+        next if part.empty?
+        current = File.join(current, part)
+        Dir.mkdir(current) unless File.directory?(current)
+      end
+    end
+    at_exit { stop_airplay } if Kernel.respond_to?(:at_exit)
   end
 
   def snapshot
@@ -50,10 +60,7 @@ class PhoneBackend
       return Result.new(ok: true, message: "AirPlay receiver is already running") if process_alive?(@airplay_pid)
       argv = ["uxplay", "-n", "Omarchy"]
       argv << "-fs" if fullscreen
-      log = File.open(File.join(@state_dir, "uxplay.log"), "a")
-      @airplay_pid = Process.spawn(*argv, out: log, err: log, pgroup: true)
-      log.close
-      Process.detach(@airplay_pid)
+      @airplay_pid = spawn_detached(argv, "uxplay")
       Result.new(ok: true, message: "AirPlay receiver started")
     rescue Errno::ENOENT
       Result.new(ok: false, message: "UxPlay is not installed")
@@ -143,16 +150,15 @@ class PhoneBackend
     @action_lock.synchronize do
       result = command(argv, timeout: 20)
       return Result.new(ok: false, message: "#{argv.first} is not installed") unless result
+      return Result.new(ok: false, message: "#{argv.first} is not installed") if result.exitstatus == 127
       message = [result.stdout, result.stderr].join(" ").strip
-      Result.new(ok: result.success?, message: result.success? ? (message.empty? ? success_message : message) : message)
+      failure = message.empty? ? "#{argv.first} failed with exit status #{result.exitstatus}" : message
+      Result.new(ok: result.success?, message: result.success? ? (message.empty? ? success_message : message) : failure)
     end
   end
 
   def spawn_gui(argv, name)
-    log = File.open(File.join(@state_dir, "#{name}.log"), "a")
-    pid = Process.spawn(*argv, out: log, err: log, pgroup: true)
-    log.close
-    Process.detach(pid)
+    spawn_detached(argv, name)
     Result.new(ok: true, message: "Opened phone")
   rescue Errno::ENOENT
     Result.new(ok: false, message: "#{argv.first} is not installed")
@@ -164,8 +170,23 @@ class PhoneBackend
     nil
   end
 
+  def spawn_detached(argv, name)
+    if Object.const_defined?(:MRUBY_VERSION)
+      OmarchyUI.spawn_detached(argv, File.join(@state_dir, "#{name}.log"))
+    else
+      log = File.open(File.join(@state_dir, "#{name}.log"), "a")
+      pid = Process.spawn(*argv, out: log, err: log, pgroup: true)
+      log.close
+      Process.detach(pid)
+      pid
+    end
+  end
+
   def available?(program)
-    ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |path| File.executable?(File.join(path, program)) }
+    ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? do |path|
+      candidate = File.join(path, program)
+      File.respond_to?(:executable?) ? File.executable?(candidate) : File.file?(candidate)
+    end
   end
 
   def process_alive?(pid)
