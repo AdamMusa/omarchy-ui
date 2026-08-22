@@ -42,6 +42,56 @@ end
 module OmarchyUI
   class CommandTimeout < StandardError; end unless const_defined?(:CommandTimeout)
   class CommandOutputLimit < StandardError; end unless const_defined?(:CommandOutputLimit)
+
+  # Directly installed plugins keep ordinary Ruby source. The packaged runtime
+  # already contains Omarchy UI, and loads application-owned relative files
+  # from the project root while preserving nested require_relative semantics.
+  module SourceLoader
+    @loaded = {}
+    @stack = []
+
+    def self.require_framework(feature)
+      return false if feature == "omarchy_ui"
+
+      raise LoadError, "cannot load such file -- #{feature}"
+    end
+
+    def self.require_relative(feature)
+      base = if @stack.empty?
+               ENV["OMARCHY_UI_PROJECT_DIR"] || Dir.pwd
+             else
+               File.dirname(@stack.last)
+             end
+      path = File.expand_path(feature, base)
+      path = "#{path}.rb" if File.extname(path).empty?
+      return false if @loaded[path]
+      raise LoadError, "cannot load such file -- #{path}" unless File.file?(path)
+
+      @loaded[path] = true
+      @stack << path
+      loaded = false
+      Object.class_eval(File.read(path))
+      loaded = true
+      true
+    ensure
+      @loaded.delete(path) if path && !loaded
+      @stack.pop if path && @stack.last == path
+    end
+  end
+end
+
+module Kernel
+  unless method_defined?(:require)
+    def require(feature)
+      OmarchyUI::SourceLoader.require_framework(feature)
+    end
+  end
+
+  unless method_defined?(:require_relative)
+    def require_relative(feature)
+      OmarchyUI::SourceLoader.require_relative(feature)
+    end
+  end
 end
 
 # mruby runs one VM on one host thread. These locks preserve the framework API

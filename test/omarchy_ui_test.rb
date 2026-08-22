@@ -12,6 +12,15 @@ class OmarchyUITest < Minitest::Test
     assert_includes bootstrap, %(VERSION = "#{OmarchyUI::VERSION}")
   end
 
+  def test_embedded_runtime_supports_conventional_ruby_loading
+    bootstrap = File.read(File.expand_path("../runtime/mrbgem/mrblib/bootstrap.rb", __dir__))
+
+    assert_includes bootstrap, 'feature == "omarchy_ui"'
+    assert_includes bootstrap, "def require_relative(feature)"
+    assert_includes bootstrap, 'ENV["OMARCHY_UI_PROJECT_DIR"]'
+    refute_includes bootstrap, "PhoneBackend"
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0
