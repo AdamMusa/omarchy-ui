@@ -25,18 +25,17 @@ end
 
 ## Install
 
-On Omarchy x86-64, install the gem and start building:
+On Omarchy x86-64, install the gem:
 
 ```bash
 gem install omarchy-ui
-omarchy_ui new MyApp
 ```
 
-The gem contains everything required to create, launch, and bundle an application. Developers do
+The gem contains everything required to launch and bundle an application. Developers do
 not need to install a separate runtime or copy framework files. Bundled applications require only
 an Omarchy computer to run.
 
-## Create and run an application
+## Start an application
 
 ```bash
 omarchy_ui new MyApp
@@ -44,7 +43,7 @@ cd myapp
 omarchy_ui launch main.rb
 ```
 
-The standalone generator creates no plugin manifest or copied runtime files:
+A new standalone project contains only application-owned files:
 
 ```text
 myapp/
@@ -66,7 +65,7 @@ omarchy_ui bundle
 ./dist/myapp/run
 ```
 
-`bundle` creates a self-contained application under `dist/<project-name>/`. The generated `run`
+`bundle` creates a self-contained application under `dist/<project-name>/`. Its `run`
 launcher works on another Omarchy computer without Ruby or the `omarchy-ui` gem.
 
 An Omarchy Shell plugin is a separate packaging mode. It requires `manifest.json` so the shell
@@ -324,7 +323,7 @@ ruby script/benchmark.rb
 ```
 
 The suite covers state, bindings, repeated structures, event persistence, component schemas,
-animation tracks and sequences, tasks, command safety, standalone project generation, packaging,
+animation tracks and sequences, tasks, command safety, standalone projects, packaging,
 manifests, component contracts, linting, and the phone backend.
 
 ## License
