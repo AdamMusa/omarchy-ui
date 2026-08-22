@@ -51,6 +51,10 @@ module OmarchyUI
     end
 
     def register_binding(node, property, reader, animation: nil)
+      property = property.to_s
+      unless @components.fetch(node.type).properties.map(&:to_s).include?(property)
+        raise ArgumentError, "unsupported bound property for #{node.type}: #{property}"
+      end
       value = normalize_value(evaluate(reader), property)
       node.props[property] = value
       @bindings << Binding.new(node:, property:, reader:, last_value: value, animation:)

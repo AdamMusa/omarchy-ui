@@ -60,7 +60,9 @@ module OmarchyUI
 
     def validate(arguments)
       source = File.expand_path(arguments.shift || Dir.pwd)
-      system("omarchy", "plugin", "validate", source) ? 0 : 1
+      with_staged_project(source) do |staging|
+        system("omarchy", "plugin", "validate", staging) ? 0 : 1
+      end
     end
 
     def push(arguments)
@@ -71,17 +73,13 @@ module OmarchyUI
       manifest = JSON.parse(File.read(manifest_path))
       plugin_id = manifest.fetch("id")
       raise ArgumentError, "invalid plugin id" unless VALID_ID.match?(plugin_id)
-      raise ArgumentError, "plugin validation failed" unless system("omarchy", "plugin", "validate", source)
-
       plugin_root = File.expand_path("~/.config/omarchy/plugins")
       backup_root = File.expand_path("~/.local/state/omarchy-ui/backups")
       destination = File.join(plugin_root, plugin_id)
       raise ArgumentError, "cannot push an installed plugin onto itself" if source == destination
       FileUtils.mkdir_p(plugin_root)
       backup = nil
-      staging = Dir.mktmpdir(".#{plugin_id}.staging-", plugin_root)
-      entries = Dir.children(source).reject { |entry| entry == ".git" }
-      FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging)
+      staging = stage_project(source, parent: plugin_root, prefix: ".#{plugin_id}.staging-")
       raise ArgumentError, "staged plugin validation failed" unless system("omarchy", "plugin", "validate", staging)
 
       if File.exist?(destination)
@@ -104,6 +102,25 @@ module OmarchyUI
       raise
     ensure
       FileUtils.remove_entry(staging) if staging && File.exist?(staging)
+    end
+
+    def with_staged_project(source)
+      staging = stage_project(source)
+      yield staging
+    ensure
+      FileUtils.remove_entry(staging) if staging && File.exist?(staging)
+    end
+
+    def stage_project(source, parent: nil, prefix: ".omarchy-ui-staging-")
+      raise ArgumentError, "project directory not found: #{source}" unless File.directory?(source)
+      staging = parent ? Dir.mktmpdir(prefix, parent) : Dir.mktmpdir(prefix)
+      entries = Dir.children(source).reject { |entry| entry == ".git" }
+      FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging) unless entries.empty?
+      Project.install_runtime(staging) if File.file?(File.join(staging, "main.rb"))
+      staging
+    rescue StandardError
+      FileUtils.remove_entry(staging) if staging && File.exist?(staging)
+      raise
     end
   end
 end

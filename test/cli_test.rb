@@ -40,6 +40,7 @@ class CLITest < Minitest::Test
         destination = File.join(home, ".config/omarchy/plugins/test.plugin")
         assert_equal 0, status
         assert File.file?(File.join(destination, "main.rb"))
+        assert File.file?(File.join(destination, "Service.qml"))
         refute File.exist?(File.join(destination, ".git"))
         refute Dir.children(File.join(home, ".config/omarchy/plugins")).any? { |name| name.include?("backup") }
         assert_includes output.string, "Pushed test.plugin"
@@ -67,6 +68,32 @@ class CLITest < Minitest::Test
       )
       assert status.success?, stderr
       assert_equal %w[ready render], stdout.lines.map { |line| JSON.parse(line).fetch("type") }
+    end
+  end
+
+  def test_validate_checks_the_complete_staged_ruby_plugin
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "source")
+      tools = File.join(directory, "bin")
+      inspected = File.join(directory, "inspected")
+      FileUtils.mkdir_p([source, tools])
+      File.write(File.join(source, "manifest.json"), JSON.generate("id" => "test.validate"))
+      File.write(File.join(source, "main.rb"), "require \"omarchy_ui\"\n")
+      omarchy = File.join(tools, "omarchy")
+      File.write(omarchy, <<~SH)
+        #!/bin/sh
+        test -f "$3/Service.qml" || exit 2
+        test -f "$3/vendor/omarchy_ui/lib/omarchy_ui.rb" || exit 3
+        cp "$3/Service.qml" #{inspected}
+      SH
+      FileUtils.chmod(0o755, omarchy)
+
+      with_environment("PATH" => "#{tools}:#{ENV.fetch('PATH')}") do
+        status = OmarchyUI::CLI.run(["validate", source], out: StringIO.new, err: StringIO.new)
+        assert_equal 0, status
+        assert File.file?(inspected)
+      end
+      refute File.exist?(File.join(source, "Service.qml")), "validation must not mutate source"
     end
   end
 

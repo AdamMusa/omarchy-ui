@@ -322,7 +322,12 @@ Item {
 
   function startRuby() {
     if (stopping || pluginDir === "" || rubyProcess.running) return
-    rubyProcess.command = ["ruby", rubyProgram]
+    rubyProcess.command = [
+      "ruby",
+      "-I", pluginDir + "/lib",
+      "-I", pluginDir + "/vendor/omarchy_ui/lib",
+      rubyProgram
+    ]
     rubyProcess.workingDirectory = pluginDir
     rubyProcess.running = true
   }

@@ -19,7 +19,7 @@ module OmarchyUI
       raise ArgumentError, "destination already exists: #{@path}" if File.exist?(@path)
       created = true
       FileUtils.mkdir_p(File.join(@path, "Components"))
-      RUNTIME_FILES.each { |file| FileUtils.cp(File.join(@framework_root, file), File.join(@path, file)) }
+      self.class.install_runtime(@path, framework_root: @framework_root)
       File.write(File.join(@path, "manifest.json"), JSON.pretty_generate(manifest) + "\n")
       File.write(File.join(@path, "main.rb"), main_program)
       File.write(File.join(@path, ".gitignore"), "*.log\n")
@@ -27,6 +27,19 @@ module OmarchyUI
     rescue StandardError
       FileUtils.remove_entry(@path) if created && File.directory?(@path)
       raise
+    end
+
+    def self.install_runtime(path, framework_root: FRAMEWORK_ROOT)
+      RUNTIME_FILES.each do |file|
+        destination = File.join(path, file)
+        FileUtils.cp(File.join(framework_root, file), destination) unless File.exist?(destination)
+      end
+      FileUtils.mkdir_p(File.join(path, "Components"))
+      vendor_root = File.join(path, "vendor", "omarchy_ui")
+      unless File.directory?(File.join(path, "lib", "omarchy_ui")) || File.directory?(File.join(vendor_root, "lib"))
+        FileUtils.mkdir_p(vendor_root)
+        FileUtils.cp_r(File.join(framework_root, "lib"), vendor_root)
+      end
     end
 
     private
