@@ -115,4 +115,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "delegate: columnChildDelegate"
     assert_includes renderer, "anchors.horizontalCenter"
   end
+
+  def test_bridge_bounds_values_and_renders_external_text_as_plain_text
+    service = source("Service.qml")
+    renderer = source("ControlNode.qml")
+
+    assert_includes service, "function boundedValue(value, depth)"
+    assert_includes service, "maxStringLength: 16384"
+    assert_operator renderer.scan("textFormat: Text.PlainText").length, :>=, 2
+    assert_includes renderer, "function escapeAutoText(value)"
+    assert_includes renderer, 'tooltipText: root.escapeAutoText(root.prop("tooltip", ""))'
+  end
 end

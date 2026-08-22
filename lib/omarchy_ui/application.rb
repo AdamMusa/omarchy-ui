@@ -298,6 +298,7 @@ module OmarchyUI
     def emit(message)
       return unless @running && @output
       encoded = JSON.generate(message)
+      raise ProtocolError, "outgoing message exceeds #{MAX_MESSAGE_BYTES} bytes" if encoded.bytesize > MAX_MESSAGE_BYTES
       @write_lock.synchronize { @output.puts(encoded) }
     end
 

@@ -25,4 +25,11 @@ class CommandTest < Minitest::Test
       OmarchyUI::Command.run([RbConfig.ruby, "-e", "sleep 5"], timeout: 0.02)
     end
   end
+
+  def test_command_output_is_bounded
+    error = assert_raises(OmarchyUI::CommandOutputLimit) do
+      OmarchyUI::Command.run([RbConfig.ruby, "-e", "print 'x' * 4096"], max_output_bytes: 1024)
+    end
+    assert_includes error.message, "exceeded 1024 bytes"
+  end
 end

@@ -5,6 +5,7 @@ require "timeout"
 
 module OmarchyUI
   class CommandTimeout < StandardError; end
+  class CommandOutputLimit < StandardError; end
 
   CommandResult = Struct.new(:stdout, :stderr, :status, keyword_init: true) do
     def success? = status.success?
@@ -14,8 +15,12 @@ module OmarchyUI
   module Command
     module_function
 
-    def run(argv, env: {}, chdir: nil, input: "", timeout: nil)
+    DEFAULT_MAX_OUTPUT_BYTES = 1_048_576
+
+    def run(argv, env: {}, chdir: nil, input: "", timeout: nil, max_output_bytes: DEFAULT_MAX_OUTPUT_BYTES)
       arguments = normalize_argv(argv)
+      output_limit = Integer(max_output_bytes)
+      raise ArgumentError, "max_output_bytes must be positive" unless output_limit.positive?
       options = {}
       options[:chdir] = File.expand_path(chdir) if chdir
       stdin = stdout = stderr = wait_thread = nil
@@ -23,10 +28,15 @@ module OmarchyUI
         stdin, stdout, stderr, wait_thread = child_stdin, child_stdout, child_stderr, child_wait
         stdin.write(input.to_s)
         stdin.close
-        stdout_reader = Thread.new { stdout.read }
-        stderr_reader = Thread.new { stderr.read }
+        stdout_reader = Thread.new { bounded_read(stdout, output_limit) }
+        stderr_reader = Thread.new { bounded_read(stderr, output_limit) }
         status = timeout ? Timeout.timeout(Float(timeout)) { wait_thread.value } : wait_thread.value
-        return CommandResult.new(stdout: stdout_reader.value, stderr: stderr_reader.value, status:)
+        stdout_value, stdout_limited = stdout_reader.value
+        stderr_value, stderr_limited = stderr_reader.value
+        if stdout_limited || stderr_limited
+          raise CommandOutputLimit, "command output exceeded #{output_limit} bytes: #{arguments.first}"
+        end
+        return CommandResult.new(stdout: stdout_value, stderr: stderr_value, status:)
       rescue Timeout::Error
         terminate(wait_thread)
         stdout_reader&.join(1)
@@ -36,6 +46,24 @@ module OmarchyUI
     ensure
       [stdin, stdout, stderr].each { |stream| stream&.close unless stream&.closed? }
     end
+
+    def bounded_read(stream, limit)
+      output = +""
+      exceeded = false
+      loop do
+        chunk = stream.readpartial(16_384)
+        remaining = limit - output.bytesize
+        if remaining.positive?
+          output << chunk.byteslice(0, remaining)
+          exceeded = true if chunk.bytesize > remaining
+        else
+          exceeded = true
+        end
+      end
+    rescue EOFError
+      [output, exceeded]
+    end
+    private_class_method :bounded_read
 
     def normalize_argv(argv)
       raise ArgumentError, "command must be an argv array" unless argv.is_a?(Array) && !argv.empty?

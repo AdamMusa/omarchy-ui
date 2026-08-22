@@ -19,13 +19,18 @@ module OmarchyUI
 end
 
 module OmarchyUI::Command
-  def self.run(argv, env: {}, chdir: nil, input: "", timeout: nil)
+  def self.run(argv, env: {}, chdir: nil, input: "", timeout: nil, max_output_bytes: 1_048_576)
     raise ArgumentError, "mruby command env is not implemented" unless env.empty?
     raise ArgumentError, "mruby command chdir is not implemented" if chdir
     raise ArgumentError, "mruby command input is not implemented" unless input.to_s.empty?
-    result = OmarchyUI.native_command(argv, timeout ? timeout.to_f : 0)
+    limit = max_output_bytes.to_i
+    raise ArgumentError, "max_output_bytes must be positive" unless limit.positive?
+    result = OmarchyUI.native_command(argv, timeout ? timeout.to_f : 0, limit)
     if result["timed_out"]
       raise OmarchyUI::CommandTimeout, "command timed out after #{timeout}s: #{argv.first}"
+    end
+    if result["output_limited"]
+      raise OmarchyUI::CommandOutputLimit, "command output exceeded #{limit} bytes: #{argv.first}"
     end
     OmarchyUI::NativeCommandResult.new(
       stdout: result["stdout"], stderr: result["stderr"],
@@ -36,6 +41,7 @@ end
 
 module OmarchyUI
   class CommandTimeout < StandardError; end unless const_defined?(:CommandTimeout)
+  class CommandOutputLimit < StandardError; end unless const_defined?(:CommandOutputLimit)
 end
 
 # mruby runs one VM on one host thread. These locks preserve the framework API

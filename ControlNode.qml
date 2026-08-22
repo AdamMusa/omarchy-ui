@@ -40,6 +40,13 @@ Loader {
     return icons[key] || key
   }
 
+  function escapeAutoText(value) {
+    return String(value === undefined || value === null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+  }
+
   function easingType(name) {
     var easings = {
       linear: Easing.Linear,
@@ -224,6 +231,7 @@ Loader {
 
     Text {
       text: String(root.prop("text", ""))
+      textFormat: Text.PlainText
       color: root.prop("color", root.foreground)
       font.family: root.fontFamily
       font.pixelSize: {
@@ -243,6 +251,7 @@ Loader {
 
     Text {
       text: root.iconGlyph(root.prop("name", root.prop("text", "")))
+      textFormat: Text.PlainText
       color: root.foreground
       font.family: root.fontFamily
       font.pixelSize: Number(root.prop("size", Style.font.icon))
@@ -253,9 +262,9 @@ Loader {
     id: buttonComponent
 
     OmarchyUi.Button {
-      text: String(root.prop("text", ""))
+      text: root.escapeAutoText(root.prop("text", ""))
       iconText: root.iconGlyph(root.prop("icon", ""))
-      tooltipText: String(root.prop("tooltip", ""))
+      tooltipText: root.escapeAutoText(root.prop("tooltip", ""))
       selected: root.prop("selected", false) === true
       active: root.prop("active", false) === true
       hasCursor: root.prop("cursor", false) === true
