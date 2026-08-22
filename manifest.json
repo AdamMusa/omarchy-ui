@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "izeesoft.omarchy-ui-poc",
-  "name": "Omarchy UI Ruby PoC",
+  "name": "Omarchy UI Ruby Framework",
   "version": "0.1.0",
   "author": "Adam Moussa Ali",
   "license": "MIT",
@@ -18,11 +18,10 @@
     "panel": "Panel.qml"
   },
   "barWidget": {
-    "displayName": "Ruby UI PoC",
+    "displayName": "Ruby UI Framework",
     "description": "Open the Ruby-driven counter panel.",
     "category": "Development",
     "allowMultiple": false,
     "defaultSection": "right"
   }
 }
-

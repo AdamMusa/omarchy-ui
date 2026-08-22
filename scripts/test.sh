@@ -26,4 +26,4 @@ else
 fi
 
 git diff --check 2>/dev/null || true
-echo "Omarchy UI PoC tests passed."
+echo "Omarchy UI framework tests passed."
