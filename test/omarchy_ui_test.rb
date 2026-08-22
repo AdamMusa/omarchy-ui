@@ -484,6 +484,30 @@ class OmarchyUITest < Minitest::Test
     refute messages(output).any? { |message| message["op"] == "replace_children" }
   end
 
+  def test_dynamic_container_preserves_input_when_only_its_value_changes
+    app = OmarchyUI::Application.new do
+      state :name, ""
+      panel :main do
+        dynamic id: :form do
+          field = text_field "", id: :name do |payload|
+            state.name = payload.fetch("value")
+          end
+          bind(field, :text) { state.name }
+        end
+      end
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    output.truncate(0)
+    output.rewind
+
+    app.receive(event("name", surface: "main", name: "input", payload: { "value" => "A" }))
+    patches = messages(output).select { |message| message["type"] == "patch" }
+    refute patches.any? { |message| message["op"] == "replace_children" }
+    assert_equal({ "op" => "set", "id" => "name", "property" => "text", "value" => "A" },
+                 patches.first.slice("op", "id", "property", "value"))
+  end
+
   def test_imperative_animation_emits_parallel_tracks
     app = OmarchyUI::Application.new do
       panel :main do

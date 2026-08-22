@@ -190,14 +190,42 @@ module OmarchyUI
     end
 
     def reconcile_structure(structure)
+      previous_children = structure.last_children
       structure.node.children.dup.each { |child| unregister_subtree(child) }
       structure.node.children.clear
       @builder.rebuild(structure.node, &structure.renderer)
       children = structure.node.children.map(&:to_h)
       return if children == structure.last_children
+      if patchable_trees?(previous_children, children)
+        emit_property_patches(previous_children, children)
+        structure.last_children = children
+        return
+      end
       structure.last_children = children
       emit("v" => PROTOCOL_VERSION, "type" => "patch", "op" => "replace_children",
            "id" => structure.node.id, "children" => children)
+    end
+
+    def patchable_trees?(previous, current)
+      return false unless previous.length == current.length
+      previous.zip(current).all? do |before, after|
+        before["id"] == after["id"] && before["type"] == after["type"] &&
+          before.fetch("events", []) == after.fetch("events", []) &&
+          before.fetch("props", {}).keys.sort == after.fetch("props", {}).keys.sort &&
+          patchable_trees?(before.fetch("children", []), after.fetch("children", []))
+      end
+    end
+
+    def emit_property_patches(previous, current)
+      previous.zip(current).each do |before, after|
+        before.fetch("props", {}).each do |property, old_value|
+          value = after.fetch("props", {}).fetch(property)
+          next if value == old_value
+          emit("v" => PROTOCOL_VERSION, "type" => "patch", "op" => "set",
+               "id" => after.fetch("id"), "property" => property, "value" => value)
+        end
+        emit_property_patches(before.fetch("children", []), after.fetch("children", []))
+      end
     end
 
     def unregister_subtree(node)
