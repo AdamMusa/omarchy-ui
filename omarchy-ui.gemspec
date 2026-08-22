@@ -10,6 +10,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Adam Moussa Ali"]
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1"
-  spec.files = Dir["lib/**/*.rb", "*.qml", "Components/**/*", "manifest.json", "README.md", "LICENSE"]
+  spec.files = Dir["bin/*", "lib/**/*.rb", "*.qml", "Components/**/*", "manifest.json", "README.md", "LICENSE"]
   spec.require_paths = ["lib"]
+  spec.bindir = "bin"
+  spec.executables = ["omarchy_ui"]
 end
