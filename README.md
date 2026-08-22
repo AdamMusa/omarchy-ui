@@ -3,10 +3,9 @@
 > **Experimental:** the API and packaging format are being validated with real Omarchy apps.
 > Pin the gem version for production projects and review release notes before upgrading.
 
-Omarchy UI is the official-style Ruby application framework for building native Omarchy
-interfaces. Ruby owns application state, events, tasks, commands, and models; a shared mruby
-runtime communicates with QML over a validated protocol. Applications do not need system Ruby
-and do not copy the framework runtime into every project.
+Omarchy UI is a Ruby framework for building native Omarchy applications. It provides reactive
+state, components, events, animation, tasks, commands, standalone windows, and shell plugin
+integration through one compact API.
 
 ```ruby
 require "omarchy_ui" unless Object.const_defined?(:OmarchyUI)
@@ -33,19 +32,9 @@ gem install omarchy-ui
 omarchy_ui new "My App"
 ```
 
-The gem includes the CLI, QML bridge, and a prebuilt mruby runtime with Omarchy UI embedded.
-Developers do not install mruby, compile the runtime, copy framework files, or require Ruby on
-machines that run a bundled application. Omarchy with Quickshell is the only host requirement.
-
-Framework maintainers can rebuild the pinned mruby 4.0 binary with:
-
-```bash
-./scripts/build-mruby-runtime.sh
-install -Dm755 build/runtime/omarchy-ui-runtime ~/.local/bin/omarchy-ui-runtime
-```
-
-The stripped prebuilt runtime is approximately 1.8 MB and embeds the Ruby framework, JSON, regular
-expressions, process support, and the native safe-command bridge.
+The gem contains everything required to create, launch, and bundle an application. Developers do
+not need to install a separate runtime or copy framework files. Bundled applications require only
+an Omarchy computer to run.
 
 ## Create and run an application
 
@@ -77,9 +66,8 @@ omarchy_ui bundle
 ./dist/my-app/run
 ```
 
-`bundle` copies the working application, framework QML bridge, and prebuilt mruby executable into
-`dist/<project-name>/`. The generated `run` launcher invokes Quickshell directly with the bundled
-runtime, so the destination computer does not need Ruby or the `omarchy-ui` gem.
+`bundle` creates a self-contained application under `dist/<project-name>/`. The generated `run`
+launcher works on another Omarchy computer without Ruby or the `omarchy-ui` gem.
 
 An Omarchy Shell plugin is a separate packaging mode. It requires `manifest.json` so the shell
 can discover its ID, entry points, bar placement, and lifecycle. For a project that intentionally
@@ -90,7 +78,7 @@ omarchy_ui validate path/to/plugin
 omarchy_ui push path/to/plugin
 ```
 
-`push` stages and validates the project, injects the shared QML bridge files, backs up an existing
+`push` stages and validates the project, adds the framework support files, backs up an existing
 installation, installs atomically, optionally enables it, and restarts Omarchy Shell. Use
 `--no-enable` or `--no-restart` when needed.
 
@@ -163,8 +151,7 @@ end
 ## Common properties
 
 Every component supports `visible`, `enabled`, `opacity`, `scale`, `rotation`, `z`, `width`, and
-`height`. Component-specific properties are listed below. Names use Ruby `snake_case`; the QML
-bridge maps them to native property names.
+`height`. Component-specific properties are listed below. Property names use Ruby `snake_case`.
 
 ## Built-in component reference
 
@@ -227,7 +214,7 @@ Typical event payloads are:
 - `list_view` change/activate: value, index, and original item
 - `list_view` scroll: x and y offsets
 
-Only declared and subscribed events cross the QML/Ruby boundary.
+Only declared and subscribed events are delivered to application handlers.
 
 ## Bindings and properties
 
@@ -286,7 +273,7 @@ in_bounce, out_bounce, in_out_bounce
 ```
 
 All common numeric visual properties and declared numeric custom-adapter properties can be
-animated. Parallel property hashes become parallel QML animation tracks.
+animated. Properties in the same hash animate in parallel.
 
 ## Tasks and commands
 
@@ -296,10 +283,9 @@ every(5, immediate: true) { state.updated_at = Time.now.to_i }
 async { state.result = run_command(["uname", "-r"], timeout: 2).stdout.strip }
 ```
 
-`after`, `every`, and `async` return cancellable task objects. MRI uses worker threads; mruby
-uses cooperative ticks from the QML host. Command execution always takes an argv array and does
-not invoke a shell. Results expose `stdout`, `stderr`, `exitstatus`, and `success?`; timeout raises
-`OmarchyUI::CommandTimeout`.
+`after`, `every`, and `async` return cancellable task objects. Command execution always takes an
+argv array and does not invoke a shell. Results expose `stdout`, `stderr`, `exitstatus`, and
+`success?`; timeout raises `OmarchyUI::CommandTimeout`.
 
 ## Custom QML components
 
@@ -325,16 +311,11 @@ declared signals are forwarded to Ruby. A container adapter can expose an `Item`
 `contentHost`; framework children are parented into it automatically. See
 [the QML support matrix](docs/qml-support.md) and [Sparkline.qml](Components/Sparkline.qml).
 
-## Architecture and safety
+## Safety
 
-`Service.qml` supervises one long-lived mruby process and exchanges versioned NDJSON through
-stdin/stdout. `ControlNode.qml` recursively renders validated component nodes. Property changes
-send incremental patches; dynamic branches replace only affected children; animations run in
-QML. Closing a window or panel does not evaluate Ruby or QML received over the protocol.
-
-Component names, QML filenames, properties, events, IDs, effects, values, message sizes, and
-animation limits are validated. Commands use argv arrays without a shell. Applications and
-plugins still run with the current user's permissions.
+Component names, files, properties, events, IDs, effects, values, message sizes, and animation
+limits are validated. Commands use argv arrays without a shell. Applications and plugins run with
+the current user's permissions, so review third-party code before installing it.
 
 ## Omarchy Phone example
 
@@ -354,8 +335,8 @@ ruby script/benchmark.rb
 ```
 
 The suite covers state, bindings, repeated structures, event persistence, component schemas,
-animation tracks and sequences, tasks, command safety, mruby compatibility, standalone project
-generation, packaging, manifests, QML contracts, QML lint, and the phone backend.
+animation tracks and sequences, tasks, command safety, standalone project generation, packaging,
+manifests, component contracts, linting, and the phone backend.
 
 ## License
 
