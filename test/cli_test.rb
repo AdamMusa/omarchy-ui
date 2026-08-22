@@ -41,6 +41,7 @@ class CLITest < Minitest::Test
         assert_equal 0, status
         assert File.file?(File.join(destination, "main.rb"))
         refute File.exist?(File.join(destination, ".git"))
+        refute Dir.children(File.join(home, ".config/omarchy/plugins")).any? { |name| name.include?("backup") }
         assert_includes output.string, "Pushed test.plugin"
       end
     end

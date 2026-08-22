@@ -57,6 +57,7 @@ module OmarchyUI
       raise ArgumentError, "plugin validation failed" unless system("omarchy", "plugin", "validate", source)
 
       plugin_root = File.expand_path("~/.config/omarchy/plugins")
+      backup_root = File.expand_path("~/.local/state/omarchy-ui/backups")
       destination = File.join(plugin_root, plugin_id)
       raise ArgumentError, "cannot push an installed plugin onto itself" if source == destination
       FileUtils.mkdir_p(plugin_root)
@@ -67,7 +68,8 @@ module OmarchyUI
       raise ArgumentError, "staged plugin validation failed" unless system("omarchy", "plugin", "validate", staging)
 
       if File.exist?(destination)
-        backup = "#{destination}.backup-#{Time.now.strftime('%Y%m%d%H%M%S')}-#{Process.pid}"
+        FileUtils.mkdir_p(backup_root)
+        backup = File.join(backup_root, "#{plugin_id}-#{Time.now.strftime('%Y%m%d%H%M%S')}-#{Process.pid}")
         FileUtils.mv(destination, backup)
         @out.puts("Backed up existing plugin to #{backup}")
       end
