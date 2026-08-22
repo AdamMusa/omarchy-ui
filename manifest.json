@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "izeesoft.omarchy-ui-poc",
   "name": "Omarchy UI Ruby Framework",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "author": "Adam Moussa Ali",
   "license": "MIT",
   "description": "Persistent Ruby state and event handlers rendered by a generic Omarchy QML bridge.",
