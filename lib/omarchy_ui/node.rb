@@ -26,5 +26,5 @@ module OmarchyUI
   end
 
   Binding = Struct.new(:node, :property, :reader, :last_value, :animation, keyword_init: true)
-  StructuralBinding = Struct.new(:node, :renderer, :last_children, :sequence_start, keyword_init: true)
+  StructuralBinding = Struct.new(:node, :renderer, :last_children, keyword_init: true)
 end

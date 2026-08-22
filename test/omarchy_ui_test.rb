@@ -508,6 +508,27 @@ class OmarchyUITest < Minitest::Test
     assert_equal "A", app.state.name
   end
 
+  def test_dynamic_regions_use_independent_generated_id_scopes_when_they_grow
+    app = OmarchyUI::Application.new do
+      state :items, ["one"]
+      panel :main do
+        dynamic(id: :first) { state.items.each { |item| text item } }
+        dynamic(id: :second) { text "Stable" }
+        button("Grow", id: :grow) { state.items = %w[one two three four] }
+      end
+    end
+    output = StringIO.new
+    error = StringIO.new
+    app.start(output:, error:)
+    output.truncate(0)
+    output.rewind
+
+    app.receive(event("grow", surface: "main"))
+    assert_empty error.string
+    assert_equal 4, app.tree.dig("main", "children", 0, "children").length
+    assert_equal "second.text.1", app.tree.dig("main", "children", 1, "children", 0, "id")
+  end
+
   def test_imperative_animation_emits_parallel_tracks
     app = OmarchyUI::Application.new do
       panel :main do

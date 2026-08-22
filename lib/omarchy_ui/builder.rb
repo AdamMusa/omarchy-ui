@@ -16,11 +16,12 @@ module OmarchyUI
     def initialize(application)
       @application = application
       @stack = []
+      @dynamic_scopes = []
     end
 
     def component(type, id: nil, **props, &block)
       definition = @application.components.fetch(type)
-      node = @application.build_node(type, explicit_id: id, props:)
+      node = @application.build_node(type, explicit_id: id || scoped_id(type), props:)
       append(node)
       if block
         raise ArgumentError, "#{type} is not a container" unless definition.container
@@ -64,7 +65,8 @@ module OmarchyUI
       definition = @application.components.fetch(type)
       raise ArgumentError, "dynamic component must be a container: #{type}" unless definition.container
 
-      node = component(type, id:, **props, &renderer)
+      node = component(type, id:, **props)
+      within_dynamic(node, &renderer)
       @application.register_structure(node, renderer)
       node
     end
@@ -166,7 +168,7 @@ module OmarchyUI
     def every(seconds, immediate: false, &block) = @application.schedule(:every, interval: seconds, immediate:, &block)
     def async(&block) = @application.schedule(:async, &block)
     def run_command(argv, **options) = Command.run(argv, **options)
-    def rebuild(node, &renderer) = within(node, &renderer)
+    def rebuild(node, &renderer) = within_dynamic(node, &renderer)
     def open_panel(name) = @application.emit_effect("open_panel", "surface" => name.to_s)
 
     def close_panel(name = nil)
@@ -174,6 +176,20 @@ module OmarchyUI
     end
 
     private
+
+    def scoped_id(type)
+      return nil if @dynamic_scopes.empty?
+      scope = @dynamic_scopes.last
+      scope[:sequence] += 1
+      "#{scope.fetch(:id)}.#{type}.#{scope.fetch(:sequence)}"
+    end
+
+    def within_dynamic(node, &block)
+      @dynamic_scopes.push(id: node.id, sequence: 0)
+      within(node, &block)
+    ensure
+      @dynamic_scopes.pop
+    end
 
     def surface(name, id:, options: {}, &block)
       raise ArgumentError, "surface requires a block" unless block

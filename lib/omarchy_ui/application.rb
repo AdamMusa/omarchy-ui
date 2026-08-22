@@ -63,8 +63,7 @@ module OmarchyUI
     end
 
     def register_structure(node, renderer)
-      sequence_start = @sequence - descendant_count(node)
-      @structures << StructuralBinding.new(node:, renderer:, last_children: node.children.map(&:to_h), sequence_start:)
+      @structures << StructuralBinding.new(node:, renderer:, last_children: node.children.map(&:to_h))
     end
 
     def register_handler(control_id, event, handler)
@@ -194,13 +193,7 @@ module OmarchyUI
       previous_children = structure.last_children
       structure.node.children.dup.each { |child| unregister_subtree(child) }
       structure.node.children.clear
-      sequence_checkpoint = @sequence
-      @sequence = structure.sequence_start
-      begin
-        @builder.rebuild(structure.node, &structure.renderer)
-      ensure
-        @sequence = [sequence_checkpoint, @sequence].max
-      end
+      @builder.rebuild(structure.node, &structure.renderer)
       children = structure.node.children.map(&:to_h)
       return if children == structure.last_children
       if patchable_trees?(previous_children, children)
@@ -211,10 +204,6 @@ module OmarchyUI
       structure.last_children = children
       emit("v" => PROTOCOL_VERSION, "type" => "patch", "op" => "replace_children",
            "id" => structure.node.id, "children" => children)
-    end
-
-    def descendant_count(node)
-      node.children.inject(0) { |count, child| count + 1 + descendant_count(child) }
     end
 
     def patchable_trees?(previous, current)
