@@ -1,0 +1,199 @@
+# frozen_string_literal: true
+
+module OmarchyUI
+  class Builder
+    UNSET = Object.new.freeze
+    CONTAINERS = %i[row column container grid stack scroll rectangle].freeze
+    VALUE_INPUTS = {
+      text_field: :text,
+      number_field: :value,
+      slider: :value,
+      dropdown: :value,
+      multi_select: :values,
+      button_group: :value
+    }.freeze
+
+    def initialize(application)
+      @application = application
+      @stack = []
+    end
+
+    def component(type, id: nil, **props, &block)
+      definition = @application.components.fetch(type)
+      node = @application.build_node(type, explicit_id: id, props:)
+      append(node)
+      if block
+        raise ArgumentError, "#{type} is not a container" unless definition.container
+        within(node, &block)
+      end
+      node
+    end
+    alias widget component
+    alias qml_component component
+
+    CONTAINERS.each do |type|
+      define_method(type) { |id: nil, **props, &block| component(type, id:, **props, &block) }
+    end
+
+    def register_component(name, qml:, properties: [], events: [], container: false)
+      unless @stack.empty? && @application.surfaces.empty?
+        raise ArgumentError, "components must be registered before a surface"
+      end
+      @application.components.register(name, qml:, properties:, events:, container:)
+    end
+
+    def state(name = nil, initial = UNSET)
+      return @application.state if name.nil?
+      raise ArgumentError, "state requires an initial value" if initial.equal?(UNSET)
+      @application.define_state(name, initial)
+    end
+
+    def bar_widget(&block) = surface("bar", id: "bar", &block)
+    def panel(name, &block) = surface(name.to_s, id: "panel.#{name}", &block)
+    def app(name = :main, &block) = surface(name.to_s, id: "app.#{name}", &block)
+
+    def dynamic(type: :column, id: nil, **props, &renderer)
+      raise ArgumentError, "dynamic requires a block" unless renderer
+      definition = @application.components.fetch(type)
+      raise ArgumentError, "dynamic component must be a container: #{type}" unless definition.container
+
+      node = component(type, id:, **props, &renderer)
+      @application.register_structure(node, renderer)
+      node
+    end
+
+    def text(value = UNSET, id: nil, **props, &reader)
+      node = component(:text, id:, **props)
+      bind_or_set(node, "text", value, reader)
+      node
+    end
+
+    def icon(name, id: nil, **props) = component(:icon, id:, name: name.to_s, **props)
+    def image(source, id: nil, **props) = component(:image, id:, source: source.to_s, **props)
+    def spacer(id: nil, **props) = component(:spacer, id:, **props)
+    def separator(id: nil, **props) = component(:separator, id:, **props)
+    def section_header(value, id: nil, **props) = component(:section_header, id:, text: value.to_s, **props)
+
+    def button(label, id: nil, **props, &handler)
+      action_component(:button, :text, label, id:, props:, handler:)
+    end
+
+    def action_button(icon, id: nil, **props, &handler)
+      action_component(:action_button, :icon, icon, id:, props:, handler:)
+    end
+
+    def toggle(label = "", id: nil, checked: UNSET, **props, &handler)
+      input_component(:toggle, :checked, checked, id:, props: props.merge(label: label.to_s), handler:)
+    end
+
+    def toggle_switch(id: nil, checked: UNSET, **props, &handler)
+      input_component(:toggle_switch, :checked, checked, id:, props:, handler:)
+    end
+
+    VALUE_INPUTS.each do |type, property|
+      define_method(type) do |value = UNSET, id: nil, **props, &handler|
+        input_component(type, property, value, id:, props:, handler:)
+      end
+    end
+
+    def progress(value = UNSET, id: nil, **props)
+      input_component(:progress, :value, value, id:, props:)
+    end
+
+    def on_click(&handler)
+      raise ArgumentError, "on_click must be inside a surface or control" if @stack.empty?
+      on(@stack.last, :click, &handler)
+    end
+
+    def on(target_or_event, event = nil, &handler)
+      raise ArgumentError, "on requires a block" unless handler
+      if target_or_event.is_a?(Node)
+        raise ArgumentError, "on(node, event) requires an event" unless event
+        node, event_name = target_or_event, event
+      else
+        raise ArgumentError, "on must be inside a surface or control" if @stack.empty?
+        node, event_name = @stack.last, target_or_event
+      end
+      @application.register_handler(node.id, event_name, handler)
+    end
+
+    def property(name, value = UNSET, &reader)
+      raise ArgumentError, "property must be inside a control" if @stack.empty?
+      bind_or_set(@stack.last, name.to_s, value, reader)
+    end
+
+    def bind(node, property, animation: nil, &reader)
+      raise ArgumentError, "bind requires a node returned by a component method" unless node.is_a?(Node)
+      raise ArgumentError, "bind requires a block" unless reader
+      transition = normalize_animation(animation)
+      @application.register_binding(node, property.to_s, reader, animation: transition)
+      node
+    end
+
+    def animation(**options) = Animation.new(**options)
+    def transaction(&block) = @application.state.transaction { instance_eval(&block) }
+    def after(seconds, &block) = @application.schedule(:after, interval: seconds, &block)
+    def every(seconds, immediate: false, &block) = @application.schedule(:every, interval: seconds, immediate:, &block)
+    def async(&block) = @application.schedule(:async, &block)
+    def rebuild(node, &renderer) = within(node, &renderer)
+    def open_panel(name) = @application.emit_effect("open_panel", "surface" => name.to_s)
+
+    def close_panel(name = nil)
+      @application.emit_effect("close_panel", name.nil? ? {} : { "surface" => name.to_s })
+    end
+
+    private
+
+    def surface(name, id:, &block)
+      raise ArgumentError, "surface requires a block" unless block
+      node = @application.build_node(:container, explicit_id: id)
+      @application.add_surface(name, node)
+      within(node, &block)
+      node
+    end
+
+    def action_component(type, property, value, id:, props:, handler:)
+      node = component(type, id:, **props.merge(property => value.to_s))
+      @application.register_handler(node.id, :click, handler) if handler
+      node
+    end
+
+    def input_component(type, property, value, id:, props:, handler: nil)
+      props = props.merge(property => value) unless value.equal?(UNSET)
+      node = component(type, id:, **props)
+      @application.register_handler(node.id, :change, handler) if handler
+      node
+    end
+
+    def within(node, &block)
+      @stack.push(node)
+      instance_eval(&block)
+    ensure
+      @stack.pop
+    end
+
+    def append(node)
+      raise ArgumentError, "#{node.type} must be inside a surface or container" if @stack.empty?
+      @stack.last.children << node
+    end
+
+    def bind_or_set(node, property, value, reader)
+      if reader
+        raise ArgumentError, "pass a value or a reactive block, not both" unless value.equal?(UNSET)
+        @application.register_binding(node, property, reader)
+      else
+        raise ArgumentError, "#{property} requires a value or block" if value.equal?(UNSET)
+        node.props[property] = @application.normalize_value(value, property)
+      end
+    end
+
+    def normalize_animation(animation)
+      case animation
+      when nil then nil
+      when Animation then animation
+      when Hash then Animation.new(**animation)
+      else raise ArgumentError, "animation must be an OmarchyUI::Animation or options hash"
+      end
+    end
+  end
+end
