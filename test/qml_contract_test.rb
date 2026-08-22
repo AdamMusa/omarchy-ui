@@ -140,6 +140,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'panelBackground: root.prop("background", Color.tooltip.background)'
   end
 
+  def test_bar_icon_button_uses_native_optical_bar_control
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "bar_icon_button"'
+    assert_includes renderer, "OmarchyUi.BarIconButton"
+    assert_includes renderer, 'slotSize: Number(root.prop("slot_size", Style.bar.iconSlot))'
+    assert_includes renderer, '"middle_click"'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

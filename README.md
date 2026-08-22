@@ -217,6 +217,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | --- | --- | --- |
 | `button` | `text`, `icon`, `tooltip`, `selected`, `active`, `cursor`, `focusable`, `bordered`, colors, font/icon sizes, padding, `left_align` | `click`, `right_click`, `hover` |
 | `action_button` | `icon`, `tooltip`, `foreground`, `hover_color`, font/size, `focusable`, `cursor`, `bordered` | `click`, `hover` |
+| `bar_icon_button` | `icon`, `tooltip`, active/colors, optical/slot/font sizing, rotation and reveal states | `click`, `right_click`, `middle_click`, `wheel` |
 | `toggle` | `label`, `description`, `checked`, `cursor`, `rounded`, colors, font/title/description sizes | `change`, `hover` |
 | `toggle_switch` | `checked`, `busy`, `interactive`, `cursor`, `cursor_ring`, `cursor_pad`, `rounded`, colors, track/knob geometry | `change`, `hover` |
 | `text_field` | `text`, `placeholder`, `password`, colors, selection tint, padding, `cursor` | `input`, `change`, `submit`, `focus`, `blur` |

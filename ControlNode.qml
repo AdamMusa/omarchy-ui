@@ -20,7 +20,7 @@ Loader {
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card",
-    "stack", "scroll", "rectangle", "action_button", "toggle", "toggle_switch", "text_field",
+    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view"].indexOf(node ? node.type : "") >= 0
@@ -196,6 +196,7 @@ Loader {
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
     if (node.type === "action_button") return actionButtonComponent
+    if (node.type === "bar_icon_button") return barIconButtonComponent
     if (node.type === "toggle") return toggleComponent
     if (node.type === "toggle_switch") return toggleSwitchComponent
     if (node.type === "text_field") return textFieldComponent
@@ -631,6 +632,30 @@ Loader {
       fontSize: Number(root.prop("font_size", Style.font.icon))
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
+    }
+  }
+
+  Component {
+    id: barIconButtonComponent
+    OmarchyUi.BarIconButton {
+      text: root.iconGlyph(root.prop("icon", ""))
+      tooltipText: root.escapeAutoText(root.prop("tooltip", ""))
+      active: root.prop("active", false) === true
+      foreground: root.prop("foreground", root.foreground)
+      activeColor: root.prop("active_color", Color.accent)
+      slotSize: Number(root.prop("slot_size", Style.bar.iconSlot))
+      opticalSize: Number(root.prop("optical_size", Style.bar.iconCanvas))
+      fontFamily: String(root.prop("font_family", root.fontFamily))
+      fontSize: Number(root.prop("font_size", Style.bar.iconFont))
+      textRotation: Number(root.prop("text_rotation", 0))
+      keepSpace: root.prop("keep_space", false) === true
+      dimmed: root.prop("dimmed", false) === true
+      concealed: root.prop("concealed", false) === true
+      interactive: root.prop("interactive", true) !== false
+      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
+      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
+      onMiddleClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "middle_click", {})
+      onWheel: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
     }
   }
 

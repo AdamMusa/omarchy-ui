@@ -72,6 +72,27 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_bar_icon_button_registers_click_handler_and_optical_properties
+    application = OmarchyUI::Application.new do
+      bar_widget do
+        bar_icon_button :wifi, slot_size: 30, optical_size: 20 do
+          state.clicked = true
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    render = messages(output).find { |message| message["type"] == "render" }
+    node = render.dig("surfaces", "bar", "children", 0)
+
+    assert_equal "bar_icon_button", node.fetch("type")
+    assert_equal "wifi", node.dig("props", "icon")
+    assert_equal 30, node.dig("props", "slot_size")
+    assert_includes node.fetch("events"), "click"
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0
