@@ -114,7 +114,9 @@ class CLITest < Minitest::Test
       assert File.executable?(File.join(bundle, "run"))
       assert File.file?(File.join(bundle, "App.qml"))
       assert File.symlink?(File.join(bundle, "Commons"))
-      assert_includes File.read(File.join(bundle, "run")), "exec quickshell"
+      launcher = File.read(File.join(bundle, "run"))
+      assert_includes launcher, "exec quickshell"
+      assert_includes launcher, "qt.qpa.services.warning=false"
     end
   end
 

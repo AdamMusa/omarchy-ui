@@ -64,7 +64,8 @@ module OmarchyUI
         environment = ENV.to_h.merge(
           "OMARCHY_UI_PROJECT_DIR" => project_dir,
           "OMARCHY_UI_RUBY_PROGRAM" => file,
-          "OMARCHY_UI_RUNTIME" => Runtime.executable
+          "OMARCHY_UI_RUNTIME" => Runtime.executable,
+          "QT_LOGGING_RULES" => qt_logging_rules
         )
         success = system(environment, "quickshell", "--path", File.join(runtime_dir, "App.qml"))
         return success ? 0 : ($?&.exitstatus || 1)
@@ -117,6 +118,7 @@ module OmarchyUI
         export OMARCHY_UI_RUNTIME="$app_dir/omarchy-ui-runtime"
         export OMARCHY_UI_PROJECT_DIR="$app_dir"
         export OMARCHY_UI_RUBY_PROGRAM="$app_dir/main.rb"
+        export QT_LOGGING_RULES="${QT_LOGGING_RULES:+$QT_LOGGING_RULES;}qt.qpa.services.warning=false"
         exec quickshell --path "$app_dir/App.qml"
       SH
       FileUtils.chmod(0o755, launcher)
@@ -125,6 +127,10 @@ module OmarchyUI
     rescue StandardError
       FileUtils.remove_entry(destination) if destination && File.directory?(destination)
       raise
+    end
+
+    def qt_logging_rules
+      [ENV["QT_LOGGING_RULES"], "qt.qpa.services.warning=false"].compact.reject(&:empty?).join(";")
     end
 
     def push(arguments)
