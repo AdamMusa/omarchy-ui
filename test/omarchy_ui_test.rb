@@ -250,4 +250,33 @@ class OmarchyUITest < Minitest::Test
     assert_raises(ArgumentError) { OmarchyUI::Animation.new(duration: 60_001) }
     assert_raises(ArgumentError) { OmarchyUI::Animation.new(easing: :javascript) }
   end
+
+  def test_events_are_explicitly_subscribed_per_node
+    received = nil
+    app = OmarchyUI::Application.new do
+      panel :actions do
+        control = button "Menu", id: :menu
+        on(control, :right_click) { |payload| received = payload.fetch("button") }
+        on(control, :mount) {}
+      end
+    end
+    node = app.tree.dig("actions", "children", 0)
+    assert_equal %w[right_click mount], node.fetch("events")
+
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    app.receive(event("menu", surface: "actions", name: "right_click", payload: { "button" => 2 }))
+    assert_equal 2, received
+  end
+
+  def test_undeclared_component_event_is_rejected_at_build_time
+    assert_raises(ArgumentError) do
+      OmarchyUI::Application.new do
+        panel :main do
+          label = text "No clicks", id: :label
+          on(label, :clicked_twice) {}
+        end
+      end
+    end
+  end
 end

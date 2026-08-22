@@ -20,7 +20,8 @@ Loader {
   readonly property bool builtIn: ["text", "icon", "button", "row", "column", "container", "image", "spacer",
     "grid", "stack", "scroll", "rectangle", "action_button", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
-    "section_header"].indexOf(node ? node.type : "") >= 0
+    "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
+    "cursor_surface", "widget_button"].indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
     var props = node && node.props ? node.props : null
@@ -49,6 +50,10 @@ Loader {
       in_bounce: Easing.InBounce, out_bounce: Easing.OutBounce, in_out_bounce: Easing.InOutBounce
     }
     return easings[String(name || "")] === undefined ? Easing.InOutQuad : easings[String(name)]
+  }
+
+  function subscribed(eventName) {
+    return node && Array.isArray(node.events) && node.events.indexOf(eventName) >= 0
   }
 
   function runTransition() {
@@ -94,6 +99,12 @@ Loader {
     if (node.type === "progress") return progressComponent
     if (node.type === "separator") return separatorComponent
     if (node.type === "section_header") return sectionHeaderComponent
+    if (node.type === "searchable_dropdown") return searchableDropdownComponent
+    if (node.type === "confirm_dialog") return confirmDialogComponent
+    if (node.type === "panel_hero") return panelHeroComponent
+    if (node.type === "optical_glyph") return opticalGlyphComponent
+    if (node.type === "cursor_surface") return cursorSurfaceComponent
+    if (node.type === "widget_button") return widgetButtonComponent
     return null
   }
   source: node && !builtIn ? bridge.componentSource(node.type) : ""
@@ -104,6 +115,7 @@ Loader {
     if (item.hasOwnProperty("controlId")) item.controlId = controlId
     if (item.hasOwnProperty("node")) item.node = node
     runTransition()
+    if (subscribed("mount")) bridge.sendEvent(surfaceName, controlId, "mount", {})
   }
   onNodeChanged: {
     if (item && !builtIn && item.hasOwnProperty("node")) item.node = node
@@ -117,6 +129,10 @@ Loader {
   }
 
   PropertyAnimation { id: patchAnimation }
+
+  Component.onDestruction: {
+    if (bridge && subscribed("unmount")) bridge.sendEvent(surfaceName, controlId, "unmount", {})
+  }
   implicitWidth: item ? item.implicitWidth : 0
   implicitHeight: item ? item.implicitHeight : 0
 
@@ -164,6 +180,8 @@ Loader {
       foreground: root.foreground
       fontFamily: root.fontFamily
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
+      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
   }
 
@@ -331,6 +349,7 @@ Loader {
       enabled: root.prop("enabled", true) !== false; bordered: root.prop("bordered", false) === true
       size: Number(root.prop("size", implicitHeight)); foreground: root.foreground; fontFamily: root.fontFamily
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
   }
 
@@ -341,6 +360,7 @@ Loader {
       checked: root.prop("checked", false) === true; enabled: root.prop("enabled", true) !== false
       foreground: root.foreground; fontFamily: root.fontFamily
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !checked })
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
   }
 
@@ -350,6 +370,7 @@ Loader {
       checked: root.prop("checked", false) === true; busy: root.prop("busy", false) === true
       interactive: root.prop("enabled", true) !== false; foreground: root.foreground
       onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !checked })
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
   }
 
@@ -361,6 +382,7 @@ Loader {
       implicitWidth: Number(root.prop("width", 240)); foreground: root.foreground
       onEditingFinished: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
       onAccepted: root.bridge.sendEvent(root.surfaceName, root.controlId, "submit", { value: text })
+      onActiveFocusChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
     }
   }
 
@@ -381,6 +403,8 @@ Loader {
       step: Number(root.prop("step", 0.05)); integer: root.prop("integer", false) === true; tickCount: Number(root.prop("ticks", 0))
       enabled: root.prop("enabled", true) !== false; implicitWidth: Number(root.prop("width", 200))
       onReleased: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
+      onMoved: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: value }) }
+      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
     }
   }
 
@@ -391,6 +415,7 @@ Loader {
       enabled: root.prop("enabled", true) !== false; implicitWidth: Number(root.prop("width", 240))
       foreground: root.foreground; fontFamily: root.fontFamily
       onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
   }
 
@@ -401,6 +426,7 @@ Loader {
       placeholderText: String(root.prop("placeholder", "Search...")); enabled: root.prop("enabled", true) !== false
       implicitWidth: Number(root.prop("width", 240)); foreground: root.foreground; fontFamily: root.fontFamily
       onChanged: function(values) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: values }) }
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
   }
 
@@ -410,6 +436,7 @@ Loader {
       value: String(root.prop("value", "")); options: root.prop("options", []); enabled: root.prop("enabled", true) !== false
       foreground: root.foreground; fontFamily: root.fontFamily
       onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
+      onHovered: function(index, value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { index: index, value: value }) }
     }
   }
 
@@ -425,4 +452,65 @@ Loader {
 
   Component { id: separatorComponent; OmarchyUi.PanelSeparator { foreground: root.foreground; strength: Number(root.prop("strength", 0.12)) } }
   Component { id: sectionHeaderComponent; OmarchyUi.PanelSectionHeader { text: String(root.prop("text", "")); foreground: root.foreground; fontFamily: root.fontFamily } }
+
+  Component {
+    id: searchableDropdownComponent
+    OmarchyUi.SearchableDropdown {
+      label: String(root.prop("label", "")); value: String(root.prop("value", "")); options: root.prop("options", [])
+      placeholderText: String(root.prop("placeholder", "Search...")); emptyText: String(root.prop("empty_text", "No matches"))
+      triggerLabel: String(root.prop("trigger_label", "")); enabled: root.prop("enabled", true) !== false
+      implicitWidth: Number(root.prop("width", 240)); foreground: root.foreground; fontFamily: root.fontFamily
+      onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
+    }
+  }
+
+  Component {
+    id: confirmDialogComponent
+    OmarchyUi.ConfirmDialog {
+      opened: root.prop("opened", false) === true; message: String(root.prop("message", ""))
+      cancelText: String(root.prop("cancel_text", "Cancel")); confirmText: String(root.prop("confirm_text", "Confirm"))
+      selectedIndex: Number(root.prop("selected_index", 1)); visible: root.prop("visible", true) !== false
+      onCanceled: root.bridge.sendEvent(root.surfaceName, root.controlId, "cancel", {})
+      onConfirmed: root.bridge.sendEvent(root.surfaceName, root.controlId, "confirm", {})
+    }
+  }
+
+  Component {
+    id: panelHeroComponent
+    OmarchyUi.PanelHero {
+      title: String(root.prop("title", "")); meta: String(root.prop("meta", "")); detail: String(root.prop("detail", ""))
+      iconSize: Number(root.prop("icon_size", Style.font.display)); iconOpacity: Number(root.prop("icon_opacity", 1))
+      foreground: root.foreground; fontFamily: root.fontFamily
+    }
+  }
+
+  Component { id: opticalGlyphComponent; OmarchyUi.OpticalGlyph { text: root.iconGlyph(root.prop("text", "")); fontSize: Number(root.prop("size", Style.font.body)); color: root.prop("color", root.foreground); debugBounds: root.prop("debug_bounds", false) === true; fontFamily: root.fontFamily } }
+
+  Component {
+    id: cursorSurfaceComponent
+    OmarchyUi.CursorSurface {
+      implicitWidth: Number(root.prop("width", contentItem.implicitWidth)); implicitHeight: Number(root.prop("height", contentItem.implicitHeight))
+      current: root.prop("current", false) === true; outline: root.prop("outline", false) === true; bordered: root.prop("bordered", false) === true
+      foreground: root.foreground
+      Column { id: contentItem; anchors.centerIn: parent; Repeater { model: root.node.children || []; delegate: childDelegate } }
+      MouseArea { anchors.fill: parent; onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {}) }
+    }
+  }
+
+  Component {
+    id: widgetButtonComponent
+    OmarchyUi.WidgetButton {
+      text: String(root.prop("text", "")); tooltipText: String(root.prop("tooltip", "")); active: root.prop("active", false) === true
+      dimmed: root.prop("dimmed", false) === true; concealed: root.prop("concealed", false) === true
+      interactive: root.prop("interactive", true) !== false; pressable: root.prop("pressable", true) !== false
+      fixedWidth: Number(root.prop("width", -1)); fixedHeight: Number(root.prop("height", -1)); textRotation: Number(root.prop("rotation", 0))
+      foreground: root.foreground; fontFamily: root.fontFamily
+      onPressed: function(button) {
+        var eventName = button === Qt.RightButton ? "right_click" : (button === Qt.MiddleButton ? "middle_click" : "click")
+        root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
+      }
+      onWheelMoved: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
+    }
+  }
 }

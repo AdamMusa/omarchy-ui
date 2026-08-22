@@ -1,0 +1,42 @@
+# QML support matrix
+
+The framework has two support levels:
+
+- **Built-in adapter:** Ruby can use the component immediately through `component`.
+- **Native adapter:** any QML type can be registered from `Components/`, including QtQuick,
+  QtQuick.Controls, Quickshell, `qs.Ui`, third-party modules, shaders, Canvas, and particles.
+
+## Portable `qs.Ui` controls
+
+| Omarchy QML | Ruby component | Properties | Events |
+| --- | --- | --- | --- |
+| `Button` | `button` | text, icon, tooltip, enabled, selected, bordered | click, right_click, hover |
+| `PanelActionButton` | `action_button` | icon, tooltip, enabled, bordered, size | click, hover |
+| `Toggle` | `toggle` | label, description, checked, enabled | change, hover |
+| `ToggleSwitch` | `toggle_switch` | checked, busy, enabled | change, hover |
+| `TextField` | `text_field` | text, placeholder, password, enabled, width | change, submit, focus, blur |
+| `NumberField` | `number_field` | label, value, from, to, step, enabled | change |
+| `PanelSlider` | `slider` | value, minimum, maximum, step, integer, ticks | input, change, right_click |
+| `Dropdown` | `dropdown` | label, value, options, placeholder, enabled, width | change, hover |
+| `SearchableDropdown` | `searchable_dropdown` | label, value, options, placeholder, empty_text, trigger_label | change, hover |
+| `MultiSelect` | `multi_select` | label, values, options, placeholder and empty labels | change, hover |
+| `ButtonGroup` | `button_group` | value, options, enabled | change, hover |
+| `ConfirmDialog` | `confirm_dialog` | opened, message, button labels, selected index | cancel, confirm |
+| `PanelHero` | `panel_hero` | title, meta, detail, icon size/opacity | — |
+| `PanelSectionHeader` | `section_header` | text | — |
+| `PanelSeparator` | `separator` | strength | — |
+| `OpticalGlyph` | `optical_glyph` | text, size, color, debug bounds | — |
+| `CursorSurface` | `cursor_surface` | size, selection/border state, children | click |
+| `WidgetButton` | `widget_button` | text, tooltip, state, size, rotation | click variants, wheel |
+
+## Shell-owned infrastructure
+
+`BarWidget`, `BarIndicator`, `Panel`, `PanelController`, `KeyboardPanel`, `PopupCard`,
+`ScreenMoveRemap`, `SpeedTestOverlay`, `PanelKeyCatcher`, `PanelToolTip`,
+`PointerMoveGate`, `BorderSurface`, and `BorderOverlay` depend on shell-owned objects,
+windows, anchors, or imperative controller lifecycles. They are supported through the native
+adapter API rather than pretending they are portable tree controls. Framework surfaces already
+provide the corresponding bar, panel, border, focus, popup, and lifecycle ownership.
+
+This distinction is about ownership, not capability: native adapters can import and instantiate
+all of these components when their required shell objects are available.

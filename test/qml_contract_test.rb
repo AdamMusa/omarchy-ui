@@ -20,13 +20,12 @@ class QmlContractTest < Minitest::Test
     refute_includes qml, '["bash"'
   end
 
-  def test_renderer_whitelists_the_prototype_control_set
+  def test_renderer_installs_the_ruby_component_registry
     qml = source("Service.qml")
-    %w[text icon button row column container image spacer grid stack scroll rectangle
-       action_button toggle toggle_switch text_field number_field slider dropdown
-       multi_select button_group progress separator section_header].each do |type|
-      assert_match(/^    #{type}: true,?$/, qml)
-    end
+    assert_includes qml, "function validateComponents(components)"
+    assert_includes qml, "componentDefinitions = validated"
+    assert_includes qml, "allowedTypes = dynamicTypes"
+    assert_includes qml, "allowedProperties = dynamicProperties"
   end
 
   def test_panel_exposes_omarchy_loader_lifecycle
@@ -43,5 +42,13 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "function easingType(name)"
     assert_includes service, 'return reject("patch animation rejected")'
     assert_includes service, "replacement.transition"
+  end
+
+  def test_component_lifecycle_events_require_explicit_subscriptions
+    renderer = source("ControlNode.qml")
+    service = source("Service.qml")
+    assert_includes renderer, 'subscribed("mount")'
+    assert_includes renderer, 'subscribed("unmount")'
+    assert_includes service, "subscriptions.indexOf(eventName) < 0"
   end
 end

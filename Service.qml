@@ -21,59 +21,8 @@ Item {
   property int restartDelayMs: 500
   property int eventSequence: 0
 
-  property var allowedTypes: ({
-    text: true,
-    icon: true,
-    button: true,
-    row: true,
-    column: true,
-    container: true,
-    image: true,
-    spacer: true,
-    grid: true,
-    stack: true,
-    scroll: true,
-    rectangle: true,
-    action_button: true,
-    toggle: true,
-    toggle_switch: true,
-    text_field: true,
-    number_field: true,
-    slider: true,
-    dropdown: true,
-    multi_select: true,
-    button_group: true,
-    progress: true,
-    separator: true,
-    section_header: true
-  })
-
-  property var allowedProperties: ({
-    text: { text: true, style: true, size: true, bold: true, color: true, wrap: true, width: true, visible: true },
-    icon: { name: true, text: true, size: true, color: true, visible: true },
-    button: { text: true, icon: true, tooltip: true, enabled: true, selected: true, bordered: true, visible: true },
-    action_button: { icon: true, tooltip: true, enabled: true, bordered: true, size: true, visible: true },
-    row: { spacing: true, alignment: true, visible: true },
-    column: { spacing: true, alignment: true, visible: true },
-    grid: { columns: true, rows: true, spacing: true, row_spacing: true, column_spacing: true, visible: true },
-    stack: { visible: true },
-    scroll: { width: true, height: true, clip: true, visible: true },
-    rectangle: { width: true, height: true, color: true, radius: true, border_color: true, border_width: true, padding: true, visible: true },
-    container: { spacing: true, padding: true, bordered: true, visible: true },
-    image: { source: true, width: true, height: true, fill_mode: true, visible: true },
-    spacer: { width: true, height: true, visible: true },
-    toggle: { label: true, description: true, checked: true, enabled: true, visible: true },
-    toggle_switch: { checked: true, busy: true, enabled: true, visible: true },
-    text_field: { text: true, placeholder: true, password: true, enabled: true, width: true, visible: true },
-    number_field: { label: true, value: true, from: true, to: true, step: true, enabled: true, visible: true },
-    slider: { value: true, minimum: true, maximum: true, step: true, integer: true, ticks: true, enabled: true, width: true, visible: true },
-    dropdown: { label: true, value: true, options: true, placeholder: true, enabled: true, width: true, visible: true },
-    multi_select: { label: true, values: true, options: true, placeholder: true, enabled: true, width: true, visible: true },
-    button_group: { value: true, options: true, enabled: true, visible: true },
-    progress: { value: true, minimum: true, maximum: true, width: true, height: true, color: true, visible: true },
-    separator: { strength: true, visible: true },
-    section_header: { text: true, visible: true }
-  })
+  property var allowedTypes: ({})
+  property var allowedProperties: ({})
 
   signal effectReceived(string name, var payload)
 
@@ -107,6 +56,13 @@ Item {
     if (!Array.isArray(children)) return false
     if (!componentDefinitions[node.type].container && children.length !== 0)
       return false
+    var subscriptions = node.events === undefined ? [] : node.events
+    if (!Array.isArray(subscriptions)) return false
+    for (var e = 0; e < subscriptions.length; e++) {
+      var eventName = String(subscriptions[e])
+      if (eventName !== "mount" && eventName !== "unmount" && componentDefinitions[node.type].events.indexOf(eventName) < 0)
+        return false
+    }
 
     index[node.id] = node
     count.value += 1
@@ -282,7 +238,11 @@ Item {
   }
 
   function sendEvent(surfaceName, controlId, eventName, payload) {
-    if (!rubyProcess.running || !validId(controlId) || ["click", "change", "submit", "focus", "blur"].indexOf(eventName) < 0) return false
+    if (!rubyProcess.running || !validId(controlId) || !/^[a-z][a-z0-9_]{0,63}$/.test(eventName)) return false
+    var target = nodeIndex[String(controlId)]
+    var definition = target ? componentDefinitions[String(target.type)] : null
+    var subscriptions = target && Array.isArray(target.events) ? target.events : []
+    if (!definition || subscriptions.indexOf(eventName) < 0) return false
     eventSequence += 1
     rubyProcess.write(JSON.stringify({
       v: 1,

@@ -67,20 +67,26 @@ module OmarchyUI
   end
 
   class Node
-    attr_reader :type, :id, :props, :children
+    attr_reader :type, :id, :props, :children, :events
 
     def initialize(type:, id:, props: {})
       @type = type.to_s
       @id = id.to_s
       @props = props.transform_keys(&:to_s)
       @children = []
+      @events = []
     end
 
     def to_h
       result = { "type" => type, "id" => id }
       result["props"] = props unless props.empty?
       result["children"] = children.map(&:to_h) unless children.empty?
+      result["events"] = events unless events.empty?
       result
+    end
+
+    def subscribe(event)
+      @events << event.to_s unless @events.include?(event.to_s)
     end
   end
 
@@ -246,11 +252,18 @@ module OmarchyUI
       @application.register_handler(@stack.last.id, "click", handler)
     end
 
-    def on(event, &handler)
-      raise ArgumentError, "on must be inside a surface or control" if @stack.empty?
+    def on(target_or_event, event = nil, &handler)
       raise ArgumentError, "on requires a block" unless handler
-
-      @application.register_handler(@stack.last.id, event, handler)
+      if target_or_event.is_a?(Node)
+        raise ArgumentError, "on(node, event) requires an event" unless event
+        node = target_or_event
+        event_name = event
+      else
+        raise ArgumentError, "on must be inside a surface or control" if @stack.empty?
+        node = @stack.last
+        event_name = target_or_event
+      end
+      @application.register_handler(node.id, event_name, handler)
     end
 
     # Adds or reactively computes any supported property on the current control.
@@ -403,7 +416,14 @@ module OmarchyUI
     def register_handler(control_id, event, handler)
       raise ArgumentError, "handler requires a block" unless handler
 
-      key = [control_id.to_s, event.to_s]
+      node = @nodes.fetch(control_id.to_s) { raise ArgumentError, "unknown event control: #{control_id}" }
+      event_name = event.to_s
+      unless @components.fetch(node.type).events.map(&:to_s).include?(event_name) || %w[mount unmount].include?(event_name)
+        raise ArgumentError, "#{node.type} does not declare event: #{event_name}"
+      end
+      node.subscribe(event_name)
+
+      key = [control_id.to_s, event_name]
       raise ArgumentError, "duplicate handler for #{key.join("/")}" if @handlers.key?(key)
 
       @handlers[key] = handler
@@ -526,7 +546,7 @@ module OmarchyUI
       unless surface_contains?(@surfaces.fetch(message["surface"]), message["id"])
         raise ProtocolError, "control does not belong to surface"
       end
-      raise ProtocolError, "invalid event" unless %w[click change submit focus blur].include?(message["event"])
+      raise ProtocolError, "invalid event" unless /\A[a-z][a-z0-9_]{0,63}\z/.match?(message["event"].to_s)
       raise ProtocolError, "payload must be an object" unless message["payload"].nil? || message["payload"].is_a?(Hash)
       raise ProtocolError, "seq must be an integer" unless message["seq"].nil? || message["seq"].is_a?(Integer)
     end
