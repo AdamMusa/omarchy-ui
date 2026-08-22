@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "izeesoft.omarchy-ui-poc",
+  "name": "Omarchy UI Ruby PoC",
+  "version": "0.1.0",
+  "author": "Adam Moussa Ali",
+  "license": "MIT",
+  "description": "Persistent Ruby state and event handlers rendered by a generic Omarchy QML bridge.",
+  "kinds": [
+    "service",
+    "bar-widget",
+    "panel"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Ruby UI PoC",
+    "description": "Open the Ruby-driven counter panel.",
+    "category": "Development",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
+

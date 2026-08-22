@@ -1,0 +1,347 @@
+import QtQuick
+import Quickshell.Io
+
+Item {
+  id: root
+
+  property var shell: null
+  property var manifest: null
+  readonly property string pluginDir: manifest && manifest.__sourceDir
+    ? String(manifest.__sourceDir)
+    : ""
+  readonly property string rubyProgram: pluginDir + "/main.rb"
+
+  property bool ready: false
+  property bool stopping: false
+  property string lastError: ""
+  property var surfaces: ({})
+  property var nodeIndex: ({})
+  property var componentDefinitions: ({})
+  property int revision: 0
+  property int restartDelayMs: 500
+  property int eventSequence: 0
+
+  property var allowedTypes: ({
+    text: true,
+    icon: true,
+    button: true,
+    row: true,
+    column: true,
+    container: true,
+    image: true,
+    spacer: true,
+    grid: true,
+    stack: true,
+    scroll: true,
+    rectangle: true,
+    action_button: true,
+    toggle: true,
+    toggle_switch: true,
+    text_field: true,
+    number_field: true,
+    slider: true,
+    dropdown: true,
+    multi_select: true,
+    button_group: true,
+    progress: true,
+    separator: true,
+    section_header: true
+  })
+
+  property var allowedProperties: ({
+    text: { text: true, style: true, size: true, bold: true, color: true, wrap: true, width: true, visible: true },
+    icon: { name: true, text: true, size: true, color: true, visible: true },
+    button: { text: true, icon: true, tooltip: true, enabled: true, selected: true, bordered: true, visible: true },
+    action_button: { icon: true, tooltip: true, enabled: true, bordered: true, size: true, visible: true },
+    row: { spacing: true, alignment: true, visible: true },
+    column: { spacing: true, alignment: true, visible: true },
+    grid: { columns: true, rows: true, spacing: true, row_spacing: true, column_spacing: true, visible: true },
+    stack: { visible: true },
+    scroll: { width: true, height: true, clip: true, visible: true },
+    rectangle: { width: true, height: true, color: true, radius: true, border_color: true, border_width: true, padding: true, visible: true },
+    container: { spacing: true, padding: true, bordered: true, visible: true },
+    image: { source: true, width: true, height: true, fill_mode: true, visible: true },
+    spacer: { width: true, height: true, visible: true },
+    toggle: { label: true, description: true, checked: true, enabled: true, visible: true },
+    toggle_switch: { checked: true, busy: true, enabled: true, visible: true },
+    text_field: { text: true, placeholder: true, password: true, enabled: true, width: true, visible: true },
+    number_field: { label: true, value: true, from: true, to: true, step: true, enabled: true, visible: true },
+    slider: { value: true, minimum: true, maximum: true, step: true, integer: true, ticks: true, enabled: true, width: true, visible: true },
+    dropdown: { label: true, value: true, options: true, placeholder: true, enabled: true, width: true, visible: true },
+    multi_select: { label: true, values: true, options: true, placeholder: true, enabled: true, width: true, visible: true },
+    button_group: { value: true, options: true, enabled: true, visible: true },
+    progress: { value: true, minimum: true, maximum: true, width: true, height: true, color: true, visible: true },
+    separator: { strength: true, visible: true },
+    section_header: { text: true, visible: true }
+  })
+
+  signal effectReceived(string name, var payload)
+
+  function validId(value) {
+    return typeof value === "string"
+      && value.length > 0
+      && value.length <= 128
+      && /^[a-zA-Z0-9_.:-]+$/.test(value)
+  }
+
+  function plainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value)
+  }
+
+  function validateNode(node, index, depth, count) {
+    if (!plainObject(node) || depth > 32 || count.value >= 2000) return false
+    if (!allowedTypes[String(node.type || "")] || !validId(node.id)) return false
+    if (index[node.id] !== undefined) return false
+
+    var props = node.props === undefined ? {} : node.props
+    if (!plainObject(props)) return false
+    var whitelist = allowedProperties[node.type]
+    for (var key in props) {
+      if (!whitelist[key]) return false
+      var value = props[key]
+      if (value !== null && typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean" && !Array.isArray(value) && !plainObject(value))
+        return false
+    }
+
+    var children = node.children === undefined ? [] : node.children
+    if (!Array.isArray(children)) return false
+    if (!componentDefinitions[node.type].container && children.length !== 0)
+      return false
+
+    index[node.id] = node
+    count.value += 1
+    for (var i = 0; i < children.length; i++)
+      if (!validateNode(children[i], index, depth + 1, count)) return false
+    return true
+  }
+
+  function validateComponents(components) {
+    if (!plainObject(components)) return false
+    var names = Object.keys(components)
+    if (names.length === 0 || names.length > 256) return false
+    var validated = ({})
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i]
+      var definition = components[name]
+      if (!/^[a-z][a-z0-9_]*$/.test(name) || !plainObject(definition)) return false
+      if (!/^[A-Z][A-Za-z0-9]*\.qml$/.test(String(definition.qml || ""))) return false
+      if (!Array.isArray(definition.properties) || !Array.isArray(definition.events)) return false
+      var propertyMap = ({})
+      for (var p = 0; p < definition.properties.length; p++) {
+        var propertyName = String(definition.properties[p])
+        if (!/^[a-z][a-z0-9_]*$/.test(propertyName)) return false
+        propertyMap[propertyName] = true
+      }
+      validated[name] = {
+        qml: definition.qml,
+        properties: propertyMap,
+        events: definition.events,
+        container: definition.container === true
+      }
+    }
+    componentDefinitions = validated
+    return true
+  }
+
+  function installRender(message) {
+    if (!plainObject(message.surfaces)) return reject("render surfaces must be an object")
+    if (!validateComponents(message.components)) return reject("invalid component registry")
+    var dynamicTypes = ({})
+    var dynamicProperties = ({})
+    for (var componentName in componentDefinitions) {
+      dynamicTypes[componentName] = true
+      dynamicProperties[componentName] = componentDefinitions[componentName].properties
+    }
+    allowedTypes = dynamicTypes
+    allowedProperties = dynamicProperties
+    var nextIndex = ({})
+    var count = { value: 0 }
+    var names = Object.keys(message.surfaces)
+    if (names.length === 0 || names.length > 32) return reject("invalid surface count")
+
+    for (var i = 0; i < names.length; i++) {
+      if (!validId(names[i]) || !validateNode(message.surfaces[names[i]], nextIndex, 0, count))
+        return reject("invalid control tree")
+    }
+
+    surfaces = message.surfaces
+    nodeIndex = nextIndex
+    revision += 1
+    lastError = ""
+  }
+
+  function applyPatch(message) {
+    if (message.op !== "set" || !validId(message.id) || typeof message.property !== "string")
+      return reject("invalid patch")
+    var node = nodeIndex[message.id]
+    if (!node || !allowedProperties[node.type][message.property]) return reject("patch target rejected")
+    var value = message.value
+    if (value !== null && typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean" && !Array.isArray(value) && !plainObject(value))
+      return reject("patch value rejected")
+
+    var animation = message.animation
+    if (animation !== undefined) {
+      if (!plainObject(animation)
+          || typeof animation.duration !== "number" || animation.duration < 0 || animation.duration > 60000
+          || typeof animation.delay !== "number" || animation.delay < 0 || animation.delay > 60000
+          || typeof animation.easing !== "string")
+        return reject("patch animation rejected")
+      var easings = ["linear", "in_quad", "out_quad", "in_out_quad", "in_cubic", "out_cubic", "in_out_cubic",
+        "in_back", "out_back", "in_out_back", "in_elastic", "out_elastic", "in_out_elastic",
+        "in_bounce", "out_bounce", "in_out_bounce"]
+      if (easings.indexOf(animation.easing) < 0) return reject("patch easing rejected")
+    }
+
+    var replacement = ({ type: node.type, id: node.id })
+    var props = ({})
+    var oldProps = node.props || {}
+    for (var key in oldProps) props[key] = oldProps[key]
+    props[message.property] = value
+    replacement.props = props
+    if (node.children !== undefined) replacement.children = node.children
+    if (animation !== undefined) {
+      replacement.transition = {
+        property: message.property,
+        from: oldProps[message.property],
+        to: value,
+        duration: animation.duration,
+        delay: animation.delay,
+        easing: animation.easing,
+        sequence: revision + 1
+      }
+    }
+
+    var nextIndex = ({})
+    for (var id in nodeIndex) nextIndex[id] = nodeIndex[id]
+    nextIndex[node.id] = replacement
+    nodeIndex = nextIndex
+    revision += 1
+  }
+
+  function handleLine(line) {
+    var raw = String(line || "").trim()
+    if (raw === "" || raw.length > 1048576) return reject("invalid message size")
+
+    var message
+    try { message = JSON.parse(raw) }
+    catch (error) { return reject("invalid JSON from Ruby") }
+    if (!plainObject(message) || message.v !== 1 || typeof message.type !== "string")
+      return reject("invalid protocol envelope")
+
+    if (message.type === "ready") {
+      ready = true
+      restartDelayMs = 500
+      lastError = ""
+    } else if (message.type === "render") {
+      installRender(message)
+    } else if (message.type === "patch") {
+      applyPatch(message)
+    } else if (message.type === "effect") {
+      handleEffect(message)
+    } else if (message.type === "ack") {
+      // Acknowledgements are consumed by benchmarks and future diagnostics.
+    } else if (message.type === "handler_error" || message.type === "runtime_error" || message.type === "protocol_error") {
+      lastError = String(message.message || message.code || "Ruby runtime error")
+    } else {
+      reject("unknown message type")
+    }
+  }
+
+  function handleEffect(message) {
+    if (typeof message.name !== "string" || !plainObject(message.payload || {}))
+      return reject("invalid effect")
+    var payload = message.payload || {}
+    effectReceived(message.name, payload)
+    if (!shell || !manifest) return
+    if (message.name === "open_panel")
+      shell.summon(manifest.id, JSON.stringify(payload))
+    else if (message.name === "close_panel")
+      shell.hide(manifest.id)
+    else
+      reject("effect not allowed")
+  }
+
+  function reject(reason) {
+    lastError = String(reason || "protocol error")
+    console.warn("omarchy-ui bridge:", lastError)
+    return false
+  }
+
+  function rootId(surfaceName) {
+    var surface = surfaces[String(surfaceName || "")]
+    return surface && validId(surface.id) ? surface.id : ""
+  }
+
+  function nodeFor(controlId) {
+    return nodeIndex[String(controlId || "")] || null
+  }
+
+  function componentSource(typeName) {
+    var definition = componentDefinitions[String(typeName || "")]
+    return definition ? pluginDir + "/Components/" + definition.qml : ""
+  }
+
+  function sendEvent(surfaceName, controlId, eventName, payload) {
+    if (!rubyProcess.running || !validId(controlId) || ["click", "change", "submit", "focus", "blur"].indexOf(eventName) < 0) return false
+    eventSequence += 1
+    rubyProcess.write(JSON.stringify({
+      v: 1,
+      type: "event",
+      surface: String(surfaceName || ""),
+      id: String(controlId),
+      event: eventName,
+      seq: eventSequence,
+      payload: plainObject(payload) ? payload : {}
+    }) + "\n")
+    return true
+  }
+
+  function startRuby() {
+    if (stopping || pluginDir === "" || rubyProcess.running) return
+    rubyProcess.command = ["ruby", rubyProgram]
+    rubyProcess.workingDirectory = pluginDir
+    rubyProcess.running = true
+  }
+
+  onPluginDirChanged: Qt.callLater(startRuby)
+
+  Component.onDestruction: {
+    stopping = true
+    restartTimer.stop()
+    if (rubyProcess.running) rubyProcess.running = false
+  }
+
+  Process {
+    id: rubyProcess
+    stdinEnabled: true
+
+    stdout: SplitParser {
+      onRead: function(line) { root.handleLine(line) }
+    }
+
+    stderr: SplitParser {
+      onRead: function(line) {
+        var message = String(line || "").trim()
+        if (message !== "") console.warn("omarchy-ui ruby:", message)
+      }
+    }
+
+    onExited: function(exitCode) {
+      root.ready = false
+      if (root.stopping || root.pluginDir === "") return
+      root.lastError = exitCode === 0
+        ? "Ruby UI runtime stopped"
+        : "Ruby UI runtime crashed (exit " + exitCode + ")"
+      restartTimer.interval = root.restartDelayMs
+      restartTimer.start()
+      root.restartDelayMs = Math.min(30000, root.restartDelayMs * 2)
+    }
+  }
+
+  Timer {
+    id: restartTimer
+    interval: 500
+    repeat: false
+    onTriggered: root.startRuby()
+  }
+}

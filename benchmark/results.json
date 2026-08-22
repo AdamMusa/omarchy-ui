@@ -1,0 +1,21 @@
+{
+  "measured_at": "2026-08-22",
+  "environment": "Ubuntu 24.04 container, x86_64, no Quickshell graphical session",
+  "ruby": "ruby 3.3.8 (2025-04-09 revision b200bad6cd) [x86_64-linux]",
+  "iterations": 500,
+  "process_startup_ms": 50.441,
+  "initial_render_after_ready_ms": 0.032,
+  "event_round_trip_ms": {
+    "median": 0.035,
+    "p95": 0.091,
+    "max": 1.404
+  },
+  "ruby_to_stdio_patch_ms": {
+    "median": 0.032,
+    "p95": 0.075,
+    "max": 0.976
+  },
+  "events_per_second": 20592.7,
+  "ruby_rss_kib": 21476,
+  "scope_note": "These numbers cover Ruby startup and the persistent NDJSON bridge through stdout. They do not include QML parsing, scene-graph layout, rendering, compositor latency, or a physical click."
+}
