@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "minitest/autorun"
+require "minitest/mock"
 require "open3"
 require "stringio"
 require "tmpdir"
@@ -10,6 +11,18 @@ require_relative "../lib/omarchy_ui/cli"
 
 class CLITest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
+
+  def test_interrupt_exits_cleanly_without_a_backtrace
+    error = StringIO.new
+    cli = OmarchyUI::CLI.new(out: StringIO.new, err: error)
+
+    status = cli.stub(:launch_file, ->(_arguments) { raise Interrupt }) do
+      cli.run(["launch", "main.rb"])
+    end
+
+    assert_equal 130, status
+    assert_empty error.string
+  end
 
   def test_run_executes_the_requested_ruby_file_with_arguments
     Dir.mktmpdir do |directory|

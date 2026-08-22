@@ -31,6 +31,8 @@ module OmarchyUI
         @err.puts("Usage: omarchy_ui <new NAME|run FILE|launch FILE|bundle [DIRECTORY]|push [DIRECTORY]|validate [DIRECTORY]|version>")
         command.nil? ? 0 : 64
       end
+    rescue Interrupt
+      130
     rescue ArgumentError, SystemCallError, JSON::ParserError => error
       @err.puts("omarchy_ui: #{error.message}")
       1
