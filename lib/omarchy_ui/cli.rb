@@ -53,6 +53,8 @@ module OmarchyUI
 
       project_dir = File.dirname(file)
       Dir.mktmpdir("omarchy-ui-app-") do |runtime_dir|
+        runtime_program = File.join(runtime_dir, "main.rb")
+        File.write(runtime_program, SourceBundle.new(file, root: project_dir).call)
         Project::RUNTIME_FILES.each do |name|
           source = File.file?(File.join(project_dir, name)) ? File.join(project_dir, name) : File.join(FRAMEWORK_ROOT, name)
           FileUtils.cp(source, runtime_dir)
@@ -65,7 +67,7 @@ module OmarchyUI
 
         environment = ENV.to_h.merge(
           "OMARCHY_UI_PROJECT_DIR" => project_dir,
-          "OMARCHY_UI_RUBY_PROGRAM" => file,
+          "OMARCHY_UI_RUBY_PROGRAM" => runtime_program,
           "OMARCHY_UI_RUNTIME" => Runtime.executable,
           "QT_LOGGING_RULES" => qt_logging_rules
         )
@@ -105,6 +107,7 @@ module OmarchyUI
       FileUtils.mkdir_p(destination)
       entries = application_entries(source)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, destination)
+      bundle_ruby_entrypoint(source, destination)
       Project.install_runtime(destination)
       if File.file?(File.join(destination, "manifest.json"))
         raise ArgumentError, "bundled plugin validation failed" unless system("omarchy", "plugin", "validate", destination)
@@ -194,11 +197,19 @@ module OmarchyUI
       staging = parent ? Dir.mktmpdir(prefix, parent) : Dir.mktmpdir(prefix)
       entries = application_entries(source)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging) unless entries.empty?
-      Project.install_runtime(staging) if File.file?(File.join(staging, "main.rb"))
+      if File.file?(File.join(staging, "main.rb"))
+        bundle_ruby_entrypoint(source, staging)
+        Project.install_runtime(staging)
+      end
       staging
     rescue StandardError
       FileUtils.remove_entry(staging) if staging && File.exist?(staging)
       raise
+    end
+
+    def bundle_ruby_entrypoint(source, destination)
+      entrypoint = File.join(source, "main.rb")
+      File.write(File.join(destination, "main.rb"), SourceBundle.new(entrypoint, root: source).call)
     end
 
     def activate_plugin(plugin_id)

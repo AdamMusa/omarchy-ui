@@ -11,11 +11,12 @@ require_relative "omarchy_ui/component_registry"
 require_relative "omarchy_ui/components"
 require_relative "omarchy_ui/builder"
 require_relative "omarchy_ui/application"
+require_relative "omarchy_ui/source_bundle"
 require_relative "omarchy_ui/project"
 require_relative "omarchy_ui/runtime"
 
 module OmarchyUI
-  VERSION = "0.0.3"
+  VERSION = "0.0.4"
   FRAMEWORK_ROOT = File.expand_path("..", __dir__)
 
   def self.plugin(&definition)

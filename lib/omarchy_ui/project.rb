@@ -50,8 +50,8 @@ module OmarchyUI
       <<~RUBY
         # frozen_string_literal: true
 
-        require "omarchy_ui" unless Object.const_defined?(:OmarchyUI)
-        eval(File.read(File.join(File.dirname(__FILE__), "components", "welcome.rb")))
+        require "omarchy_ui"
+        require_relative "components/welcome"
 
         OmarchyUI.plugin do
           app :main, title: "#{@name}", width: 760, height: 520 do
@@ -99,7 +99,8 @@ module OmarchyUI
         application manifest, or copied framework QML files are required.
 
         Edit `main.rb` for application state and behavior. Reusable Ruby UI components live in
-        `components/`; `welcome.rb` is included as a working example. `omarchy_ui bundle` generates
+        `components/` and load with ordinary Ruby `require_relative`; `welcome.rb` is included as a
+        working example. `omarchy_ui bundle` generates
         the native QML bridge and embeds the runtime for distribution.
       MARKDOWN
     end

@@ -76,6 +76,10 @@ class CLITest < Minitest::Test
       assert_equal ["welcome.rb"], Dir.children(File.join(project, "components"))
       refute File.exist?(File.join(project, "manifest.json"))
       assert_includes File.read(File.join(project, "main.rb")), "welcome_card("
+      assert_includes File.read(File.join(project, "main.rb")), 'require "omarchy_ui"'
+      refute_includes File.read(File.join(project, "main.rb")), "Object.const_defined?"
+      assert_includes File.read(File.join(project, "main.rb")), 'require_relative "components/welcome"'
+      refute_includes File.read(File.join(project, "main.rb")), "eval("
       assert_includes File.read(File.join(project, "components", "welcome.rb")), "OmarchyUI::Builder.include"
       refute Dir.glob(File.join(project, "**", "*.qml")).any?
       assert_includes File.read(File.join(project, "README.md")), "omarchy_ui launch main.rb"
@@ -132,6 +136,37 @@ class CLITest < Minitest::Test
       launcher = File.read(File.join(bundle, "run"))
       assert_includes launcher, "exec quickshell"
       assert_includes launcher, "qt.qpa.services.warning=false"
+    end
+  end
+
+  def test_bundle_resolves_normal_ruby_require_relative_calls
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "demo")
+      FileUtils.mkdir_p(File.join(source, "components"))
+      File.write(File.join(source, "main.rb"), "require_relative \"components/card\"\nputs Card\n")
+      File.write(File.join(source, "components", "card.rb"), "Card = \"welcome\"\n")
+
+      status = OmarchyUI::CLI.run(["bundle", source], out: StringIO.new, err: StringIO.new)
+      bundled_main = File.read(File.join(source, "dist", "demo", "main.rb"))
+
+      assert_equal 0, status
+      assert_includes bundled_main, 'Card = "welcome"'
+      refute_includes bundled_main, "require_relative"
+      stdout, stderr, process = Open3.capture3(RbConfig.ruby, File.join(source, "dist", "demo", "main.rb"))
+      assert process.success?, stderr
+      assert_equal "welcome\n", stdout
+    end
+  end
+
+  def test_bundle_omits_framework_require_already_embedded_in_runtime
+    Dir.mktmpdir do |directory|
+      entrypoint = File.join(directory, "main.rb")
+      File.write(entrypoint, "require \"omarchy_ui\"\nputs \"app\"\n")
+
+      bundled = OmarchyUI::SourceBundle.new(entrypoint).call
+
+      refute_includes bundled, 'require "omarchy_ui"'
+      assert_includes bundled, 'puts "app"'
     end
   end
 
