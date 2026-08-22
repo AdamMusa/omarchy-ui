@@ -7,6 +7,7 @@ cd -- "$repo_dir"
 
 ruby -Ilib test/omarchy_ui_test.rb
 ruby -Ilib test/cli_test.rb
+ruby -Ilib test/command_test.rb
 ruby test/manifest_test.rb
 ruby test/qml_contract_test.rb
 ruby -c lib/omarchy_ui.rb

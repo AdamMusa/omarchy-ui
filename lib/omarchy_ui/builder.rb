@@ -158,6 +158,7 @@ module OmarchyUI
     def after(seconds, &block) = @application.schedule(:after, interval: seconds, &block)
     def every(seconds, immediate: false, &block) = @application.schedule(:every, interval: seconds, immediate:, &block)
     def async(&block) = @application.schedule(:async, &block)
+    def run_command(argv, **options) = Command.run(argv, **options)
     def rebuild(node, &renderer) = within(node, &renderer)
     def open_panel(name) = @application.emit_effect("open_panel", "surface" => name.to_s)
 
