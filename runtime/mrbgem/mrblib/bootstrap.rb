@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OmarchyUI
-  VERSION = "0.0.1" unless const_defined?(:VERSION)
+  VERSION = "0.0.2" unless const_defined?(:VERSION)
   FRAMEWORK_ROOT = "" unless const_defined?(:FRAMEWORK_ROOT)
 end
 

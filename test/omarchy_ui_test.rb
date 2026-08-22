@@ -7,6 +7,11 @@ require "timeout"
 require_relative "../lib/omarchy_ui"
 
 class OmarchyUITest < Minitest::Test
+  def test_embedded_runtime_version_matches_framework
+    bootstrap = File.read(File.expand_path("../runtime/mrbgem/mrblib/bootstrap.rb", __dir__))
+    assert_includes bootstrap, %(VERSION = "#{OmarchyUI::VERSION}")
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0
