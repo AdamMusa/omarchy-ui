@@ -29,7 +29,7 @@ On Omarchy x86-64, install the gem and start building:
 
 ```bash
 gem install omarchy-ui
-omarchy_ui new "My App"
+omarchy_ui new MyApp
 ```
 
 The gem contains everything required to create, launch, and bundle an application. Developers do
@@ -39,15 +39,15 @@ an Omarchy computer to run.
 ## Create and run an application
 
 ```bash
-omarchy_ui new "My App"
-cd my-app
+omarchy_ui new MyApp
+cd myapp
 omarchy_ui launch main.rb
 ```
 
 The standalone generator creates no plugin manifest or copied runtime files:
 
 ```text
-my-app/
+myapp/
 ├── Components/
 │   └── Welcome.qml
 ├── README.md
@@ -63,7 +63,7 @@ From an application directory:
 
 ```bash
 omarchy_ui bundle
-./dist/my-app/run
+./dist/myapp/run
 ```
 
 `bundle` creates a self-contained application under `dist/<project-name>/`. The generated `run`
