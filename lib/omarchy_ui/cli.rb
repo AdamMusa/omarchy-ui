@@ -147,7 +147,6 @@ module OmarchyUI
       enable = !arguments.delete("--no-enable")
       restart = !arguments.delete("--no-restart")
       source = File.expand_path(arguments.shift || Dir.pwd)
-      Runtime.install_shared
       manifest_path = File.join(source, "manifest.json")
       manifest = JSON.parse(File.read(manifest_path))
       plugin_id = manifest.fetch("id")
