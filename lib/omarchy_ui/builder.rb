@@ -192,7 +192,8 @@ module OmarchyUI
     def input_component(type, property, value, id:, props:, handler: nil)
       props = props.merge(property => value) unless value.equal?(UNSET)
       node = component(type, id:, **props)
-      @application.register_handler(node.id, :change, handler) if handler
+      event = type == :text_field ? :input : :change
+      @application.register_handler(node.id, event, handler) if handler
       node
     end
 

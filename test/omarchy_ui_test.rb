@@ -181,6 +181,7 @@ class OmarchyUITest < Minitest::Test
 
   def test_form_widgets_keep_typed_properties_and_deliver_change_payloads
     selected = nil
+    typed = nil
     application = OmarchyUI::Application.new do
       panel :settings do
         dropdown "dark", id: :theme, options: [
@@ -192,7 +193,9 @@ class OmarchyUITest < Minitest::Test
         multi_select %w[wifi bluetooth], options: %w[wifi bluetooth audio]
         slider 0.5, minimum: 0, maximum: 1
         toggle "Notifications", checked: true
-        text_field "hello", placeholder: "Name"
+        text_field "hello", id: :name, placeholder: "Name" do |event|
+          typed = event.fetch("value")
+        end
       end
     end
     output = StringIO.new
@@ -204,6 +207,8 @@ class OmarchyUITest < Minitest::Test
 
     application.receive(event("theme", surface: "settings", name: "change", payload: { "value" => "light" }))
     assert_equal "light", selected
+    application.receive(event("name", surface: "settings", name: "input", payload: { "value" => "Ada" }))
+    assert_equal "Ada", typed
   end
 
   def test_arbitrary_properties_can_be_reactively_bound
