@@ -19,9 +19,13 @@ module OmarchyUI
       destination ||= File.expand_path("~/.local/bin/omarchy-ui-runtime")
       raise ArgumentError, "bundled mruby runtime is missing" unless File.file?(BUNDLED)
       FileUtils.mkdir_p(File.dirname(destination))
-      FileUtils.cp(BUNDLED, destination)
-      FileUtils.chmod(0o755, destination)
+      temporary = "#{destination}.install-#{Process.pid}"
+      FileUtils.cp(BUNDLED, temporary)
+      FileUtils.chmod(0o755, temporary)
+      File.rename(temporary, destination)
       destination
+    ensure
+      FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
     end
   end
 end
