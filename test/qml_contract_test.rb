@@ -116,6 +116,22 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "anchors.horizontalCenter"
   end
 
+  def test_responsive_layouts_and_named_icons_are_native_built_ins
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, "import QtQuick.Layouts"
+    assert_includes renderer, 'node.type === "row_layout"'
+    assert_includes renderer, 'node.type === "column_layout"'
+    assert_includes renderer, 'node.type === "grid_layout"'
+    assert_includes renderer, 'node.type === "flow"'
+    assert_includes renderer, 'node.type === "card"'
+    assert_includes renderer, "Layout.fillWidth"
+    assert_includes renderer, 'root.structuralContainer && root.subscribed("click")'
+    assert_includes renderer, 'phone: "\\uf3cd"'
+    assert_includes renderer, 'android: "\\uf17b"'
+    assert_includes renderer, 'color: root.prop("color", root.foreground)'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

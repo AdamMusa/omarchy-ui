@@ -16,7 +16,7 @@ require_relative "omarchy_ui/project"
 require_relative "omarchy_ui/runtime"
 
 module OmarchyUI
-  VERSION = "0.0.4"
+  VERSION = "0.0.5"
   FRAMEWORK_ROOT = File.expand_path("..", __dir__)
 
   def self.plugin(&definition)

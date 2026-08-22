@@ -155,6 +155,12 @@ Every component supports `visible`, `enabled`, `opacity`, `scale`, `rotation`, `
 | `row` | `spacing`, `alignment` (`start`, `center`, `end`) | `click` | yes |
 | `column` | `spacing`, `alignment` (`start`, `center`, `end`) | `click` | yes |
 | `grid` | `columns`, `rows`, `spacing`, `row_spacing`, `column_spacing` | `click` | yes |
+| `row_layout` | `spacing`, `alignment`; children support fill/preferred/min/max sizing | `click` | yes |
+| `column_layout` | `spacing`, `alignment`; children support fill/preferred/min/max sizing | `click` | yes |
+| `grid_layout` | `columns`, `rows`, spacing and alignment; children support layout sizing | `click` | yes |
+| `flow` | `spacing`, `orientation`, `width`, `height`; wraps children automatically | `click` | yes |
+| `center` | `padding`, `spacing` | `click` | yes |
+| `card` | `padding`, `spacing`, `color`, `radius`, `border_color`, `accent` | `click` | yes |
 | `stack` | — | `click` | yes |
 | `scroll` | `clip` | `click` | yes |
 | `rectangle` | `color`, `radius`, `border_color`, `border_width`, `padding` | `click` | yes |
@@ -167,6 +173,42 @@ Every component supports `visible`, `enabled`, `opacity`, `scale`, `rotation`, `
 | `section_header` | `text` | — | no |
 | `panel_hero` | `title`, `meta`, `detail`, `foreground`, `font_family`, `icon_size`, `icon_opacity`, `meta_opacity` | — | no |
 | `optical_glyph` | `text`, `size`, `color`, `debug_bounds` | — | no |
+
+Layout children can use `fill_width`, `fill_height`, `preferred_width`, `preferred_height`,
+`minimum_width`, `minimum_height`, `maximum_width`, `maximum_height`, and `layout_alignment`.
+For example:
+
+```ruby
+card padding: 20 do
+  column_layout spacing: 14 do
+    row_layout fill_width: true, spacing: 10 do
+      icon :phone, size: 22, color: "#7aa2f7"
+      text "Connected devices", style: :heading, fill_width: true
+      button "Refresh", icon: :refresh
+    end
+
+    flow width: 520, spacing: 10 do
+      button "Android", icon: :android
+      button "iPhone", icon: :apple
+      button "Network", icon: :wifi
+    end
+  end
+end
+```
+
+### Built-in icons
+
+`icon`, `button`, and `action_button` accept icon names as Ruby symbols. The built-in catalog is:
+
+`ruby`, `phone`, `plus`, `minus`, `reset`, `refresh`, `house`, `gear`, `search`, `xmark`,
+`check`, `menu`, `user`, `bell`, `wifi`, `bluetooth`, `volume_high`, `volume_low`, `volume_off`,
+`play`, `pause`, `stop`, `trash`, `edit`, `folder`, `file`, `download`, `upload`, `link`, `lock`,
+`unlock`, `eye`, `eye_slash`, `star`, `heart`, `info`, `warning`, `circle_info`, `circle_check`,
+`circle_xmark`, `arrow_left`, `arrow_right`, `arrow_up`, `arrow_down`, `chevron_left`,
+`chevron_right`, `chevron_up`, `chevron_down`, `calendar`, `clock`, `camera`, `image`, `music`,
+`terminal`, `code`, `copy`, `save`, `power`, `globe`, `location`, `pin`, `android`, and `apple`.
+
+Unknown icon values are rendered literally, so a Nerd Font glyph can also be passed directly.
 
 ### Inputs and actions
 

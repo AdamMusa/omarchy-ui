@@ -21,6 +21,40 @@ class OmarchyUITest < Minitest::Test
     refute_includes bootstrap, "PhoneBackend"
   end
 
+  def test_responsive_layouts_and_icon_catalog_are_built_in
+    application = OmarchyUI::Application.new do
+      app do
+        card padding: 20 do
+          column_layout spacing: 12 do
+            row_layout fill_width: true do
+              icon :phone, color: "#7aa2f7"
+              text "Devices", fill_width: true
+            end
+            flow width: 480 do
+              button "Android", icon: :android
+              button "iPhone", icon: :apple
+            end
+          end
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    render = messages(output).find { |message| message["type"] == "render" }
+    card_node = render.dig("surfaces", "main", "children", 0)
+    column = card_node.dig("children", 0)
+    row = column.dig("children", 0)
+
+    assert_equal "card", card_node.fetch("type")
+    assert_equal "column_layout", column.fetch("type")
+    assert_equal true, row.dig("props", "fill_width")
+    assert_equal "phone", row.dig("children", 0, "props", "name")
+    assert_includes OmarchyUI::ICON_NAMES, :android
+    assert_includes OmarchyUI::ICON_NAMES, :apple
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0

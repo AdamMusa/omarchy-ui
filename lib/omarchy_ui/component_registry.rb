@@ -25,7 +25,11 @@ module OmarchyUI
       end
     end
     NAME = AsciiPattern.new(min: 1, max: 64, first: LOWER, rest: LOWER + DIGITS + "_")
-    ITEM_PROPERTIES = %i[visible enabled opacity scale rotation z width height].freeze
+    ITEM_PROPERTIES = %i[
+      visible enabled opacity scale rotation z width height
+      fill_width fill_height preferred_width preferred_height
+      minimum_width minimum_height maximum_width maximum_height layout_alignment
+    ].freeze
 
     def initialize
       @components = {}

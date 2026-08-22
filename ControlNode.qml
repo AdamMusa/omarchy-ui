@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls as QQC
+import QtQuick.Layouts
 import qs.Commons
 import qs.Ui as OmarchyUi
 
@@ -18,10 +19,14 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "button", "row", "column", "container", "image", "spacer",
-    "grid", "stack", "scroll", "rectangle", "action_button", "toggle", "toggle_switch", "text_field",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card",
+    "stack", "scroll", "rectangle", "action_button", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view"].indexOf(node ? node.type : "") >= 0
+  readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle"]
+    .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
     var props = node && node.props ? node.props : null
@@ -34,7 +39,21 @@ Loader {
       ruby: "\ue23e",
       phone: "\uf3cd",
       plus: "\uf067",
-      reset: "\uf2f9"
+      minus: "\uf068",
+      reset: "\uf2f9", refresh: "\uf2f9",
+      house: "\uf015", gear: "\uf013", search: "\uf002", xmark: "\uf00d", check: "\uf00c",
+      menu: "\uf0c9", user: "\uf007", bell: "\uf0f3", wifi: "\uf1eb", bluetooth: "\uf293",
+      volume_high: "\uf028", volume_low: "\uf027", volume_off: "\uf026",
+      play: "\uf04b", pause: "\uf04c", stop: "\uf04d", trash: "\uf1f8", edit: "\uf044",
+      folder: "\uf07b", file: "\uf15b", download: "\uf019", upload: "\uf093", link: "\uf0c1",
+      lock: "\uf023", unlock: "\uf09c", eye: "\uf06e", eye_slash: "\uf070",
+      star: "\uf005", heart: "\uf004", info: "\uf129", warning: "\uf071",
+      circle_info: "\uf05a", circle_check: "\uf058", circle_xmark: "\uf057",
+      arrow_left: "\uf060", arrow_right: "\uf061", arrow_up: "\uf062", arrow_down: "\uf063",
+      chevron_left: "\uf053", chevron_right: "\uf054", chevron_up: "\uf077", chevron_down: "\uf078",
+      calendar: "\uf133", clock: "\uf017", camera: "\uf030", image: "\uf03e", music: "\uf001",
+      terminal: "\uf120", code: "\uf121", copy: "\uf0c5", save: "\uf0c7", power: "\uf011",
+      globe: "\uf0ac", location: "\uf3c5", pin: "\uf08d", android: "\uf17b", apple: "\uf179"
     }
     var key = String(name || "")
     return icons[key] || key
@@ -57,6 +76,17 @@ Loader {
       in_bounce: Easing.InBounce, out_bounce: Easing.OutBounce, in_out_bounce: Easing.InOutBounce
     }
     return easings[String(name || "")] === undefined ? Easing.InOutQuad : easings[String(name)]
+  }
+
+  function layoutAlignment(name, fallback) {
+    var value = String(name || fallback || "center")
+    if (value === "start" || value === "left" || value === "top") return Qt.AlignLeft | Qt.AlignTop
+    if (value === "end" || value === "right" || value === "bottom") return Qt.AlignRight | Qt.AlignBottom
+    if (value === "left_center") return Qt.AlignLeft | Qt.AlignVCenter
+    if (value === "right_center") return Qt.AlignRight | Qt.AlignVCenter
+    if (value === "top_center") return Qt.AlignTop | Qt.AlignHCenter
+    if (value === "bottom_center") return Qt.AlignBottom | Qt.AlignHCenter
+    return Qt.AlignCenter
   }
 
   function subscribed(eventName) {
@@ -155,6 +185,12 @@ Loader {
     if (node.type === "image") return imageComponent
     if (node.type === "spacer") return spacerComponent
     if (node.type === "grid") return gridComponent
+    if (node.type === "row_layout") return rowLayoutComponent
+    if (node.type === "column_layout") return columnLayoutComponent
+    if (node.type === "grid_layout") return gridLayoutComponent
+    if (node.type === "flow") return flowComponent
+    if (node.type === "center") return centerComponent
+    if (node.type === "card") return cardComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -197,6 +233,11 @@ Loader {
     if (item && !builtIn && item.hasOwnProperty("node")) item.node = node
     if (!builtIn) syncNativeProperties()
     Qt.callLater(runTransition)
+  }
+
+  TapHandler {
+    enabled: root.structuralContainer && root.subscribed("click")
+    onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
   }
 
   Repeater {
@@ -252,7 +293,7 @@ Loader {
     Text {
       text: root.iconGlyph(root.prop("name", root.prop("text", "")))
       textFormat: Text.PlainText
-      color: root.foreground
+      color: root.prop("color", root.foreground)
       font.family: root.fontFamily
       font.pixelSize: Number(root.prop("size", Style.font.icon))
     }
@@ -375,6 +416,77 @@ Loader {
   }
 
   Component {
+    id: rowLayoutComponent
+    RowLayout {
+      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
+      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
+    }
+  }
+
+  Component {
+    id: columnLayoutComponent
+    ColumnLayout {
+      spacing: Number(root.prop("spacing", Style.spacing.panelGap))
+      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
+    }
+  }
+
+  Component {
+    id: gridLayoutComponent
+    GridLayout {
+      columns: Number(root.prop("columns", 2))
+      rows: Number(root.prop("rows", -1))
+      rowSpacing: Number(root.prop("row_spacing", root.prop("spacing", Style.spacing.controlGap)))
+      columnSpacing: Number(root.prop("column_spacing", root.prop("spacing", Style.spacing.controlGap)))
+      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
+    }
+  }
+
+  Component {
+    id: flowComponent
+    Flow {
+      width: Number(root.prop("width", 420))
+      height: root.prop("height", null) === null ? childrenRect.height : Number(root.prop("height", childrenRect.height))
+      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
+      flow: String(root.prop("orientation", "horizontal")) === "vertical" ? Flow.TopToBottom : Flow.LeftToRight
+      Repeater { model: root.node.children || []; delegate: childDelegate }
+    }
+  }
+
+  Component {
+    id: centerComponent
+    Item {
+      readonly property int pad: Number(root.prop("padding", 0))
+      implicitWidth: centeredContent.implicitWidth + pad * 2
+      implicitHeight: centeredContent.implicitHeight + pad * 2
+      Column {
+        id: centeredContent
+        anchors.centerIn: parent
+        spacing: Number(root.prop("spacing", Style.spacing.panelGap))
+        Repeater { model: root.node.children || []; delegate: childDelegate }
+      }
+    }
+  }
+
+  Component {
+    id: cardComponent
+    OmarchyUi.BorderSurface {
+      readonly property int pad: Number(root.prop("padding", Style.space(16)))
+      implicitWidth: cardContent.implicitWidth + pad * 2
+      implicitHeight: cardContent.implicitHeight + pad * 2
+      color: root.prop("color", Color.popups.background)
+      radius: Number(root.prop("radius", Style.cornerRadius))
+      borderSpec: Border.controlSpec("normal", root.prop("border_color", root.foreground), root.prop("accent", Color.accent))
+      Column {
+        id: cardContent
+        anchors.centerIn: parent
+        spacing: Number(root.prop("spacing", Style.spacing.panelGap))
+        Repeater { model: root.node.children || []; delegate: childDelegate }
+      }
+    }
+  }
+
+  Component {
     id: stackComponent
     Item {
       implicitWidth: childrenRect.width
@@ -437,6 +549,31 @@ Loader {
       anchors.top: crossAlignment === "start" || crossAlignment === "top" ? parent.top : undefined
       anchors.verticalCenter: crossAlignment === "center" ? parent.verticalCenter : undefined
       anchors.bottom: crossAlignment === "end" || crossAlignment === "bottom" ? parent.bottom : undefined
+      source: Qt.resolvedUrl("ControlNode.qml")
+      onLoaded: {
+        item.bridge = root.bridge
+        item.surfaceName = root.surfaceName
+        item.controlId = String(modelData.id)
+        item.foreground = root.foreground
+        item.fontFamily = root.fontFamily
+      }
+    }
+  }
+
+  Component {
+    id: layoutChildDelegate
+    Loader {
+      required property var modelData
+      readonly property var layoutProps: modelData && modelData.props ? modelData.props : ({})
+      Layout.fillWidth: layoutProps.fill_width === true
+      Layout.fillHeight: layoutProps.fill_height === true
+      Layout.preferredWidth: layoutProps.preferred_width === undefined ? -1 : Number(layoutProps.preferred_width)
+      Layout.preferredHeight: layoutProps.preferred_height === undefined ? -1 : Number(layoutProps.preferred_height)
+      Layout.minimumWidth: layoutProps.minimum_width === undefined ? 0 : Number(layoutProps.minimum_width)
+      Layout.minimumHeight: layoutProps.minimum_height === undefined ? 0 : Number(layoutProps.minimum_height)
+      Layout.maximumWidth: layoutProps.maximum_width === undefined ? Infinity : Number(layoutProps.maximum_width)
+      Layout.maximumHeight: layoutProps.maximum_height === undefined ? Infinity : Number(layoutProps.maximum_height)
+      Layout.alignment: root.layoutAlignment(layoutProps.layout_alignment, root.prop("alignment", "center"))
       source: Qt.resolvedUrl("ControlNode.qml")
       onLoaded: {
         item.bridge = root.bridge

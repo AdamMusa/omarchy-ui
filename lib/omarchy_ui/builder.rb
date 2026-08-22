@@ -3,7 +3,10 @@
 module OmarchyUI
   class Builder
     UNSET = Object.new.freeze
-    CONTAINERS = %i[row column container grid stack scroll rectangle].freeze
+    CONTAINERS = %i[
+      row column container grid row_layout column_layout grid_layout flow center card
+      stack scroll rectangle
+    ].freeze
     VALUE_INPUTS = {
       text_field: :text,
       number_field: :value,

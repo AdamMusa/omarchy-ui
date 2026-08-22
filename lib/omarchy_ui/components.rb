@@ -1,11 +1,25 @@
 # frozen_string_literal: true
 
 module OmarchyUI
+  ICON_NAMES = %i[
+    ruby phone plus minus reset refresh house gear search xmark check menu user bell wifi bluetooth
+    volume_high volume_low volume_off play pause stop trash edit folder file download upload link lock
+    unlock eye eye_slash star heart info warning circle_info circle_check circle_xmark arrow_left
+    arrow_right arrow_up arrow_down chevron_left chevron_right chevron_up chevron_down calendar clock
+    camera image music terminal code copy save power globe location pin android apple
+  ].freeze
+
   COMPONENTS = {
     container: [%i[spacing padding bordered visible], %i[click], true],
     row: [%i[spacing alignment visible], %i[click], true],
     column: [%i[spacing alignment visible], %i[click], true],
     grid: [%i[columns rows spacing row_spacing column_spacing visible], %i[click], true],
+    row_layout: [%i[spacing alignment visible], %i[click], true],
+    column_layout: [%i[spacing alignment visible], %i[click], true],
+    grid_layout: [%i[columns rows spacing row_spacing column_spacing alignment visible], %i[click], true],
+    flow: [%i[spacing orientation width height visible], %i[click], true],
+    center: [%i[padding spacing visible], %i[click], true],
+    card: [%i[padding spacing color radius border_color accent visible], %i[click], true],
     stack: [%i[visible], %i[click], true],
     scroll: [%i[width height clip visible], %i[click], true],
     rectangle: [%i[width height color radius border_color border_width padding visible], %i[click], true],
