@@ -158,6 +158,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'indicatorBlock: String(root.prop("indicator_block", "single"))'
   end
 
+  def test_border_overlay_uses_native_gradient_border_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "border_overlay"'
+    assert_includes renderer, "OmarchyUi.BorderOverlay"
+    assert_includes renderer, 'gradient: { colors: colors, angle: Number(root.prop("gradient_angle", 0)), enabled: true }'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

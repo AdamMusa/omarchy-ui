@@ -19,7 +19,7 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
@@ -192,6 +192,7 @@ Loader {
     if (node.type === "flow") return flowComponent
     if (node.type === "center") return centerComponent
     if (node.type === "card") return cardComponent
+    if (node.type === "border_overlay") return borderOverlayComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -500,6 +501,26 @@ Loader {
         anchors.centerIn: parent
         spacing: Number(root.prop("spacing", Style.spacing.panelGap))
         Repeater { model: root.node.children || []; delegate: childDelegate }
+      }
+    }
+  }
+
+  Component {
+    id: borderOverlayComponent
+    OmarchyUi.BorderOverlay {
+      width: Number(root.prop("width", 120))
+      height: Number(root.prop("height", 80))
+      radius: Number(root.prop("radius", Style.cornerRadius))
+      borderSpec: {
+        var colors = root.prop("gradient_colors", [])
+        if (Array.isArray(colors) && colors.length > 1) {
+          return {
+            color: colors[0],
+            widths: Border.flat(colors[0], root.prop("width_spec", Style.normalBorderWidth)).widths,
+            gradient: { colors: colors, angle: Number(root.prop("gradient_angle", 0)), enabled: true }
+          }
+        }
+        return Border.flat(root.prop("color", root.foreground), root.prop("width_spec", Style.normalBorderWidth))
       }
     }
   }

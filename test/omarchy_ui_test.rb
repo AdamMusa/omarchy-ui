@@ -112,6 +112,24 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_border_overlay_accepts_gradient_border_data
+    application = OmarchyUI::Application.new do
+      app do
+        border_overlay width: 240, height: 120, width_spec: 2,
+                       gradient_colors: ["#7aa2f7", "#bb9af7"], gradient_angle: 45
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "border_overlay", node.fetch("type")
+    assert_equal ["#7aa2f7", "#bb9af7"], node.dig("props", "gradient_colors")
+    assert_equal 45, node.dig("props", "gradient_angle")
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0
