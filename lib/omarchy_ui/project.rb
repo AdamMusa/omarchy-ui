@@ -16,9 +16,9 @@ module OmarchyUI
     def create
       raise ArgumentError, "destination already exists: #{@path}" if File.exist?(@path)
       created = true
-      FileUtils.mkdir_p(File.join(@path, "Components"))
+      FileUtils.mkdir_p(File.join(@path, "components"))
       File.write(File.join(@path, "main.rb"), main_program)
-      File.write(File.join(@path, "Components", "Welcome.qml"), welcome_component)
+      File.write(File.join(@path, "components", "welcome.rb"), welcome_component)
       File.write(File.join(@path, "README.md"), readme)
       @path
     rescue StandardError
@@ -51,62 +51,36 @@ module OmarchyUI
         # frozen_string_literal: true
 
         require "omarchy_ui" unless Object.const_defined?(:OmarchyUI)
+        eval(File.read(File.join(File.dirname(__FILE__), "components", "welcome.rb")))
 
         OmarchyUI.plugin do
-          register_component :welcome,
-            qml: "Welcome.qml",
-            properties: %i[title message]
-
           app :main, title: "#{@name}", width: 760, height: 520 do
-            component :welcome,
+            welcome_card(
               title: "Welcome to #{@name}",
               message: "This is the official Omarchy UI framework."
+            )
           end
         end
       RUBY
     end
 
     def welcome_component
-      <<~QML
-        import QtQuick
-        import qs.Commons
-        import qs.Ui
+      <<~RUBY
+        # frozen_string_literal: true
 
-        BorderSurface {
-          id: root
+        module WelcomeComponent
+          def welcome_card(title:, message:)
+            container padding: 24, bordered: true do
+              column spacing: 12 do
+                text title, style: :heading
+                text message, wrap: true
+              end
+            end
+          end
+        end
 
-          property string title: "Welcome"
-          property string message: "This is the official Omarchy UI framework."
-
-          implicitWidth: 520
-          implicitHeight: 220
-          color: Color.popups.background
-          radius: Style.cornerRadius
-          borderSpec: Border.controlSpec("normal", Color.foreground, Color.accent)
-
-          Column {
-            anchors.centerIn: parent
-            spacing: Style.spacing.lg
-
-            Text {
-              anchors.horizontalCenter: parent.horizontalCenter
-              text: root.title
-              color: Color.foreground
-              font.family: Style.font.family
-              font.pixelSize: Style.font.heading
-              font.bold: true
-            }
-
-            Text {
-              anchors.horizontalCenter: parent.horizontalCenter
-              text: root.message
-              color: Color.foreground
-              font.family: Style.font.family
-              font.pixelSize: Style.font.body
-            }
-          }
-        }
-      QML
+        OmarchyUI::Builder.include(WelcomeComponent)
+      RUBY
     end
 
     def readme
@@ -124,8 +98,9 @@ module OmarchyUI
         The shared `omarchy-ui-runtime` must be installed on `PATH`. No system Ruby,
         application manifest, or copied framework QML files are required.
 
-        Edit `main.rb` for application state and behavior. Custom QML adapters live in
-        `Components/`; `Welcome.qml` is included as a working example.
+        Edit `main.rb` for application state and behavior. Reusable Ruby UI components live in
+        `components/`; `welcome.rb` is included as a working example. `omarchy_ui bundle` generates
+        the native QML bridge and embeds the runtime for distribution.
       MARKDOWN
     end
   end

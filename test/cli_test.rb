@@ -72,10 +72,12 @@ class CLITest < Minitest::Test
         assert_equal 0, status
       end
       project = File.join(directory, "weather-board")
-      assert_equal %w[Components README.md main.rb], Dir.children(project).sort
-      assert_equal ["Welcome.qml"], Dir.children(File.join(project, "Components"))
+      assert_equal %w[README.md components main.rb], Dir.children(project).sort
+      assert_equal ["welcome.rb"], Dir.children(File.join(project, "components"))
       refute File.exist?(File.join(project, "manifest.json"))
-      assert_includes File.read(File.join(project, "main.rb")), "register_component :welcome"
+      assert_includes File.read(File.join(project, "main.rb")), "welcome_card("
+      assert_includes File.read(File.join(project, "components", "welcome.rb")), "OmarchyUI::Builder.include"
+      refute Dir.glob(File.join(project, "**", "*.qml")).any?
       assert_includes File.read(File.join(project, "README.md")), "omarchy_ui launch main.rb"
 
       stdout, stderr, status = Open3.capture3(

@@ -47,11 +47,15 @@ A new standalone project contains only application-owned files:
 
 ```text
 myapp/
-├── Components/
-│   └── Welcome.qml
+├── components/
+│   └── welcome.rb
 ├── README.md
 └── main.rb
 ```
+
+The generated application UI is entirely Ruby. `main.rb` loads reusable Ruby components from
+`components/`; no QML source is generated into the application project. The framework creates the
+required native bridge files only when launching or bundling the app.
 
 `launch` opens a compositor-managed window. Drag its title bar or use Super+drag, and close it
 with Super+W. For protocol debugging without a window, use `omarchy_ui run main.rb`.
