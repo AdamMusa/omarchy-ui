@@ -15,7 +15,7 @@ class QmlContractTest < Minitest::Test
     assert_includes qml, "stdinEnabled: true"
     assert_includes qml, "rubyProcess.write(JSON.stringify("
     assert_includes qml, "stdout: SplitParser"
-    assert_includes qml, '"omarchy-ui-runtime"'
+    assert_includes qml, 'pluginDir + "/omarchy-ui-runtime"'
     refute_includes qml, '"ruby",'
     refute_includes qml, "execDetached"
     refute_includes qml, '["bash"'

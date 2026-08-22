@@ -30,6 +30,12 @@ module OmarchyUI
         destination = File.join(path, file)
         FileUtils.cp(File.join(framework_root, file), destination) unless File.exist?(destination)
       end
+      bundled_runtime = File.join(framework_root, "vendor", "runtime", "x86_64-linux", "omarchy-ui-runtime")
+      if File.file?(bundled_runtime)
+        destination = File.join(path, "omarchy-ui-runtime")
+        FileUtils.cp(bundled_runtime, destination)
+        FileUtils.chmod(0o755, destination)
+      end
       FileUtils.mkdir_p(File.join(path, "Components"))
     end
 

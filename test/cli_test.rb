@@ -41,6 +41,7 @@ class CLITest < Minitest::Test
         assert_equal 0, status
         assert File.file?(File.join(destination, "main.rb"))
         assert File.file?(File.join(destination, "Service.qml"))
+        assert File.executable?(File.join(destination, "omarchy-ui-runtime"))
         refute File.exist?(File.join(destination, "vendor")), "plugins use the shared native runtime"
         refute File.exist?(File.join(destination, ".git"))
         refute Dir.children(File.join(home, ".config/omarchy/plugins")).any? { |name| name.include?("backup") }

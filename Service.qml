@@ -362,8 +362,9 @@ Item {
 
   function startRuby() {
     if (stopping || pluginDir === "" || rubyProcess.running) return
+    var configuredRuntime = String(Quickshell.env("OMARCHY_UI_RUNTIME") || "")
     rubyProcess.command = [
-      String(Quickshell.env("OMARCHY_UI_RUNTIME") || "omarchy-ui-runtime"),
+      configuredRuntime !== "" ? configuredRuntime : pluginDir + "/omarchy-ui-runtime",
       effectiveRubyProgram
     ]
     rubyProcess.workingDirectory = pluginDir
