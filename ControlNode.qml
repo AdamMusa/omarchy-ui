@@ -6,9 +6,9 @@ import qs.Ui as OmarchyUi
 Loader {
   id: root
 
-  required property var bridge
-  required property string surfaceName
-  required property string controlId
+  property var bridge: null
+  property string surfaceName: ""
+  property string controlId: ""
   property color foreground: Color.foreground
   property string fontFamily: Style.font.family
 
@@ -142,9 +142,6 @@ Loader {
   Component.onDestruction: {
     if (bridge && subscribed("unmount")) bridge.sendEvent(surfaceName, controlId, "unmount", {})
   }
-  implicitWidth: item ? item.implicitWidth : 0
-  implicitHeight: item ? item.implicitHeight : 0
-
   Component {
     id: textComponent
 
@@ -215,15 +212,7 @@ Loader {
 
       Repeater {
         model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-
-        ControlNode {
-          required property var modelData
-          bridge: root.bridge
-          surfaceName: root.surfaceName
-          controlId: String(modelData.id)
-          foreground: root.foreground
-          fontFamily: root.fontFamily
-        }
+        delegate: childDelegate
       }
     }
   }
@@ -236,15 +225,7 @@ Loader {
 
       Repeater {
         model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-
-        ControlNode {
-          required property var modelData
-          bridge: root.bridge
-          surfaceName: root.surfaceName
-          controlId: String(modelData.id)
-          foreground: root.foreground
-          fontFamily: root.fontFamily
-        }
+        delegate: childDelegate
       }
     }
   }
@@ -252,7 +233,7 @@ Loader {
   Component {
     id: containerComponent
 
-    BorderSurface {
+    OmarchyUi.BorderSurface {
       readonly property int innerPadding: Number(root.prop("padding", 0))
       implicitWidth: content.implicitWidth + innerPadding * 2
       implicitHeight: content.implicitHeight + innerPadding * 2
@@ -269,15 +250,7 @@ Loader {
 
         Repeater {
           model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-
-          ControlNode {
-            required property var modelData
-            bridge: root.bridge
-            surfaceName: root.surfaceName
-            controlId: String(modelData.id)
-            foreground: root.foreground
-            fontFamily: root.fontFamily
-          }
+          delegate: childDelegate
         }
       }
     }
@@ -288,8 +261,8 @@ Loader {
 
     Image {
       source: String(root.prop("source", ""))
-      implicitWidth: Number(root.prop("width", 120))
-      implicitHeight: Number(root.prop("height", 120))
+      width: Number(root.prop("width", 120))
+      height: Number(root.prop("height", 120))
       asynchronous: true
       fillMode: Image.PreserveAspectFit
     }
@@ -357,10 +330,16 @@ Loader {
 
   Component {
     id: childDelegate
-    ControlNode {
+    Loader {
       required property var modelData
-      bridge: root.bridge; surfaceName: root.surfaceName; controlId: String(modelData.id)
-      foreground: root.foreground; fontFamily: root.fontFamily
+      source: Qt.resolvedUrl("ControlNode.qml")
+      onLoaded: {
+        item.bridge = root.bridge
+        item.surfaceName = root.surfaceName
+        item.controlId = String(modelData.id)
+        item.foreground = root.foreground
+        item.fontFamily = root.fontFamily
+      }
     }
   }
 

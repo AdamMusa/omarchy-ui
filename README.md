@@ -192,6 +192,13 @@ Run:
 ruby script/benchmark.rb
 ```
 
+Inside a live Omarchy session, deploy and verify the supervised Ruby process, panel summon,
+and QML journal with:
+
+```bash
+./scripts/smoke-test.sh
+```
+
 The test suite verifies the initial tree, callbacks, a single incremental count patch, no-op state assignments, malformed and cross-surface event rejection, effects, duplicate-id rejection, the manifest contract, no symlinks, and the QML process/renderer contract. The plugin also passes Omarchy's current `omarchy-plugin-validate` implementation.
 
 Measured on the work container with Ruby 3.3.8 and 500 sequential increment events:

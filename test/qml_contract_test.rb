@@ -51,4 +51,13 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'subscribed("unmount")'
     assert_includes service, "subscriptions.indexOf(eventName) < 0"
   end
+
+  def test_renderer_uses_runtime_recursion_and_qualified_omarchy_types
+    renderer = source("ControlNode.qml")
+    panel = source("Panel.qml")
+    refute_match(/^\s+ControlNode \{$/, renderer)
+    assert_includes renderer, 'source: Qt.resolvedUrl("ControlNode.qml")'
+    assert_includes renderer, "OmarchyUi.BorderSurface {"
+    assert_includes panel, "OmarchyUi.BorderSurface {"
+  end
 end

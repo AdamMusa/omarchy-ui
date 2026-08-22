@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
+import qs.Ui as OmarchyUi
 
 Item {
   id: root
@@ -59,7 +60,7 @@ Item {
       focus: true
       Keys.onEscapePressed: root.dismiss()
 
-      BorderSurface {
+      OmarchyUi.BorderSurface {
         id: card
         anchors.centerIn: parent
         width: Math.min(parent.width - Style.space(32), Math.max(Style.space(320), renderer.implicitWidth + Style.space(48)))
