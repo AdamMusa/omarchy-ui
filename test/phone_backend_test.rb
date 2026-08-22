@@ -27,6 +27,19 @@ class PhoneBackendTest < Minitest::Test
     def available?(_program) = true
   end
 
+  class FakeAirPlayBackend < PhoneBackend
+    attr_reader :spawned
+
+    private
+
+    def process_alive?(_pid) = false
+
+    def spawn_detached(argv, name)
+      @spawned = [argv, name]
+      4321
+    end
+  end
+
   def test_snapshot_merges_attached_mdns_android_and_ios_devices
     Dir.mktmpdir do |directory|
       backend = FakeBackend.new(
@@ -56,6 +69,22 @@ class PhoneBackendTest < Minitest::Test
       assert result.ok
       assert_equal "Successfully paired", result.message
       assert_equal argv, backend.commands.last.first
+    end
+  end
+
+  def test_airplay_uses_firewall_ports_and_reports_the_pin
+    Dir.mktmpdir do |directory|
+      backend = FakeAirPlayBackend.new(state_dir: directory)
+      result = backend.start_airplay
+      argv, name = backend.spawned
+
+      assert result.ok
+      assert_match(/PIN \d{4}\z/, result.message)
+      assert_equal "uxplay", name
+      assert_equal ["uxplay", "-n", "Omarchy", "-nh"], argv.first(4)
+      assert_match(/\A-pin\d{4}\z/, argv.fetch(4))
+      assert_equal ["-p", "7100"], argv.slice(5, 2)
+      assert_equal "4321\n", File.read(File.join(directory, "uxplay.pid"))
     end
   end
 

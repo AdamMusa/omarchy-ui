@@ -10,6 +10,7 @@ class PhoneBackend
   def initialize(state_dir: File.expand_path("~/.local/state/omarchy-phone-ruby"))
     @state_dir = state_dir
     @action_lock = Mutex.new
+    @airplay_pid_path = File.join(@state_dir, "uxplay.pid")
     @airplay_pid = nil
     if Object.const_defined?(:FileUtils)
       FileUtils.mkdir_p(@state_dir)
@@ -22,6 +23,7 @@ class PhoneBackend
         Dir.mkdir(current) unless File.directory?(current)
       end
     end
+    @airplay_pid = load_airplay_pid
     at_exit { stop_airplay } if Kernel.respond_to?(:at_exit)
   end
 
@@ -58,10 +60,12 @@ class PhoneBackend
   def start_airplay(fullscreen: false)
     @action_lock.synchronize do
       return Result.new(ok: true, message: "AirPlay receiver is already running") if process_alive?(@airplay_pid)
-      argv = ["uxplay", "-n", "Omarchy"]
+      pin = format("%04d", rand(10_000))
+      argv = ["uxplay", "-n", "Omarchy", "-nh", "-pin#{pin}", "-p", "7100"]
       argv << "-fs" if fullscreen
       @airplay_pid = spawn_detached(argv, "uxplay")
-      Result.new(ok: true, message: "AirPlay receiver started")
+      File.write(@airplay_pid_path, "#{@airplay_pid}\n")
+      Result.new(ok: true, message: "AirPlay receiver started — PIN #{pin}")
     rescue Errno::ENOENT
       Result.new(ok: false, message: "UxPlay is not installed")
     end
@@ -69,12 +73,15 @@ class PhoneBackend
 
   def stop_airplay
     @action_lock.synchronize do
-      return Result.new(ok: true, message: "AirPlay receiver is stopped") unless process_alive?(@airplay_pid)
+      unless process_alive?(@airplay_pid)
+        clear_airplay_pid
+        return Result.new(ok: true, message: "AirPlay receiver is stopped")
+      end
       Process.kill("TERM", -@airplay_pid)
-      @airplay_pid = nil
+      clear_airplay_pid
       Result.new(ok: true, message: "AirPlay receiver stopped")
     rescue Errno::ESRCH
-      @airplay_pid = nil
+      clear_airplay_pid
       Result.new(ok: true, message: "AirPlay receiver stopped")
     end
   end
@@ -82,6 +89,18 @@ class PhoneBackend
   def airplay_running? = process_alive?(@airplay_pid)
 
   private
+
+  def load_airplay_pid
+    return nil unless File.file?(@airplay_pid_path)
+    Integer(File.read(@airplay_pid_path).strip)
+  rescue ArgumentError
+    nil
+  end
+
+  def clear_airplay_pid
+    @airplay_pid = nil
+    File.delete(@airplay_pid_path) if File.file?(@airplay_pid_path)
+  end
 
   def backend_status
     {
