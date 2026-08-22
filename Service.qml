@@ -159,6 +159,39 @@ Item {
       return true
     }
 
+    if (message.op === "animate") {
+      if (!Array.isArray(message.tracks) || message.tracks.length === 0 || message.tracks.length > 64)
+        return reject("animation tracks rejected")
+      var animatedProps = ({})
+      var validatedTracks = []
+      var sourceProps = node.props || {}
+      for (var trackIndex = 0; trackIndex < message.tracks.length; trackIndex++) {
+        var track = message.tracks[trackIndex]
+        if (!plainObject(track) || typeof track.property !== "string"
+            || !allowedProperties[node.type][track.property] || !validAnimation(track))
+          return reject("animation track rejected")
+        var targetValue = track.to
+        if (targetValue !== null && typeof targetValue !== "string" && typeof targetValue !== "number")
+          return reject("animation target rejected")
+        animatedProps[track.property] = targetValue
+        validatedTracks.push(track)
+      }
+      var animatedReplacement = ({ type: node.type, id: node.id })
+      var finalProps = ({})
+      for (var sourceKey in sourceProps) finalProps[sourceKey] = sourceProps[sourceKey]
+      for (var animatedKey in animatedProps) finalProps[animatedKey] = animatedProps[animatedKey]
+      animatedReplacement.props = finalProps
+      if (node.children !== undefined) animatedReplacement.children = node.children
+      if (node.events !== undefined) animatedReplacement.events = node.events
+      animatedReplacement.transitions = validatedTracks
+      var animatedIndex = ({})
+      for (var animatedId in nodeIndex) animatedIndex[animatedId] = nodeIndex[animatedId]
+      animatedIndex[node.id] = animatedReplacement
+      nodeIndex = animatedIndex
+      revision += 1
+      return true
+    }
+
     if (message.op !== "set" || typeof message.property !== "string") return reject("invalid patch")
     if (!allowedProperties[node.type][message.property]) return reject("patch target rejected")
     var value = message.value
@@ -166,17 +199,7 @@ Item {
       return reject("patch value rejected")
 
     var animation = message.animation
-    if (animation !== undefined) {
-      if (!plainObject(animation)
-          || typeof animation.duration !== "number" || animation.duration < 0 || animation.duration > 60000
-          || typeof animation.delay !== "number" || animation.delay < 0 || animation.delay > 60000
-          || typeof animation.easing !== "string")
-        return reject("patch animation rejected")
-      var easings = ["linear", "in_quad", "out_quad", "in_out_quad", "in_cubic", "out_cubic", "in_out_cubic",
-        "in_back", "out_back", "in_out_back", "in_elastic", "out_elastic", "in_out_elastic",
-        "in_bounce", "out_bounce", "in_out_bounce"]
-      if (easings.indexOf(animation.easing) < 0) return reject("patch easing rejected")
-    }
+    if (animation !== undefined && !validAnimation(animation)) return reject("patch animation rejected")
 
     var replacement = ({ type: node.type, id: node.id })
     var props = ({})
@@ -202,6 +225,17 @@ Item {
     nextIndex[node.id] = replacement
     nodeIndex = nextIndex
     revision += 1
+  }
+
+  function validAnimation(animation) {
+    if (!plainObject(animation)
+        || typeof animation.duration !== "number" || animation.duration < 0 || animation.duration > 60000
+        || typeof animation.delay !== "number" || animation.delay < 0 || animation.delay > 60000
+        || typeof animation.easing !== "string") return false
+    var easings = ["linear", "in_quad", "out_quad", "in_out_quad", "in_cubic", "out_cubic", "in_out_cubic",
+      "in_back", "out_back", "in_out_back", "in_elastic", "out_elastic", "in_out_elastic",
+      "in_bounce", "out_bounce", "in_out_bounce"]
+    return easings.indexOf(animation.easing) >= 0
   }
 
   function handleLine(line) {

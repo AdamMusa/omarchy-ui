@@ -38,7 +38,7 @@ class QmlContractTest < Minitest::Test
   def test_renderer_supports_validated_native_property_animations
     renderer = source("ControlNode.qml")
     service = source("Service.qml")
-    assert_includes renderer, "PropertyAnimation { id: patchAnimation }"
+    assert_includes renderer, "id: propertyAnimationFactory"
     assert_includes renderer, "function easingType(name)"
     assert_includes service, 'return reject("patch animation rejected")'
     assert_includes service, "replacement.transition"
@@ -66,5 +66,14 @@ class QmlContractTest < Minitest::Test
     assert_includes service, 'message.op === "replace_children"'
     assert_includes service, 'return reject("invalid children patch")'
     assert_includes service, "validateNode(message.children[childIndex]"
+  end
+
+  def test_service_and_renderer_support_composed_animation_tracks
+    service = source("Service.qml")
+    renderer = source("ControlNode.qml")
+    assert_includes service, 'message.op === "animate"'
+    assert_includes service, "message.tracks.length > 64"
+    assert_includes renderer, "propertyAnimationFactory.createObject"
+    assert_includes renderer, "delayedAnimationFactory.createObject"
   end
 end

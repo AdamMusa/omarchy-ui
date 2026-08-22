@@ -5,6 +5,7 @@ require "thread"
 
 module OmarchyUI
   class Application
+    ANIMATION_DEFAULTS = { "opacity" => 1.0, "scale" => 1.0, "rotation" => 0.0, "z" => 0.0 }.freeze
     attr_reader :state, :surfaces, :components
 
     def initialize(components: DEFAULT_COMPONENTS, &definition)
@@ -75,6 +76,34 @@ module OmarchyUI
 
     def emit_effect(name, payload = {})
       emit("v" => PROTOCOL_VERSION, "type" => "effect", "name" => name.to_s, "payload" => payload)
+    end
+
+    def animate(node, properties, animation)
+      emit_animation(node, animation_tracks(node, properties, animation))
+    end
+
+    def animation_tracks(node, properties, animation)
+      definition = @components.fetch(node.type)
+      properties.map do |property, value|
+        property_name = property.to_s
+        unless definition.properties.map(&:to_s).include?(property_name)
+          raise ArgumentError, "unsupported animated property for #{node.type}: #{property_name}"
+        end
+        normalized = normalize_value(value, property_name)
+        track = {
+          "property" => property_name,
+          "from" => node.props.fetch(property_name, ANIMATION_DEFAULTS[property_name]),
+          "to" => normalized
+        }.merge(animation.to_h)
+        node.props[property_name] = normalized
+        track
+      end
+    end
+
+    def emit_animation(node, tracks)
+      raise ArgumentError, "animation requires at least one property" if tracks.empty?
+      emit("v" => PROTOCOL_VERSION, "type" => "patch", "op" => "animate", "id" => node.id, "tracks" => tracks)
+      node
     end
 
     def tree = @surfaces.transform_values(&:to_h)

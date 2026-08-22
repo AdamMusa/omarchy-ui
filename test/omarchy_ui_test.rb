@@ -431,4 +431,48 @@ class OmarchyUITest < Minitest::Test
     app.receive(event("change", surface: "main"))
     refute messages(output).any? { |message| message["op"] == "replace_children" }
   end
+
+  def test_imperative_animation_emits_parallel_tracks
+    app = OmarchyUI::Application.new do
+      panel :main do
+        label = text "Animate", id: :label
+        button("Go", id: :go) do
+          animate label, { opacity: 0.25, scale: 1.2 }, duration: 280, easing: :out_cubic
+        end
+      end
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    output.truncate(0)
+    output.rewind
+    app.receive(event("go", surface: "main"))
+
+    patch = messages(output).first
+    assert_equal "animate", patch.fetch("op")
+    assert_equal %w[opacity scale], patch.fetch("tracks").map { |track| track.fetch("property") }
+    assert_equal [1.0, 1.0], patch.fetch("tracks").map { |track| track.fetch("from") }
+    assert_equal [0.25, 1.2], patch.fetch("tracks").map { |track| track.fetch("to") }
+  end
+
+  def test_animation_sequences_accumulate_track_delays
+    app = OmarchyUI::Application.new do
+      panel :main do
+        label = text "Pulse", id: :label
+        button("Pulse", id: :pulse) do
+          animate_sequence label, [
+            { to: { scale: 1.2 }, duration: 100, easing: :out_quad },
+            { to: { scale: 1.0 }, duration: 150, easing: :in_quad, pause: 25 }
+          ]
+        end
+      end
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    output.truncate(0)
+    output.rewind
+    app.receive(event("pulse", surface: "main"))
+    tracks = messages(output).first.fetch("tracks")
+    assert_equal [0, 100], tracks.map { |track| track.fetch("delay") }
+    assert_equal [1.0, 1.2], tracks.map { |track| track.fetch("from") }
+  end
 end

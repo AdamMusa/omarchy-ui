@@ -131,6 +131,29 @@ module OmarchyUI
     end
 
     def animation(**options) = Animation.new(**options)
+
+    def animate(node, properties, duration: 200, easing: :in_out_quad, delay: 0)
+      transition = Animation.new(duration:, easing:, delay:)
+      @application.animate(node, properties, transition)
+      node
+    end
+
+    def animate_sequence(node, steps)
+      elapsed = 0
+      tracks = steps.flat_map do |step|
+        options = step.transform_keys(&:to_sym)
+        properties = options.fetch(:to)
+        transition = Animation.new(
+          duration: options.fetch(:duration, 200),
+          easing: options.fetch(:easing, :in_out_quad),
+          delay: elapsed + options.fetch(:delay, 0)
+        )
+        elapsed = transition.delay + transition.duration + options.fetch(:pause, 0)
+        @application.animation_tracks(node, properties, transition)
+      end
+      @application.emit_animation(node, tracks)
+      node
+    end
     def transaction(&block) = @application.state.transaction { instance_eval(&block) }
     def after(seconds, &block) = @application.schedule(:after, interval: seconds, &block)
     def every(seconds, immediate: false, &block) = @application.schedule(:every, interval: seconds, immediate:, &block)

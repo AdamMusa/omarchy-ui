@@ -57,22 +57,30 @@ Loader {
   }
 
   function runTransition() {
-    var transition = node ? node.transition : null
-    if (!item || !transition) return
+    var transitions = node && Array.isArray(node.transitions)
+      ? node.transitions
+      : (node && node.transition ? [node.transition] : [])
+    if (!item || transitions.length === 0) return
+    for (var transitionIndex = 0; transitionIndex < transitions.length; transitionIndex++)
+      runTrack(transitions[transitionIndex])
+  }
+
+  function runTrack(transition) {
     var commonProperties = ["opacity", "scale", "rotation", "z", "width", "height"]
     var animationTarget = commonProperties.indexOf(transition.property) >= 0 ? root : item
     if (!animationTarget.hasOwnProperty(transition.property)) return
     if (transition.from === undefined || transition.from === null) return
-    patchAnimation.stop()
-    patchAnimation.target = animationTarget
-    patchAnimation.property = String(transition.property)
-    patchAnimation.from = transition.from
-    patchAnimation.to = transition.to
-    patchAnimation.duration = Number(transition.duration)
-    patchAnimation.easing.type = easingType(transition.easing)
-    transitionTimer.interval = Number(transition.delay || 0)
-    if (transitionTimer.interval > 0) transitionTimer.restart()
-    else patchAnimation.restart()
+    var animation = propertyAnimationFactory.createObject(root, {
+      target: animationTarget,
+      property: String(transition.property),
+      from: transition.from,
+      to: transition.to,
+      duration: Number(transition.duration)
+    })
+    animation.easing.type = easingType(transition.easing)
+    var delay = Number(transition.delay || 0)
+    if (delay > 0) delayedAnimationFactory.createObject(root, { interval: delay, animation: animation }).start()
+    else animation.start()
   }
 
   visible: node !== null && prop("visible", true) !== false
@@ -118,11 +126,13 @@ Loader {
   }
   source: node && !builtIn ? bridge.componentSource(node.type) : ""
   onLoaded: {
-    if (!item || builtIn) return
-    if (item.hasOwnProperty("bridge")) item.bridge = bridge
-    if (item.hasOwnProperty("surfaceName")) item.surfaceName = surfaceName
-    if (item.hasOwnProperty("controlId")) item.controlId = controlId
-    if (item.hasOwnProperty("node")) item.node = node
+    if (!item) return
+    if (!builtIn) {
+      if (item.hasOwnProperty("bridge")) item.bridge = bridge
+      if (item.hasOwnProperty("surfaceName")) item.surfaceName = surfaceName
+      if (item.hasOwnProperty("controlId")) item.controlId = controlId
+      if (item.hasOwnProperty("node")) item.node = node
+    }
     runTransition()
     if (subscribed("mount")) bridge.sendEvent(surfaceName, controlId, "mount", {})
   }
@@ -131,13 +141,19 @@ Loader {
     Qt.callLater(runTransition)
   }
 
-  Timer {
-    id: transitionTimer
-    repeat: false
-    onTriggered: patchAnimation.restart()
+  Component {
+    id: propertyAnimationFactory
+    PropertyAnimation { onStopped: destroy() }
   }
 
-  PropertyAnimation { id: patchAnimation }
+  Component {
+    id: delayedAnimationFactory
+    Timer {
+      required property var animation
+      repeat: false
+      onTriggered: { animation.start(); destroy() }
+    }
+  }
 
   Component.onDestruction: {
     if (bridge && subscribed("unmount")) bridge.sendEvent(surfaceName, controlId, "unmount", {})
