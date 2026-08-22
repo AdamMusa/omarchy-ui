@@ -127,10 +127,40 @@ Item {
   }
 
   function applyPatch(message) {
-    if (message.op !== "set" || !validId(message.id) || typeof message.property !== "string")
+    if (!validId(message.id))
       return reject("invalid patch")
     var node = nodeIndex[message.id]
-    if (!node || !allowedProperties[node.type][message.property]) return reject("patch target rejected")
+    if (!node) return reject("patch target rejected")
+
+    if (message.op === "replace_children") {
+      if (!componentDefinitions[node.type].container || !Array.isArray(message.children))
+        return reject("children patch rejected")
+      var removed = ({})
+      function markRemoved(child) {
+        removed[child.id] = true
+        var nested = Array.isArray(child.children) ? child.children : []
+        for (var r = 0; r < nested.length; r++) markRemoved(nested[r])
+      }
+      var oldChildren = Array.isArray(node.children) ? node.children : []
+      for (var oldIndex = 0; oldIndex < oldChildren.length; oldIndex++) markRemoved(oldChildren[oldIndex])
+
+      var childrenIndex = ({})
+      for (var existingId in nodeIndex)
+        if (!removed[existingId] && existingId !== node.id) childrenIndex[existingId] = nodeIndex[existingId]
+      var count = { value: Object.keys(childrenIndex).length }
+      for (var childIndex = 0; childIndex < message.children.length; childIndex++)
+        if (!validateNode(message.children[childIndex], childrenIndex, 0, count)) return reject("invalid children patch")
+
+      var containerReplacement = ({ type: node.type, id: node.id, props: node.props || {}, children: message.children })
+      if (node.events !== undefined) containerReplacement.events = node.events
+      childrenIndex[node.id] = containerReplacement
+      nodeIndex = childrenIndex
+      revision += 1
+      return true
+    }
+
+    if (message.op !== "set" || typeof message.property !== "string") return reject("invalid patch")
+    if (!allowedProperties[node.type][message.property]) return reject("patch target rejected")
     var value = message.value
     if (value !== null && typeof value !== "string" && typeof value !== "number" && typeof value !== "boolean" && !Array.isArray(value) && !plainObject(value))
       return reject("patch value rejected")

@@ -60,4 +60,11 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "OmarchyUi.BorderSurface {"
     assert_includes panel, "OmarchyUi.BorderSurface {"
   end
+
+  def test_service_validates_structural_child_patches
+    service = source("Service.qml")
+    assert_includes service, 'message.op === "replace_children"'
+    assert_includes service, 'return reject("invalid children patch")'
+    assert_includes service, "validateNode(message.children[childIndex]"
+  end
 end

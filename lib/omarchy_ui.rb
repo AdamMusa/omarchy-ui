@@ -90,6 +90,20 @@ module OmarchyUI
       container_node(:rectangle, id:, props:, &block)
     end
 
+    # Rebuilds only this container's children when state changes. This makes
+    # ordinary Ruby conditionals and collection iteration reactive.
+    def dynamic(type: :column, id: nil, **props, &renderer)
+      raise ArgumentError, "dynamic requires a block" unless renderer
+      definition = @application.components.fetch(type)
+      raise ArgumentError, "dynamic component must be a container: #{type}" unless definition.container
+
+      node = @application.build_node(type, explicit_id: id, props: props)
+      append(node)
+      within(node, &renderer)
+      @application.register_structure(node, renderer)
+      node
+    end
+
     def text(value = UNSET, id: nil, **props, &reader)
       node = leaf_node(:text, id:, props:)
       bind_or_set(node, "text", value, reader)
@@ -228,6 +242,10 @@ module OmarchyUI
       @application.schedule(:async, &block)
     end
 
+    def rebuild(node, &renderer)
+      within(node, &renderer)
+    end
+
     def open_panel(name)
       @application.emit_effect("open_panel", "surface" => name.to_s)
     end
@@ -304,6 +322,7 @@ module OmarchyUI
       @surfaces = {}
       @nodes = {}
       @bindings = []
+      @structures = []
       @handlers = {}
       @sequence = 0
       @output = nil
@@ -350,6 +369,10 @@ module OmarchyUI
       value = normalize_value(evaluate(reader), property)
       node.props[property] = value
       @bindings << Binding.new(node:, property:, reader:, last_value: value, animation: animation)
+    end
+
+    def register_structure(node, renderer)
+      @structures << StructuralBinding.new(node:, renderer:, last_children: node.children.map(&:to_h))
     end
 
     def register_handler(control_id, event, handler)
@@ -434,7 +457,10 @@ module OmarchyUI
 
     def state_changed(_name, _previous, _value)
       @state_change_lock.synchronize do
-        @bindings.each do |binding|
+        @structures.dup.each do |structure|
+          reconcile_structure(structure) if @structures.include?(structure)
+        end
+        @bindings.dup.each do |binding|
         value = normalize_value(evaluate(binding.reader), binding.property)
         next if value == binding.last_value
 
@@ -452,6 +478,32 @@ module OmarchyUI
           emit(patch)
         end
       end
+    end
+
+    def reconcile_structure(structure)
+      previous = structure.node.children.dup
+      previous.each { |child| unregister_subtree(child) }
+      structure.node.children.clear
+      @builder.rebuild(structure.node, &structure.renderer)
+      children = structure.node.children.map(&:to_h)
+      return if children == structure.last_children
+
+      structure.last_children = children
+      emit(
+        "v" => PROTOCOL_VERSION,
+        "type" => "patch",
+        "op" => "replace_children",
+        "id" => structure.node.id,
+        "children" => children
+      )
+    end
+
+    def unregister_subtree(node)
+      node.children.each { |child| unregister_subtree(child) }
+      @nodes.delete(node.id)
+      @bindings.delete_if { |binding| binding.node.equal?(node) }
+      @structures.delete_if { |structure| structure.node.equal?(node) }
+      @handlers.delete_if { |(control_id, _event), _handler| control_id == node.id }
     end
 
     def dispatch_event(message)

@@ -126,6 +126,24 @@ Adapters live in `Components/` and receive the bridge, surface name, control id,
 
 Every state write reevaluates registered reactive property blocks. Only changed values produce patches. Assigning the current value again produces no patch.
 
+Ordinary Ruby conditionals and iteration can be made reactive with a structural container:
+
+```ruby
+dynamic id: :results do
+  if state.items.empty?
+    text "No results", id: :empty
+  else
+    state.items.each do |item|
+      button item.fetch(:label), id: "result.#{item.fetch(:id)}"
+    end
+  end
+end
+```
+
+State changes reconcile only that container's descendants. Removed nodes lose their bindings
+and handlers, new nodes are validated and indexed, and the bridge applies a
+`replace_children` patch without recreating the panel, surface, service, or Ruby process.
+
 The current conditional story is intentionally limited: ordinary Ruby `if` executes while the initial tree is built. Reactively adding or removing a branch requires structural diffing, which is listed under next steps rather than hidden behind a full rerender.
 
 ## Generic QML renderer

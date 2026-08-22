@@ -19,6 +19,11 @@ OmarchyUI.plugin do
       text "Ruby → QML → Omarchy", style: :heading
       text(id: :count) { "Count: #{state.count}" }
 
+      dynamic id: :parity, spacing: 4 do
+        text(state.count.even? ? "Even" : "Odd", id: :parity_label, style: :caption)
+        icon(state.count.even? ? :reset : :plus, id: :parity_icon)
+      end
+
       row spacing: 8 do
         button "Increment", id: :increment do
           state.count += 1
@@ -31,4 +36,3 @@ OmarchyUI.plugin do
     end
   end
 end
-

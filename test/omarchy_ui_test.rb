@@ -381,4 +381,54 @@ class OmarchyUITest < Minitest::Test
     sleep(0.02)
     assert_equal count, ticks.size
   end
+
+  def test_dynamic_containers_reconcile_conditionals_and_event_handlers
+    clicked = []
+    app = OmarchyUI::Application.new do
+      state :items, [{ id: "one", label: "One" }]
+      panel :main do
+        dynamic id: :content do
+          state.items.each do |item|
+            button item.fetch(:label), id: "item.#{item.fetch(:id)}" do
+              clicked << item.fetch(:id)
+            end
+          end
+          text "Empty", id: :empty if state.items.empty?
+        end
+        button("Replace", id: :replace) do
+          state.items = [{ id: "two", label: "Two" }]
+        end
+      end
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    output.truncate(0)
+    output.rewind
+
+    app.receive(event("replace", surface: "main"))
+    patch = messages(output).find { |message| message["op"] == "replace_children" }
+    assert_equal "content", patch.fetch("id")
+    assert_equal ["item.two"], patch.fetch("children").map { |node| node.fetch("id") }
+
+    app.receive(event("item.two", surface: "main"))
+    assert_equal ["two"], clicked
+    app.receive(event("item.one", surface: "main"))
+    assert_equal "protocol_error", messages(output).last.fetch("type")
+  end
+
+  def test_dynamic_container_does_not_patch_an_unchanged_subtree
+    app = OmarchyUI::Application.new do
+      state :unrelated, 0
+      panel :main do
+        dynamic(id: :stable) { text "Same", id: :same }
+        button("Change", id: :change) { state.unrelated += 1 }
+      end
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    output.truncate(0)
+    output.rewind
+    app.receive(event("change", surface: "main"))
+    refute messages(output).any? { |message| message["op"] == "replace_children" }
+  end
 end
