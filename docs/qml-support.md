@@ -29,6 +29,15 @@ The framework has two support levels:
 | `CursorSurface` | `cursor_surface` | size, selection/border state, children | click |
 | `WidgetButton` | `widget_button` | text, tooltip, state, size, rotation | click variants, wheel |
 
+## Models
+
+`list_view` accepts typed primitive or object arrays and supports configurable key, label,
+description, and icon fields. Its `items` and `selected` properties can be reactive bindings;
+updates are incremental property patches rather than complete surface renders. It emits
+`change`, `activate`, and scroll-position payloads containing the row value, index,
+and original typed item. A native adapter can provide an entirely custom delegate while using
+the same array/hash protocol.
+
 ## Shell-owned infrastructure
 
 `BarWidget`, `BarIndicator`, `Panel`, `PanelController`, `KeyboardPanel`, `PopupCard`,

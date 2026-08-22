@@ -5,93 +5,12 @@ require "thread"
 require_relative "omarchy_ui/component_registry"
 require_relative "omarchy_ui/components"
 require_relative "omarchy_ui/animation"
+require_relative "omarchy_ui/protocol"
+require_relative "omarchy_ui/state_store"
+require_relative "omarchy_ui/node"
 
 module OmarchyUI
   VERSION = "0.2.0"
-  PROTOCOL_VERSION = 1
-  MAX_MESSAGE_BYTES = 1_048_576
-  VALID_ID = /\A[a-zA-Z0-9_.:-]{1,128}\z/
-
-  class ProtocolError < StandardError; end
-
-  class StateStore
-    def initialize(on_change)
-      @values = {}
-      @on_change = on_change
-    end
-
-    def define(name, initial)
-      key = name.to_sym
-      raise ArgumentError, "state already defined: #{key}" if @values.key?(key)
-
-      @values[key] = initial
-    end
-
-    def [](name)
-      @values.fetch(name.to_sym)
-    end
-
-    def []=(name, value)
-      write(name.to_sym, value)
-    end
-
-    def method_missing(name, *arguments)
-      raw = name.to_s
-      if raw.end_with?("=")
-        raise ArgumentError, "expected one value" unless arguments.length == 1
-
-        return write(raw.delete_suffix("=").to_sym, arguments.first)
-      end
-
-      return @values.fetch(name) if arguments.empty? && @values.key?(name)
-
-      super
-    end
-
-    def respond_to_missing?(name, include_private = false)
-      key = name.to_s.delete_suffix("=").to_sym
-      @values.key?(key) || super
-    end
-
-    private
-
-    def write(key, value)
-      raise NoMethodError, "unknown state: #{key}" unless @values.key?(key)
-      return value if @values[key] == value
-
-      previous = @values[key]
-      @values[key] = value
-      @on_change.call(key, previous, value)
-      value
-    end
-  end
-
-  class Node
-    attr_reader :type, :id, :props, :children, :events
-
-    def initialize(type:, id:, props: {})
-      @type = type.to_s
-      @id = id.to_s
-      @props = props.transform_keys(&:to_s)
-      @children = []
-      @events = []
-    end
-
-    def to_h
-      result = { "type" => type, "id" => id }
-      result["props"] = props unless props.empty?
-      result["children"] = children.map(&:to_h) unless children.empty?
-      result["events"] = events unless events.empty?
-      result
-    end
-
-    def subscribe(event)
-      @events << event.to_s unless @events.include?(event.to_s)
-    end
-  end
-
-  Binding = Struct.new(:node, :property, :reader, :last_value, :animation, keyword_init: true)
-
   class Builder
     UNSET = Object.new.freeze
 
@@ -546,7 +465,7 @@ module OmarchyUI
       unless surface_contains?(@surfaces.fetch(message["surface"]), message["id"])
         raise ProtocolError, "control does not belong to surface"
       end
-      raise ProtocolError, "invalid event" unless /\A[a-z][a-z0-9_]{0,63}\z/.match?(message["event"].to_s)
+      raise ProtocolError, "invalid event" unless VALID_EVENT.match?(message["event"].to_s)
       raise ProtocolError, "payload must be an object" unless message["payload"].nil? || message["payload"].is_a?(Hash)
       raise ProtocolError, "seq must be an integer" unless message["seq"].nil? || message["seq"].is_a?(Integer)
     end

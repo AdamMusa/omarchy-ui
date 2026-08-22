@@ -31,7 +31,8 @@ module OmarchyUI
     panel_hero: [%i[title meta detail icon_size icon_opacity visible], [], false],
     optical_glyph: [%i[text size color debug_bounds visible], [], false],
     cursor_surface: [%i[width height current outline bordered color visible], %i[click], true],
-    widget_button: [%i[text tooltip active dimmed concealed interactive pressable width height rotation visible], %i[click right_click middle_click wheel], false]
+    widget_button: [%i[text tooltip active dimmed concealed interactive pressable width height rotation visible], %i[click right_click middle_click wheel], false],
+    list_view: [%i[items key_field label_field description_field icon_field selected orientation spacing width height empty_text visible], %i[activate change scroll], false]
   }.freeze
 
   DEFAULT_COMPONENTS = ComponentRegistry.new

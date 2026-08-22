@@ -21,7 +21,7 @@ Loader {
     "grid", "stack", "scroll", "rectangle", "action_button", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
-    "cursor_surface", "widget_button"].indexOf(node ? node.type : "") >= 0
+    "cursor_surface", "widget_button", "list_view"].indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
     var props = node && node.props ? node.props : null
@@ -105,6 +105,7 @@ Loader {
     if (node.type === "optical_glyph") return opticalGlyphComponent
     if (node.type === "cursor_surface") return cursorSurfaceComponent
     if (node.type === "widget_button") return widgetButtonComponent
+    if (node.type === "list_view") return listViewComponent
     return null
   }
   source: node && !builtIn ? bridge.componentSource(node.type) : ""
@@ -511,6 +512,66 @@ Loader {
         root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
       }
       onWheelMoved: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
+    }
+  }
+
+  Component {
+    id: listViewComponent
+    ListView {
+      id: listControl
+      readonly property var sourceItems: root.prop("items", [])
+      readonly property string keyField: String(root.prop("key_field", "id"))
+      readonly property string labelField: String(root.prop("label_field", "label"))
+      readonly property string descriptionField: String(root.prop("description_field", "description"))
+      readonly property string iconField: String(root.prop("icon_field", "icon"))
+      implicitWidth: Number(root.prop("width", 280)); implicitHeight: Number(root.prop("height", 240))
+      orientation: String(root.prop("orientation", "vertical")) === "horizontal" ? ListView.Horizontal : ListView.Vertical
+      spacing: Number(root.prop("spacing", Style.spacing.labelGap)); clip: true; model: sourceItems
+      currentIndex: {
+        var selected = root.prop("selected", null)
+        for (var i = 0; i < sourceItems.length; i++) {
+          var item = sourceItems[i]
+          var key = typeof item === "object" ? item[keyField] : item
+          if (key === selected) return i
+        }
+        return -1
+      }
+      onContentXChanged: if (moving) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", { x: contentX, y: contentY })
+      onContentYChanged: if (moving) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", { x: contentX, y: contentY })
+
+      delegate: OmarchyUi.CursorSurface {
+        required property var modelData
+        required property int index
+        readonly property var value: typeof modelData === "object" ? modelData[listControl.keyField] : modelData
+        width: listControl.orientation === ListView.Vertical ? listControl.width : implicitWidth
+        implicitWidth: rowContent.implicitWidth + Style.spacing.rowPaddingX * 2
+        implicitHeight: Math.max(Style.spacing.controlHeight, rowContent.implicitHeight + Style.spacing.controlPaddingY * 2)
+        current: index === listControl.currentIndex
+        foreground: root.foreground
+        Row {
+          id: rowContent
+          anchors.centerIn: parent
+          spacing: Style.spacing.controlGap
+          Text { visible: text !== ""; text: root.iconGlyph(typeof modelData === "object" ? modelData[listControl.iconField] : ""); color: root.foreground; font.family: root.fontFamily }
+          Column {
+            Text { text: String(typeof modelData === "object" ? (modelData[listControl.labelField] ?? value) : modelData); color: root.foreground; font.family: root.fontFamily }
+            Text { visible: text !== ""; text: String(typeof modelData === "object" ? (modelData[listControl.descriptionField] || "") : ""); color: Qt.darker(root.foreground, 1.4); font.family: root.fontFamily; font.pixelSize: Style.font.caption }
+          }
+        }
+        MouseArea {
+          anchors.fill: parent
+          onClicked: {
+            listControl.currentIndex = index
+            root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: parent.value, index: index, item: modelData })
+            root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", { value: parent.value, index: index, item: modelData })
+          }
+        }
+      }
+
+      Text {
+        anchors.centerIn: parent; visible: listControl.count === 0
+        text: String(root.prop("empty_text", "No items")); color: Qt.darker(root.foreground, 1.4); font.family: root.fontFamily
+      }
     }
   }
 }

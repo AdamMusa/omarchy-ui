@@ -279,4 +279,30 @@ class OmarchyUITest < Minitest::Test
       end
     end
   end
+
+  def test_reactive_list_models_preserve_typed_rows_and_activation_payloads
+    activated = nil
+    app = OmarchyUI::Application.new do
+      state :rows, [{ id: 1, label: "One" }]
+      panel :items do
+        list = component :list_view, id: :items, items: state.rows, selected: 1
+        bind(list, :items) { state.rows }
+        on(list, :activate) { |payload| activated = payload.fetch("item") }
+        button("Add", id: :add) { state.rows = state.rows + [{ id: 2, label: "Two" }] }
+      end
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    output.truncate(0)
+    output.rewind
+
+    app.receive(event("add", surface: "items"))
+    patch = messages(output).first
+    assert_equal [{ "id" => 1, "label" => "One" }, { "id" => 2, "label" => "Two" }], patch.fetch("value")
+
+    app.receive(event("items", surface: "items", name: "activate", payload: {
+      "value" => 2, "index" => 1, "item" => { "id" => 2, "label" => "Two" }
+    }))
+    assert_equal({ "id" => 2, "label" => "Two" }, activated)
+  end
 end
