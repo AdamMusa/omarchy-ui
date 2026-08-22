@@ -4,6 +4,7 @@ require "fileutils"
 require "json"
 require "open3"
 require "rbconfig"
+require "tmpdir"
 
 module OmarchyUI
   class CLI
@@ -46,6 +47,8 @@ module OmarchyUI
     end
 
     def push(arguments)
+      enable = !arguments.delete("--no-enable")
+      restart = !arguments.delete("--no-restart")
       source = File.expand_path(arguments.shift || Dir.pwd)
       manifest_path = File.join(source, "manifest.json")
       manifest = JSON.parse(File.read(manifest_path))
@@ -55,18 +58,33 @@ module OmarchyUI
 
       plugin_root = File.expand_path("~/.config/omarchy/plugins")
       destination = File.join(plugin_root, plugin_id)
+      raise ArgumentError, "cannot push an installed plugin onto itself" if source == destination
       FileUtils.mkdir_p(plugin_root)
+      backup = nil
+      staging = Dir.mktmpdir(".#{plugin_id}.staging-", plugin_root)
+      entries = Dir.children(source).reject { |entry| entry == ".git" }
+      FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging)
+      raise ArgumentError, "staged plugin validation failed" unless system("omarchy", "plugin", "validate", staging)
+
       if File.exist?(destination)
-        backup = "#{destination}.backup-#{Time.now.strftime('%Y%m%d%H%M%S')}"
+        backup = "#{destination}.backup-#{Time.now.strftime('%Y%m%d%H%M%S')}-#{Process.pid}"
         FileUtils.mv(destination, backup)
         @out.puts("Backed up existing plugin to #{backup}")
       end
-      FileUtils.cp_r(source, destination)
-      FileUtils.rm_rf(File.join(destination, ".git"))
-      system("omarchy", "plugin", "enable", plugin_id)
-      system("omarchy", "restart", "shell")
+      FileUtils.mv(staging, destination)
+      staging = nil
+      system("omarchy", "plugin", "enable", plugin_id) if enable
+      system("omarchy", "restart", "shell") if restart
       @out.puts("Pushed #{plugin_id} to #{destination}")
       0
+    rescue StandardError
+      if backup && !File.exist?(destination) && File.exist?(backup)
+        FileUtils.mv(backup, destination)
+        @err.puts("Restored previous plugin after push failure")
+      end
+      raise
+    ensure
+      FileUtils.remove_entry(staging) if staging && File.exist?(staging)
     end
   end
 end
