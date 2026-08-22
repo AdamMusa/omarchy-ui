@@ -14,10 +14,10 @@ class CLITest < Minitest::Test
   def test_run_executes_the_requested_ruby_file_with_arguments
     Dir.mktmpdir do |directory|
       program = File.join(directory, "app.rb")
-      File.write(program, "puts ARGV.join(':')\n")
+      File.write(program, "require 'omarchy_ui'; puts [OmarchyUI::VERSION, *ARGV].join(':')\n")
       stdout, stderr, status = Open3.capture3(File.join(ROOT, "bin/omarchy_ui"), "run", program, "one", "two")
       assert status.success?, stderr
-      assert_equal "one:two\n", stdout
+      assert_equal "#{OmarchyUI::VERSION}:one:two\n", stdout
     end
   end
 
@@ -64,7 +64,7 @@ class CLITest < Minitest::Test
       end
 
       stdout, stderr, status = Open3.capture3(
-        { "RUBYLIB" => File.join(ROOT, "lib") }, RbConfig.ruby, File.join(project, "main.rb")
+        RbConfig.ruby, File.join(project, "main.rb")
       )
       assert status.success?, stderr
       assert_equal %w[ready render], stdout.lines.map { |line| JSON.parse(line).fetch("type") }

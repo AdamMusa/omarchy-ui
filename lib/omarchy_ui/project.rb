@@ -74,7 +74,11 @@ module OmarchyUI
       <<~RUBY
         # frozen_string_literal: true
 
-        require "omarchy_ui"
+        begin
+          require "omarchy_ui"
+        rescue LoadError
+          require_relative "vendor/omarchy_ui/lib/omarchy_ui"
+        end
 
         OmarchyUI.plugin do
           bar_widget do

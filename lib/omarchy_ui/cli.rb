@@ -39,7 +39,7 @@ module OmarchyUI
     def run_file(arguments)
       file = File.expand_path(arguments.shift || raise(ArgumentError, "run requires a Ruby file"))
       raise ArgumentError, "Ruby file not found: #{file}" unless File.file?(file)
-      exec(RbConfig.ruby, file, *arguments)
+      exec(RbConfig.ruby, "-I", File.join(FRAMEWORK_ROOT, "lib"), file, *arguments)
     end
 
     def new_project(arguments)
@@ -90,8 +90,8 @@ module OmarchyUI
       end
       FileUtils.mv(staging, destination)
       staging = nil
-      system("omarchy", "plugin", "enable", plugin_id) if enable
-      system("omarchy", "restart", "shell") if restart
+      activate_plugin(plugin_id) if enable
+      raise ArgumentError, "shell restart failed; plugin is installed but not active" if restart && !system("omarchy", "restart", "shell")
       @out.puts("Pushed #{plugin_id} to #{destination}")
       0
     rescue StandardError
@@ -121,6 +121,16 @@ module OmarchyUI
     rescue StandardError
       FileUtils.remove_entry(staging) if staging && File.exist?(staging)
       raise
+    end
+
+    def activate_plugin(plugin_id)
+      return if system("omarchy", "plugin", "enable", plugin_id)
+      system("omarchy-shell", "shell", "rescanPlugins")
+      20.times do
+        return if system("omarchy", "plugin", "enable", plugin_id, out: File::NULL, err: File::NULL)
+        sleep(0.1)
+      end
+      raise ArgumentError, "plugin was installed but Omarchy could not enable #{plugin_id}"
     end
   end
 end
