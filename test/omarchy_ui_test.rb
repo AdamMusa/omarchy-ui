@@ -152,6 +152,27 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_checkbox_is_a_value_input_with_change_handler
+    application = OmarchyUI::Application.new do
+      state :enabled, false
+      app do
+        checkbox "Enable Wi-Fi", checked: state.enabled do |event|
+          state.enabled = event.fetch("value")
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "checkbox", node.fetch("type")
+    assert_equal "Enable Wi-Fi", node.dig("props", "label")
+    assert_equal false, node.dig("props", "checked")
+    assert_includes node.fetch("events"), "change"
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0

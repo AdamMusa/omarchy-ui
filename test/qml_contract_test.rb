@@ -176,6 +176,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"text", { text: text }'
   end
 
+  def test_checkbox_has_omarchy_styling_and_value_event
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "checkbox"'
+    assert_includes renderer, "QQC.CheckBox"
+    assert_includes renderer, 'root.iconGlyph("check")'
+    assert_includes renderer, '"change", { value: checked }'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

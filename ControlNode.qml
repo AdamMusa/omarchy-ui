@@ -20,7 +20,7 @@ Loader {
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay",
-    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "toggle_switch", "text_field",
+    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
@@ -200,6 +200,7 @@ Loader {
     if (node.type === "bar_icon_button") return barIconButtonComponent
     if (node.type === "bar_indicator") return barIndicatorComponent
     if (node.type === "toggle") return toggleComponent
+    if (node.type === "checkbox") return checkboxComponent
     if (node.type === "toggle_switch") return toggleSwitchComponent
     if (node.type === "text_field") return textFieldComponent
     if (node.type === "number_field") return numberFieldComponent
@@ -733,6 +734,48 @@ Loader {
       descriptionSize: Number(root.prop("description_size", Style.font.caption))
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !checked })
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
+    }
+  }
+
+  Component {
+    id: checkboxComponent
+    QQC.CheckBox {
+      id: checkControl
+      text: root.escapeAutoText(root.prop("label", ""))
+      checked: root.prop("checked", false) === true
+      hoverEnabled: true
+      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
+      leftPadding: 0
+      rightPadding: 0
+      indicator: Rectangle {
+        implicitWidth: Number(root.prop("indicator_size", Style.space(20)))
+        implicitHeight: implicitWidth
+        x: checkControl.leftPadding
+        y: checkControl.topPadding + (checkControl.availableHeight - height) / 2
+        radius: Math.min(Style.cornerRadius, width / 4)
+        color: checkControl.checked ? root.prop("accent", Color.accent) : root.prop("background", "transparent")
+        border.width: Style.normalBorderWidth
+        border.color: checkControl.checked ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
+        Text {
+          anchors.centerIn: parent
+          text: checkControl.checked ? root.iconGlyph("check") : ""
+          textFormat: Text.PlainText
+          color: Color.background
+          font.family: String(root.prop("font_family", root.fontFamily))
+          font.pixelSize: parent.width * 0.7
+        }
+      }
+      contentItem: Text {
+        leftPadding: checkControl.indicator.width + checkControl.spacing
+        text: checkControl.text
+        textFormat: Text.PlainText
+        color: root.prop("foreground", root.foreground)
+        font.family: String(root.prop("font_family", root.fontFamily))
+        font.pixelSize: Number(root.prop("font_size", Style.font.body))
+        verticalAlignment: Text.AlignVCenter
+      }
+      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked })
+      onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
     }
   }
 

@@ -108,6 +108,10 @@ module OmarchyUI
       input_component(:toggle, :checked, checked, id:, props: props.merge(label: label.to_s), handler:)
     end
 
+    def checkbox(label = "", id: nil, checked: UNSET, **props, &handler)
+      input_component(:checkbox, :checked, checked, id:, props: props.merge(label: label.to_s), handler:)
+    end
+
     def toggle_switch(id: nil, checked: UNSET, **props, &handler)
       input_component(:toggle_switch, :checked, checked, id:, props:, handler:)
     end
