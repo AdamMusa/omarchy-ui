@@ -15,6 +15,7 @@ module OmarchyUI
   class ComponentRegistry
     QML_FILE = /\A[A-Z][A-Za-z0-9]*\.qml\z/
     NAME = /\A[a-z][a-z0-9_]{0,63}\z/
+    ITEM_PROPERTIES = %i[visible enabled opacity scale rotation z width height].freeze
 
     def initialize
       @components = {}
@@ -25,7 +26,7 @@ module OmarchyUI
       raise ArgumentError, "component already registered: #{key}" if @components.key?(key)
       raise ArgumentError, "invalid component name: #{name.inspect}" unless NAME.match?(key.to_s)
       raise ArgumentError, "invalid component adapter: #{qml.inspect}" unless QML_FILE.match?(qml.to_s)
-      property_names = properties.map(&:to_sym)
+      property_names = (properties.map(&:to_sym) + ITEM_PROPERTIES).uniq
       event_names = events.map(&:to_sym)
       invalid_property = property_names.find { |property| !NAME.match?(property.to_s) }
       invalid_event = event_names.find { |event| !NAME.match?(event.to_s) }

@@ -58,10 +58,13 @@ Loader {
 
   function runTransition() {
     var transition = node ? node.transition : null
-    if (!item || !transition || !item.hasOwnProperty(transition.property)) return
+    if (!item || !transition) return
+    var commonProperties = ["opacity", "scale", "rotation", "z", "width", "height"]
+    var animationTarget = commonProperties.indexOf(transition.property) >= 0 ? root : item
+    if (!animationTarget.hasOwnProperty(transition.property)) return
     if (transition.from === undefined || transition.from === null) return
     patchAnimation.stop()
-    patchAnimation.target = item
+    patchAnimation.target = animationTarget
     patchAnimation.property = String(transition.property)
     patchAnimation.from = transition.from
     patchAnimation.to = transition.to
@@ -73,6 +76,11 @@ Loader {
   }
 
   visible: node !== null && prop("visible", true) !== false
+  enabled: prop("enabled", true) !== false
+  opacity: Number(prop("opacity", 1))
+  scale: Number(prop("scale", 1))
+  rotation: Number(prop("rotation", 0))
+  z: Number(prop("z", 0))
   sourceComponent: {
     if (!node) return null
     if (node.type === "text") return textComponent
@@ -174,12 +182,25 @@ Loader {
       text: String(root.prop("text", ""))
       iconText: root.iconGlyph(root.prop("icon", ""))
       tooltipText: String(root.prop("tooltip", ""))
-      enabled: root.prop("enabled", true) !== false
       selected: root.prop("selected", false) === true
+      active: root.prop("active", false) === true
+      hasCursor: root.prop("cursor", false) === true
+      focusable: root.prop("focusable", true) !== false
       bordered: root.prop("bordered", true) !== false
-      focusable: true
-      foreground: root.foreground
-      fontFamily: root.fontFamily
+      foreground: root.prop("foreground", root.foreground)
+      background: root.prop("background", "transparent")
+      accent: root.prop("accent", Color.accent)
+      fontFamily: String(root.prop("font_family", root.fontFamily))
+      fontSize: Number(root.prop("font_size", Style.font.body))
+      iconSize: Number(root.prop("icon_size", Style.font.icon))
+      iconRotation: Number(root.prop("icon_rotation", 0))
+      iconSpinning: root.prop("icon_spinning", false) === true
+      horizontalPadding: Number(root.prop("horizontal_padding", Style.spacing.controlPaddingX))
+      verticalPadding: Number(root.prop("vertical_padding", Style.spacing.controlPaddingY))
+      leftAlign: root.prop("left_align", false) === true
+      tooltipBackground: root.prop("tooltip_background", Color.tooltip.background)
+      tooltipForeground: root.prop("tooltip_foreground", Color.tooltip.text)
+      tooltipBorder: root.prop("tooltip_border", Color.tooltip.border)
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
       onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
@@ -347,8 +368,11 @@ Loader {
     id: actionButtonComponent
     OmarchyUi.PanelActionButton {
       iconText: root.iconGlyph(root.prop("icon", "")); tooltipText: String(root.prop("tooltip", ""))
-      enabled: root.prop("enabled", true) !== false; bordered: root.prop("bordered", false) === true
-      size: Number(root.prop("size", implicitHeight)); foreground: root.foreground; fontFamily: root.fontFamily
+      bordered: root.prop("bordered", false) === true; focusable: root.prop("focusable", false) === true
+      hasCursor: root.prop("cursor", false) === true
+      size: Number(root.prop("size", 28)); foreground: root.prop("foreground", root.foreground)
+      hoverColor: root.prop("hover_color", foreground); fontFamily: String(root.prop("font_family", root.fontFamily))
+      fontSize: Number(root.prop("font_size", Style.font.icon))
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
@@ -358,8 +382,11 @@ Loader {
     id: toggleComponent
     OmarchyUi.Toggle {
       label: String(root.prop("label", "")); description: String(root.prop("description", ""))
-      checked: root.prop("checked", false) === true; enabled: root.prop("enabled", true) !== false
-      foreground: root.foreground; fontFamily: root.fontFamily
+      checked: root.prop("checked", false) === true; hasCursor: root.prop("cursor", false) === true
+      rounded: root.prop("rounded", Style.cornerRadius > 0) === true
+      foreground: root.prop("foreground", root.foreground); accent: root.prop("accent", Color.accent)
+      fontFamily: String(root.prop("font_family", root.fontFamily)); titleSize: Number(root.prop("title_size", Style.font.subtitle))
+      descriptionSize: Number(root.prop("description_size", Style.font.caption))
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !checked })
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
@@ -369,7 +396,14 @@ Loader {
     id: toggleSwitchComponent
     OmarchyUi.ToggleSwitch {
       checked: root.prop("checked", false) === true; busy: root.prop("busy", false) === true
-      interactive: root.prop("enabled", true) !== false; foreground: root.foreground
+      interactive: root.prop("interactive", root.prop("enabled", true)) !== false
+      hasCursor: root.prop("cursor", false) === true; cursorRing: root.prop("cursor_ring", true) !== false
+      cursorPad: Number(root.prop("cursor_pad", Style.space(6))); rounded: root.prop("rounded", Style.cornerRadius > 0) === true
+      foreground: root.prop("foreground", root.foreground); accent: root.prop("accent", Color.accent)
+      trackHeight: Number(root.prop("track_height", Math.max(22, Math.round(Style.spacing.controlHeight * 0.55))))
+      trackWidth: Number(root.prop("track_width", Math.round(trackHeight * 1.9)))
+      knobSize: Number(root.prop("knob_size", Math.max(6, Math.round(trackHeight * 0.72))))
+      knobInset: Number(root.prop("knob_inset", Math.max(1, Math.round((trackHeight - knobSize) / 2))))
       onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !checked })
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
@@ -379,8 +413,12 @@ Loader {
     id: textFieldComponent
     OmarchyUi.TextField {
       text: String(root.prop("text", "")); placeholderText: String(root.prop("placeholder", ""))
-      password: root.prop("password", false) === true; enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 240)); foreground: root.foreground
+      password: root.prop("password", false) === true
+      implicitWidth: Number(root.prop("width", 240)); foreground: root.prop("foreground", root.foreground)
+      accent: root.prop("accent", Color.accent); selectionTint: root.prop("selection_tint", Style.selectionFillFor(foreground, accent))
+      horizontalPadding: Number(root.prop("horizontal_padding", Style.spacing.controlPaddingX))
+      verticalPadding: Number(root.prop("vertical_padding", Style.spacing.inputPaddingY)); hasCursor: root.prop("cursor", false) === true
+      onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
       onEditingFinished: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
       onAccepted: root.bridge.sendEvent(root.surfaceName, root.controlId, "submit", { value: text })
       onActiveFocusChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
@@ -392,8 +430,11 @@ Loader {
     OmarchyUi.NumberField {
       label: String(root.prop("label", "")); value: Number(root.prop("value", 0))
       from: Number(root.prop("from", 0)); to: Number(root.prop("to", 100)); stepSize: Number(root.prop("step", 1))
-      enabled: root.prop("enabled", true) !== false; foreground: root.foreground; fontFamily: root.fontFamily
+      foreground: root.prop("foreground", root.foreground); accent: root.prop("accent", Color.accent)
+      fontFamily: String(root.prop("font_family", root.fontFamily)); fontSize: Number(root.prop("font_size", Style.font.body))
+      fieldWidth: Number(root.prop("field_width", Style.spacing.numberFieldWidth)); hasCursor: root.prop("cursor", false) === true
       onModified: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
+      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
   }
 
@@ -402,7 +443,11 @@ Loader {
     OmarchyUi.PanelSlider {
       value: Number(root.prop("value", 0)); minimum: Number(root.prop("minimum", 0)); maximum: Number(root.prop("maximum", 1))
       step: Number(root.prop("step", 0.05)); integer: root.prop("integer", false) === true; tickCount: Number(root.prop("ticks", 0))
-      enabled: root.prop("enabled", true) !== false; implicitWidth: Number(root.prop("width", 200))
+      implicitWidth: Number(root.prop("width", 200)); trackColor: root.prop("track_color", "#333")
+      fillColor: root.prop("fill_color", root.foreground); knobColor: root.prop("knob_color", root.foreground)
+      trackHeight: Number(root.prop("track_height", Math.max(4, Math.round(Style.spacing.controlHeight * 0.11))))
+      knobSize: Number(root.prop("knob_size", Math.max(14, Math.round(Style.spacing.controlHeight * 0.38))))
+      tickColor: root.prop("tick_color", Color.background)
       onReleased: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
       onMoved: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: value }) }
       onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
@@ -413,8 +458,11 @@ Loader {
     id: dropdownComponent
     OmarchyUi.Dropdown {
       label: String(root.prop("label", "")); value: String(root.prop("value", "")); options: root.prop("options", [])
-      enabled: root.prop("enabled", true) !== false; implicitWidth: Number(root.prop("width", 240))
-      foreground: root.foreground; fontFamily: root.fontFamily
+      implicitWidth: Number(root.prop("width", 240)); foreground: root.prop("foreground", root.foreground)
+      background: root.prop("background", Color.popups.background); popupBorder: root.prop("popup_border", Color.popups.border)
+      accent: root.prop("accent", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
+      rowHeight: Number(root.prop("row_height", Style.spacing.controlHeight)); popupRowHeight: Number(root.prop("popup_row_height", Style.spacing.popupRowHeight))
+      showLabel: root.prop("show_label", true) !== false; hasCursor: root.prop("cursor", false) === true
       onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
@@ -425,7 +473,14 @@ Loader {
     OmarchyUi.MultiSelect {
       label: String(root.prop("label", "")); values: root.prop("values", []); options: root.prop("options", [])
       placeholderText: String(root.prop("placeholder", "Search...")); enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 240)); foreground: root.foreground; fontFamily: root.fontFamily
+      optionsCommand: root.prop("options_command", []); optionsCommandCwd: String(root.prop("options_command_cwd", ""))
+      emptyText: String(root.prop("empty_text", "No options")); noSelectionText: String(root.prop("no_selection_text", "None selected"))
+      triggerLabel: String(root.prop("trigger_label", "")); showLabel: root.prop("show_label", true) !== false
+      implicitWidth: Number(root.prop("width", 240)); foreground: root.prop("foreground", root.foreground)
+      background: root.prop("background", Color.popups.background); popupBorder: root.prop("popup_border", Color.popups.border)
+      accent: root.prop("accent", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
+      rowHeight: Number(root.prop("row_height", Style.spacing.controlHeight)); popupRowHeight: Number(root.prop("popup_row_height", Style.spacing.popupRowHeight))
+      popupMinHeight: Number(root.prop("popup_min_height", Style.spacing.searchablePopupMinHeight)); hasCursor: root.prop("cursor", false) === true
       onChanged: function(values) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: values }) }
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
@@ -434,8 +489,11 @@ Loader {
   Component {
     id: buttonGroupComponent
     OmarchyUi.ButtonGroup {
-      value: String(root.prop("value", "")); options: root.prop("options", []); enabled: root.prop("enabled", true) !== false
-      foreground: root.foreground; fontFamily: root.fontFamily
+      value: String(root.prop("value", "")); options: root.prop("options", [])
+      foreground: root.prop("foreground", root.foreground); background: root.prop("background", Color.background)
+      accent: root.prop("accent", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
+      fontSize: Number(root.prop("font_size", Style.font.body)); focusable: root.prop("focusable", true) !== false
+      cursorIndex: Number(root.prop("cursor_index", -1))
       onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
       onHovered: function(index, value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { index: index, value: value }) }
     }
@@ -459,8 +517,12 @@ Loader {
     OmarchyUi.SearchableDropdown {
       label: String(root.prop("label", "")); value: String(root.prop("value", "")); options: root.prop("options", [])
       placeholderText: String(root.prop("placeholder", "Search...")); emptyText: String(root.prop("empty_text", "No matches"))
-      triggerLabel: String(root.prop("trigger_label", "")); enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 240)); foreground: root.foreground; fontFamily: root.fontFamily
+      triggerLabel: String(root.prop("trigger_label", "")); implicitWidth: Number(root.prop("width", 240))
+      foreground: root.prop("foreground", root.foreground); background: root.prop("background", Color.popups.background)
+      popupBorder: root.prop("popup_border", Color.popups.border); accent: root.prop("accent", Color.accent)
+      fontFamily: String(root.prop("font_family", root.fontFamily)); rowHeight: Number(root.prop("row_height", Style.spacing.controlHeight))
+      popupRowHeight: Number(root.prop("popup_row_height", Style.spacing.popupRowHeight)); popupMinHeight: Number(root.prop("popup_min_height", Style.spacing.searchablePopupMinHeight))
+      showLabel: root.prop("show_label", true) !== false; hasCursor: root.prop("cursor", false) === true
       onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
     }
@@ -472,6 +534,10 @@ Loader {
       opened: root.prop("opened", false) === true; message: String(root.prop("message", ""))
       cancelText: String(root.prop("cancel_text", "Cancel")); confirmText: String(root.prop("confirm_text", "Confirm"))
       selectedIndex: Number(root.prop("selected_index", 1)); visible: root.prop("visible", true) !== false
+      background: root.prop("background", Color.background); foreground: root.prop("foreground", root.foreground)
+      scrim: root.prop("scrim", Util.alpha(Color.background, 0.7)); selectedBackground: root.prop("selected_background", Util.alpha(root.foreground, 0.08))
+      selectedText: root.prop("selected_text", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
+      cornerRadius: Number(root.prop("corner_radius", Style.cornerRadius))
       onCanceled: root.bridge.sendEvent(root.surfaceName, root.controlId, "cancel", {})
       onConfirmed: root.bridge.sendEvent(root.surfaceName, root.controlId, "confirm", {})
     }
@@ -482,7 +548,8 @@ Loader {
     OmarchyUi.PanelHero {
       title: String(root.prop("title", "")); meta: String(root.prop("meta", "")); detail: String(root.prop("detail", ""))
       iconSize: Number(root.prop("icon_size", Style.font.display)); iconOpacity: Number(root.prop("icon_opacity", 1))
-      foreground: root.foreground; fontFamily: root.fontFamily
+      metaOpacity: Number(root.prop("meta_opacity", 1)); foreground: root.prop("foreground", root.foreground)
+      fontFamily: String(root.prop("font_family", root.fontFamily))
     }
   }
 
@@ -493,7 +560,9 @@ Loader {
     OmarchyUi.CursorSurface {
       implicitWidth: Number(root.prop("width", contentItem.implicitWidth)); implicitHeight: Number(root.prop("height", contentItem.implicitHeight))
       current: root.prop("current", false) === true; outline: root.prop("outline", false) === true; bordered: root.prop("bordered", false) === true
-      foreground: root.foreground
+      hasCursor: root.prop("cursor", false) === true; foreground: root.prop("foreground", root.foreground)
+      accent: root.prop("accent", Color.accent); fill: root.prop("fill", Style.hoverFillFor(foreground, accent))
+      currentFill: root.prop("current_fill", Style.selectedFillFor(foreground, accent))
       Column { id: contentItem; anchors.centerIn: parent; Repeater { model: root.node.children || []; delegate: childDelegate } }
       MouseArea { anchors.fill: parent; onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {}) }
     }
@@ -505,8 +574,13 @@ Loader {
       text: String(root.prop("text", "")); tooltipText: String(root.prop("tooltip", "")); active: root.prop("active", false) === true
       dimmed: root.prop("dimmed", false) === true; concealed: root.prop("concealed", false) === true
       interactive: root.prop("interactive", true) !== false; pressable: root.prop("pressable", true) !== false
-      fixedWidth: Number(root.prop("width", -1)); fixedHeight: Number(root.prop("height", -1)); textRotation: Number(root.prop("rotation", 0))
-      foreground: root.foreground; fontFamily: root.fontFamily
+      fontFamily: String(root.prop("font_family", root.fontFamily)); fontSize: Number(root.prop("font_size", Style.font.body))
+      foreground: root.prop("foreground", root.foreground); activeColor: root.prop("active_color", Color.urgent)
+      horizontalMargin: Number(root.prop("horizontal_margin", 8.5)); verticalPadding: Number(root.prop("vertical_padding", 6))
+      fixedWidth: Number(root.prop("fixed_width", -1)); fixedHeight: Number(root.prop("fixed_height", -1)); textRotation: Number(root.prop("text_rotation", 0))
+      keepSpace: root.prop("keep_space", false) === true; useActiveColor: root.prop("use_active_color", true) !== false
+      maintainIndicatorReveal: root.prop("maintain_indicator_reveal", false) === true
+      labelVisible: root.prop("label_visible", true) !== false; hasVisualContent: root.prop("has_visual_content", text !== "") === true
       onPressed: function(button) {
         var eventName = button === Qt.RightButton ? "right_click" : (button === Qt.MiddleButton ? "middle_click" : "click")
         root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
