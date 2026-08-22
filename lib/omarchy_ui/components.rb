@@ -31,6 +31,7 @@ module OmarchyUI
     button: [%i[text icon tooltip selected active cursor focusable bordered foreground background accent font_family font_size icon_size icon_rotation icon_spinning horizontal_padding vertical_padding left_align tooltip_background tooltip_foreground tooltip_border], %i[click right_click hover], false],
     action_button: [%i[icon tooltip foreground hover_color font_family font_size size focusable cursor bordered], %i[click hover], false],
     bar_icon_button: [%i[icon tooltip active foreground active_color slot_size optical_size font_family font_size text_rotation keep_space dimmed concealed interactive], %i[click right_click middle_click wheel], false],
+    bar_indicator: [%i[active active_icon inactive_icon active_tooltip inactive_tooltip indicator_block foreground active_color font_family font_size], %i[click right_click middle_click wheel], false],
     toggle: [%i[label description checked cursor rounded foreground accent font_family title_size description_size], %i[change hover], false],
     toggle_switch: [%i[checked busy interactive cursor cursor_ring cursor_pad rounded foreground accent track_height track_width knob_size knob_inset], %i[change hover], false],
     text_field: [%i[text placeholder password foreground accent selection_tint horizontal_padding vertical_padding cursor], %i[change submit focus blur input], false],

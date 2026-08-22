@@ -149,6 +149,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"middle_click"'
   end
 
+  def test_bar_indicator_uses_native_active_inactive_control
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "bar_indicator"'
+    assert_includes renderer, "OmarchyUi.BarIndicator"
+    assert_includes renderer, 'activeText: root.iconGlyph(root.prop("active_icon", ""))'
+    assert_includes renderer, 'indicatorBlock: String(root.prop("indicator_block", "single"))'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

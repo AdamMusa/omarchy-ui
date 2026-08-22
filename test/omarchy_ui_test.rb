@@ -93,6 +93,25 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_bar_indicator_serializes_active_and_inactive_states
+    application = OmarchyUI::Application.new do
+      bar_widget do
+        bar_indicator :wifi, active: true, inactive_icon: :xmark,
+                             active_tooltip: "Online", inactive_tooltip: "Offline"
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "bar", "children", 0)
+
+    assert_equal "bar_indicator", node.fetch("type")
+    assert_equal true, node.dig("props", "active")
+    assert_equal "wifi", node.dig("props", "active_icon")
+    assert_equal "xmark", node.dig("props", "inactive_icon")
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0

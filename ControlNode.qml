@@ -20,7 +20,7 @@ Loader {
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card",
-    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "toggle", "toggle_switch", "text_field",
+    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view"].indexOf(node ? node.type : "") >= 0
@@ -197,6 +197,7 @@ Loader {
     if (node.type === "rectangle") return rectangleComponent
     if (node.type === "action_button") return actionButtonComponent
     if (node.type === "bar_icon_button") return barIconButtonComponent
+    if (node.type === "bar_indicator") return barIndicatorComponent
     if (node.type === "toggle") return toggleComponent
     if (node.type === "toggle_switch") return toggleSwitchComponent
     if (node.type === "text_field") return textFieldComponent
@@ -652,6 +653,26 @@ Loader {
       dimmed: root.prop("dimmed", false) === true
       concealed: root.prop("concealed", false) === true
       interactive: root.prop("interactive", true) !== false
+      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
+      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
+      onMiddleClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "middle_click", {})
+      onWheel: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
+    }
+  }
+
+  Component {
+    id: barIndicatorComponent
+    OmarchyUi.BarIndicator {
+      active: root.prop("active", false) === true
+      activeText: root.iconGlyph(root.prop("active_icon", ""))
+      inactiveText: root.iconGlyph(root.prop("inactive_icon", root.prop("active_icon", "")))
+      activeTooltipText: root.escapeAutoText(root.prop("active_tooltip", ""))
+      inactiveTooltipText: root.escapeAutoText(root.prop("inactive_tooltip", root.prop("active_tooltip", "")))
+      indicatorBlock: String(root.prop("indicator_block", "single"))
+      foreground: root.prop("foreground", root.foreground)
+      activeColor: root.prop("active_color", Color.accent)
+      fontFamily: String(root.prop("font_family", root.fontFamily))
+      fontSize: Number(root.prop("font_size", Style.font.caption))
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
       onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
       onMiddleClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "middle_click", {})

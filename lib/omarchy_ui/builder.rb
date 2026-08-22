@@ -99,6 +99,10 @@ module OmarchyUI
       action_component(:bar_icon_button, :icon, icon, id:, props:, handler:)
     end
 
+    def bar_indicator(active_icon, id: nil, **props, &handler)
+      action_component(:bar_indicator, :active_icon, active_icon, id:, props:, handler:)
+    end
+
     def toggle(label = "", id: nil, checked: UNSET, **props, &handler)
       input_component(:toggle, :checked, checked, id:, props: props.merge(label: label.to_s), handler:)
     end
