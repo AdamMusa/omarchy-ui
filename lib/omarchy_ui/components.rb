@@ -25,6 +25,7 @@ module OmarchyUI
     rectangle: [%i[width height color radius border_color border_width padding visible], %i[click], true],
     text: [%i[text style size bold color wrap width visible], [], false],
     icon: [%i[name text size color visible], [], false],
+    tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],
     image: [%i[source width height fill_mode visible], [], false],
     spacer: [%i[width height visible], [], false],
     button: [%i[text icon tooltip selected active cursor focusable bordered foreground background accent font_family font_size icon_size icon_rotation icon_spinning horizontal_padding vertical_padding left_align tooltip_background tooltip_foreground tooltip_border], %i[click right_click hover], false],

@@ -81,6 +81,7 @@ module OmarchyUI
     end
 
     def icon(name, id: nil, **props) = component(:icon, id:, name: name.to_s, **props)
+    def tooltip(value, id: nil, **props) = component(:tooltip, id:, text: value.to_s, **props)
     def image(source, id: nil, **props) = component(:image, id:, source: source.to_s, **props)
     def spacer(id: nil, **props) = component(:spacer, id:, **props)
     def separator(id: nil, **props) = component(:separator, id:, **props)

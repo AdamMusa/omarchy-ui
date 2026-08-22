@@ -166,6 +166,7 @@ Every component supports `visible`, `enabled`, `opacity`, `scale`, `rotation`, `
 | `rectangle` | `color`, `radius`, `border_color`, `border_width`, `padding` | `click` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
+| `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
 | `image` | `source`, `fill_mode` | — | no |
 | `spacer` | — | — | no |
 | `progress` | `value`, `minimum`, `maximum`, `color` | — | no |

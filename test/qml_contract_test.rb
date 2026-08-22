@@ -132,6 +132,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'color: root.prop("color", root.foreground)'
   end
 
+  def test_tooltip_uses_the_native_omarchy_panel_tooltip
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "tooltip"'
+    assert_includes renderer, "OmarchyUi.PanelToolTip"
+    assert_includes renderer, 'panelBackground: root.prop("background", Color.tooltip.background)'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

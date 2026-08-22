@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "icon", "button", "row", "column", "container", "image", "spacer",
+  readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card",
     "stack", "scroll", "rectangle", "action_button", "toggle", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "separator",
@@ -178,6 +178,7 @@ Loader {
     if (!node) return null
     if (node.type === "text") return textComponent
     if (node.type === "icon") return iconComponent
+    if (node.type === "tooltip") return tooltipComponent
     if (node.type === "button") return buttonComponent
     if (node.type === "row") return rowComponent
     if (node.type === "column") return columnComponent
@@ -296,6 +297,21 @@ Loader {
       color: root.prop("color", root.foreground)
       font.family: root.fontFamily
       font.pixelSize: Number(root.prop("size", Style.font.icon))
+    }
+  }
+
+  Component {
+    id: tooltipComponent
+    OmarchyUi.PanelToolTip {
+      text: root.escapeAutoText(root.prop("text", ""))
+      visible: root.prop("visible", false) === true
+      delay: Number(root.prop("delay", 400))
+      timeout: Number(root.prop("timeout", -1))
+      panelForeground: root.prop("foreground", Color.tooltip.text)
+      panelBackground: root.prop("background", Color.tooltip.background)
+      panelBorder: root.prop("border", Color.tooltip.border)
+      fontFamily: String(root.prop("font_family", root.fontFamily))
+      fontSize: Number(root.prop("font_size", Style.font.bodySmall))
     }
   }
 
