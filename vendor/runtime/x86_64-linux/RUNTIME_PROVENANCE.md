@@ -1,10 +1,10 @@
 # Omarchy UI runtime provenance
 
 - Omarchy UI source: https://github.com/AdamMusa/omarchy-ui
-- Omarchy UI source revision: `de4819e5582e23a5b2c05dffe5cf64922edb1074`
+- Omarchy UI source revision: `6910e8decefe2a6cf20e0bdbe85193bde04fa37c`
 - mruby source revision: `831da26b9021de0369d17b71b5667e2941a1a32d`
 - Target: x86-64 Linux
-- SHA-256: `b1d6d40a2f42c314732f989441e6239d771e74800b7a62af0c85a03e79c76ee9`
+- SHA-256: `e68455eb59d02e2a083e268ce1e053d1cc7dba6451dd5be9bf7f863a3f173e6e`
 
 Rebuild and verification instructions are committed at
-[`docs/runtime-build.md`](https://github.com/AdamMusa/omarchy-ui/blob/de4819e5582e23a5b2c05dffe5cf64922edb1074/docs/runtime-build.md).
+[`docs/runtime-build.md`](https://github.com/AdamMusa/omarchy-ui/blob/6910e8decefe2a6cf20e0bdbe85193bde04fa37c/docs/runtime-build.md).
