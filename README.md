@@ -134,19 +134,8 @@ end
 
 State accepts protocol-safe values: `nil`, booleans, finite numbers, strings, arrays, and hashes
 with string/symbol keys. Bindings are reevaluated after changes and emit small property patches.
+Ruby blocks passed to `text`, `property`, or `bind` are reactive; no wrapper is required.
 `transaction` batches related state writes.
-
-Use `dynamic` when state changes the structure rather than only a property:
-
-```ruby
-dynamic id: :results, spacing: 8 do
-  if state.items.empty?
-    text "Nothing found"
-  else
-    state.items.each { |item| text item.fetch("name") }
-  end
-end
-```
 
 ## Common properties
 
