@@ -3,6 +3,7 @@
 require "json"
 require "minitest/autorun"
 require "stringio"
+require "timeout"
 require_relative "../lib/omarchy_ui"
 
 class OmarchyUITest < Minitest::Test
@@ -347,5 +348,37 @@ class OmarchyUITest < Minitest::Test
     threads = 8.times.map { Thread.new { 250.times { store.update(:count) { |value| value + 1 } } } }
     threads.each(&:join)
     assert_equal 2_000, store.count
+  end
+
+  def test_managed_tasks_update_state_and_stop_with_the_application
+    app = OmarchyUI::Application.new do
+      state :status, "waiting"
+      panel :main do
+        label = text "", id: :status
+        bind(label, :text) { state.status }
+      end
+      after(0.01) { state.status = "ready" }
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    Timeout.timeout(1) do
+      sleep(0.005) until messages(output).any? { |message| message["type"] == "patch" }
+    end
+    assert_equal "ready", messages(output).find { |message| message["type"] == "patch" }.fetch("value")
+    app.stop
+  end
+
+  def test_periodic_tasks_are_cooperatively_cancelled
+    ticks = Queue.new
+    app = OmarchyUI::Application.new do
+      panel(:main) { text "timer" }
+      every(0.005, immediate: true) { ticks << true }
+    end
+    app.start(output: StringIO.new, error: StringIO.new)
+    Timeout.timeout(1) { sleep(0.002) while ticks.empty? }
+    app.stop
+    count = ticks.size
+    sleep(0.02)
+    assert_equal count, ticks.size
   end
 end

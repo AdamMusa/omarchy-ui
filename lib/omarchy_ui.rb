@@ -9,6 +9,7 @@ require_relative "omarchy_ui/protocol"
 require_relative "omarchy_ui/state_store"
 require_relative "omarchy_ui/node"
 require_relative "omarchy_ui/value"
+require_relative "omarchy_ui/scheduler"
 
 module OmarchyUI
   VERSION = "0.2.0"
@@ -215,6 +216,18 @@ module OmarchyUI
       @application.state.transaction { instance_eval(&block) }
     end
 
+    def after(seconds, &block)
+      @application.schedule(:after, interval: seconds, &block)
+    end
+
+    def every(seconds, immediate: false, &block)
+      @application.schedule(:every, interval: seconds, immediate:, &block)
+    end
+
+    def async(&block)
+      @application.schedule(:async, &block)
+    end
+
     def open_panel(name)
       @application.emit_effect("open_panel", "surface" => name.to_s)
     end
@@ -301,6 +314,7 @@ module OmarchyUI
       @components = components.dup
       @builder = Builder.new(self)
       @state = StateStore.new(method(:state_changed))
+      @scheduler = Scheduler.new(evaluator: method(:evaluate), on_error: method(:report_internal_error))
       @builder.instance_eval(&definition) if definition
       raise ArgumentError, "plugin defines no surfaces" if @surfaces.empty?
     end
@@ -379,6 +393,7 @@ module OmarchyUI
         "surfaces" => @surfaces.keys
       )
       emit("v" => PROTOCOL_VERSION, "type" => "render", "components" => @components.protocol_schema, "surfaces" => tree)
+      @scheduler.start
       self
     end
 
@@ -390,7 +405,17 @@ module OmarchyUI
         report_internal_error(exception)
       end
     ensure
+      stop
+    end
+
+    def stop
       @running = false
+      @scheduler.stop
+      self
+    end
+
+    def schedule(kind, interval: 0, immediate: false, &block)
+      @scheduler.schedule(kind, interval:, immediate:, &block)
     end
 
     def receive(raw_line)
