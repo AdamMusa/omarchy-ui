@@ -305,4 +305,47 @@ class OmarchyUITest < Minitest::Test
     }))
     assert_equal({ "id" => 2, "label" => "Two" }, activated)
   end
+
+  def test_transactions_emit_only_final_reactive_values
+    app = OmarchyUI::Application.new do
+      state :first, 0
+      state :second, 0
+      panel :main do
+        label = text "", id: :total
+        bind(label, :text) { "Total: #{state.first + state.second}" }
+        button("Batch", id: :batch) do
+          transaction do
+            state.first = 2
+            state.second = 3
+          end
+        end
+      end
+    end
+    output = StringIO.new
+    app.start(output: output, error: StringIO.new)
+    output.truncate(0)
+    output.rewind
+    app.receive(event("batch", surface: "main"))
+
+    patches = messages(output).select { |message| message["type"] == "patch" }
+    assert_equal 1, patches.length
+    assert_equal "Total: 5", patches.first.fetch("value")
+  end
+
+  def test_values_reject_cycles_nonfinite_numbers_and_excessive_depth
+    cyclic = []
+    cyclic << cyclic
+    assert_raises(ArgumentError) { OmarchyUI::Value.normalize(cyclic, property: :items) }
+    assert_raises(ArgumentError) { OmarchyUI::Value.normalize(Float::INFINITY, property: :value) }
+    deep = 34.times.reduce("end") { |value| [value] }
+    assert_raises(ArgumentError) { OmarchyUI::Value.normalize(deep, property: :items) }
+  end
+
+  def test_state_update_is_atomic_across_threads
+    store = OmarchyUI::StateStore.new(->(*) {})
+    store.define(:count, 0)
+    threads = 8.times.map { Thread.new { 250.times { store.update(:count) { |value| value + 1 } } } }
+    threads.each(&:join)
+    assert_equal 2_000, store.count
+  end
 end

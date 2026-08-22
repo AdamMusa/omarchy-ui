@@ -8,6 +8,7 @@ require_relative "omarchy_ui/animation"
 require_relative "omarchy_ui/protocol"
 require_relative "omarchy_ui/state_store"
 require_relative "omarchy_ui/node"
+require_relative "omarchy_ui/value"
 
 module OmarchyUI
   VERSION = "0.2.0"
@@ -210,6 +211,10 @@ module OmarchyUI
       Animation.new(**options)
     end
 
+    def transaction(&block)
+      @application.state.transaction { instance_eval(&block) }
+    end
+
     def open_panel(name)
       @application.emit_effect("open_panel", "surface" => name.to_s)
     end
@@ -292,6 +297,7 @@ module OmarchyUI
       @error = $stderr
       @running = false
       @write_lock = Mutex.new
+      @state_change_lock = Mutex.new
       @components = components.dup
       @builder = Builder.new(self)
       @state = StateStore.new(method(:state_changed))
@@ -357,15 +363,7 @@ module OmarchyUI
     end
 
     def normalize_value(value, property = nil)
-      case value
-      when Symbol then value.to_s
-      when String, Numeric, TrueClass, FalseClass, NilClass then value
-      when Array then value.map { |item| normalize_value(item, property) }
-      when Hash
-        value.each_with_object({}) { |(key, item), result| result[key.to_s] = normalize_value(item, property) }
-      else
-        raise ArgumentError, "unsupported property value for #{property}: #{value.class}"
-      end
+      Value.normalize(value, property: property)
     end
 
     def start(output: $stdout, error: $stderr)
@@ -410,7 +408,8 @@ module OmarchyUI
     private
 
     def state_changed(_name, _previous, _value)
-      @bindings.each do |binding|
+      @state_change_lock.synchronize do
+        @bindings.each do |binding|
         value = normalize_value(evaluate(binding.reader), binding.property)
         next if value == binding.last_value
 
@@ -425,7 +424,8 @@ module OmarchyUI
           "value" => value
         }
         patch["animation"] = binding.animation.to_h if binding.animation
-        emit(patch)
+          emit(patch)
+        end
       end
     end
 
