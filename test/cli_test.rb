@@ -47,6 +47,29 @@ class CLITest < Minitest::Test
     end
   end
 
+  def test_new_scaffolds_a_valid_runnable_framework_plugin
+    Dir.mktmpdir do |directory|
+      output = StringIO.new
+      Dir.chdir(directory) do
+        status = OmarchyUI::CLI.run(["new", "Weather Board", "--id", "test.weather-board"],
+                                    out: output, err: StringIO.new)
+        assert_equal 0, status
+      end
+      project = File.join(directory, "weather-board")
+      manifest = JSON.parse(File.read(File.join(project, "manifest.json")))
+      assert_equal "test.weather-board", manifest.fetch("id")
+      %w[Service.qml ControlNode.qml Panel.qml BarWidget.qml main.rb].each do |file|
+        assert File.file?(File.join(project, file)), "missing generated #{file}"
+      end
+
+      stdout, stderr, status = Open3.capture3(
+        { "RUBYLIB" => File.join(ROOT, "lib") }, RbConfig.ruby, File.join(project, "main.rb")
+      )
+      assert status.success?, stderr
+      assert_equal %w[ready render], stdout.lines.map { |line| JSON.parse(line).fetch("type") }
+    end
+  end
+
   private
 
   def with_environment(values)

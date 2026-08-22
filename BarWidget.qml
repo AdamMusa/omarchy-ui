@@ -4,7 +4,8 @@ import qs.Ui
 
 BarWidget {
   id: root
-  moduleName: "izeesoft.omarchy-ui-poc"
+  property var manifest: null
+  moduleName: manifest ? String(manifest.id) : ""
 
   readonly property var rubyService: bar && bar.shell
     ? bar.shell.serviceFor(moduleName)
@@ -44,4 +45,3 @@ BarWidget {
     }
   }
 }
-

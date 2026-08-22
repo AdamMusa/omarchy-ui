@@ -21,11 +21,12 @@ module OmarchyUI
       command = arguments.shift
       case command
       when "run" then run_file(arguments)
+      when "new" then new_project(arguments)
       when "push" then push(arguments)
       when "validate" then validate(arguments)
       when "version", "--version", "-v" then @out.puts(OmarchyUI::VERSION); 0
       else
-        @err.puts("Usage: omarchy_ui <run FILE|push [DIRECTORY]|validate [DIRECTORY]|version>")
+        @err.puts("Usage: omarchy_ui <new NAME [--id ID]|run FILE|push [DIRECTORY]|validate [DIRECTORY]|version>")
         command.nil? ? 0 : 64
       end
     rescue ArgumentError, SystemCallError, JSON::ParserError => error
@@ -39,6 +40,22 @@ module OmarchyUI
       file = File.expand_path(arguments.shift || raise(ArgumentError, "run requires a Ruby file"))
       raise ArgumentError, "Ruby file not found: #{file}" unless File.file?(file)
       exec(RbConfig.ruby, file, *arguments)
+    end
+
+    def new_project(arguments)
+      name = arguments.shift || raise(ArgumentError, "new requires a project name")
+      id_index = arguments.index("--id")
+      plugin_id = id_index ? arguments.fetch(id_index + 1) : "local.#{slug(name)}"
+      destination = File.expand_path(slug(name))
+      Project.new(path: destination, id: plugin_id, name: name).create
+      @out.puts("Created #{plugin_id} in #{destination}")
+      0
+    end
+
+    def slug(value)
+      result = value.to_s.downcase.gsub(/[^a-z0-9]+/, "-").gsub(/\A-|\-\z/, "")
+      raise ArgumentError, "name must contain letters or numbers" if result.empty?
+      result
     end
 
     def validate(arguments)
