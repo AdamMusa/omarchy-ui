@@ -21,20 +21,27 @@ OmarchyUI.plugin do
 end
 ```
 
-## Requirements and runtime
+## Install
 
-- Omarchy with Quickshell and the `qs.Commons` / `qs.Ui` modules.
-- The shared `omarchy-ui-runtime` executable on `PATH`.
-- Ruby is needed only for framework development and MRI tests, not for generated applications.
+On Omarchy x86-64, install the gem and start building:
 
-Build the pinned mruby 4.0 runtime:
+```bash
+gem install omarchy-ui
+omarchy_ui new "My App"
+```
+
+The gem includes the CLI, QML bridge, and a prebuilt mruby runtime with Omarchy UI embedded.
+Developers do not install mruby, compile the runtime, copy framework files, or require Ruby on
+machines that run a bundled application. Omarchy with Quickshell is the only host requirement.
+
+Framework maintainers can rebuild the pinned mruby 4.0 binary with:
 
 ```bash
 ./scripts/build-mruby-runtime.sh
 install -Dm755 build/runtime/omarchy-ui-runtime ~/.local/bin/omarchy-ui-runtime
 ```
 
-The stripped runtime is approximately 1.8 MB and embeds the Ruby framework, JSON, regular
+The stripped prebuilt runtime is approximately 1.8 MB and embeds the Ruby framework, JSON, regular
 expressions, process support, and the native safe-command bridge.
 
 ## Create and run an application
@@ -57,6 +64,19 @@ my-app/
 
 `launch` opens a compositor-managed window. Drag its title bar or use Super+drag, and close it
 with Super+W. For protocol debugging without a window, use `omarchy_ui run main.rb`.
+
+## Bundle for another Omarchy computer
+
+From an application directory:
+
+```bash
+omarchy_ui bundle
+./dist/my-app/run
+```
+
+`bundle` copies the working application, framework QML bridge, and prebuilt mruby executable into
+`dist/<project-name>/`. The generated `run` launcher invokes Quickshell directly with the bundled
+runtime, so the destination computer does not need Ruby or the `omarchy-ui` gem.
 
 An Omarchy Shell plugin is a separate packaging mode. It requires `manifest.json` so the shell
 can discover its ID, entry points, bar placement, and lifecycle. For a project that intentionally

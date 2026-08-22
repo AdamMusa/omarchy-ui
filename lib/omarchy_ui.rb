@@ -12,6 +12,7 @@ require_relative "omarchy_ui/components"
 require_relative "omarchy_ui/builder"
 require_relative "omarchy_ui/application"
 require_relative "omarchy_ui/project"
+require_relative "omarchy_ui/runtime"
 
 module OmarchyUI
   VERSION = "0.4.0"

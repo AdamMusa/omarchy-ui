@@ -98,6 +98,25 @@ class CLITest < Minitest::Test
     end
   end
 
+  def test_bundle_embeds_runtime_bridge_and_direct_launcher
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "demo")
+      FileUtils.mkdir_p(source)
+      File.write(File.join(source, "main.rb"), "# app\n")
+      output = StringIO.new
+
+      status = OmarchyUI::CLI.run(["bundle", source], out: output, err: StringIO.new)
+      bundle = File.join(source, "dist", "demo")
+
+      assert_equal 0, status
+      assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
+      assert File.executable?(File.join(bundle, "run"))
+      assert File.file?(File.join(bundle, "App.qml"))
+      assert File.symlink?(File.join(bundle, "Commons"))
+      assert_includes File.read(File.join(bundle, "run")), "exec quickshell"
+    end
+  end
+
   private
 
   def with_environment(values)

@@ -23,11 +23,12 @@ module OmarchyUI
       when "run" then run_file(arguments)
       when "launch" then launch_file(arguments)
       when "new" then new_project(arguments)
+      when "bundle" then bundle_project(arguments)
       when "push" then push(arguments)
       when "validate" then validate(arguments)
       when "version", "--version", "-v" then @out.puts(OmarchyUI::VERSION); 0
       else
-        @err.puts("Usage: omarchy_ui <new NAME|run FILE|launch FILE|push [DIRECTORY]|validate [DIRECTORY]|version>")
+        @err.puts("Usage: omarchy_ui <new NAME|run FILE|launch FILE|bundle [DIRECTORY]|push [DIRECTORY]|validate [DIRECTORY]|version>")
         command.nil? ? 0 : 64
       end
     rescue ArgumentError, SystemCallError, JSON::ParserError => error
@@ -62,7 +63,8 @@ module OmarchyUI
 
         environment = ENV.to_h.merge(
           "OMARCHY_UI_PROJECT_DIR" => project_dir,
-          "OMARCHY_UI_RUBY_PROGRAM" => file
+          "OMARCHY_UI_RUBY_PROGRAM" => file,
+          "OMARCHY_UI_RUNTIME" => Runtime.executable
         )
         success = system(environment, "quickshell", "--path", File.join(runtime_dir, "App.qml"))
         return success ? 0 : ($?&.exitstatus || 1)
@@ -91,10 +93,45 @@ module OmarchyUI
       end
     end
 
+    def bundle_project(arguments)
+      source = File.expand_path(arguments.shift || Dir.pwd)
+      raise ArgumentError, "bundle accepts one directory" unless arguments.empty?
+      raise ArgumentError, "main.rb not found: #{source}" unless File.file?(File.join(source, "main.rb"))
+      destination = File.join(source, "dist", File.basename(source))
+      raise ArgumentError, "bundle destination already exists: #{destination}" if File.exist?(destination)
+      FileUtils.mkdir_p(destination)
+      entries = Dir.children(source).reject { |entry| %w[.git dist].include?(entry) }
+      FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, destination)
+      Project.install_runtime(destination)
+      runtime = File.join(destination, "omarchy-ui-runtime")
+      FileUtils.cp(Runtime::BUNDLED, runtime)
+      FileUtils.chmod(0o755, runtime)
+      %w[Commons Ui].each do |module_name|
+        FileUtils.ln_s(File.join("/usr/share/omarchy/shell", module_name), File.join(destination, module_name))
+      end
+      launcher = File.join(destination, "run")
+      File.write(launcher, <<~SH)
+        #!/bin/sh
+        set -eu
+        app_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+        export OMARCHY_UI_RUNTIME="$app_dir/omarchy-ui-runtime"
+        export OMARCHY_UI_PROJECT_DIR="$app_dir"
+        export OMARCHY_UI_RUBY_PROGRAM="$app_dir/main.rb"
+        exec quickshell --path "$app_dir/App.qml"
+      SH
+      FileUtils.chmod(0o755, launcher)
+      @out.puts("Bundled application in #{destination}")
+      0
+    rescue StandardError
+      FileUtils.remove_entry(destination) if destination && File.directory?(destination)
+      raise
+    end
+
     def push(arguments)
       enable = !arguments.delete("--no-enable")
       restart = !arguments.delete("--no-restart")
       source = File.expand_path(arguments.shift || Dir.pwd)
+      Runtime.install_shared
       manifest_path = File.join(source, "manifest.json")
       manifest = JSON.parse(File.read(manifest_path))
       plugin_id = manifest.fetch("id")
