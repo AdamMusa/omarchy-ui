@@ -82,8 +82,9 @@ class PhoneBackendTest < Minitest::Test
       assert_match(/PIN \d{4}\z/, result.message)
       assert_equal "uxplay", name
       assert_equal ["uxplay", "-n", "Omarchy", "-nh"], argv.first(4)
-      assert_match(/\A-pin\d{4}\z/, argv.fetch(4))
-      assert_equal ["-p", "7100"], argv.slice(5, 2)
+      assert_equal "-pin", argv.fetch(4)
+      assert_match(/\A\d{4}\z/, argv.fetch(5))
+      assert_equal ["-p", "7100"], argv.slice(6, 2)
       assert_equal "4321\n", File.read(File.join(directory, "uxplay.pid"))
     end
   end

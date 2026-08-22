@@ -61,10 +61,10 @@ class PhoneBackend
     @action_lock.synchronize do
       return Result.new(ok: true, message: "AirPlay receiver is already running") if process_alive?(@airplay_pid)
       pin = format("%04d", rand(10_000))
-      argv = ["uxplay", "-n", "Omarchy", "-nh", "-pin#{pin}", "-p", "7100"]
+      argv = ["uxplay", "-n", "Omarchy", "-nh", "-pin", pin, "-p", "7100"]
       argv << "-fs" if fullscreen
       @airplay_pid = spawn_detached(argv, "uxplay")
-      File.write(@airplay_pid_path, "#{@airplay_pid}\n")
+      File.open(@airplay_pid_path, "w") { |file| file.write("#{@airplay_pid}\n") }
       Result.new(ok: true, message: "AirPlay receiver started — PIN #{pin}")
     rescue Errno::ENOENT
       Result.new(ok: false, message: "UxPlay is not installed")
