@@ -23,6 +23,15 @@ module OmarchyUI
     Application.new(&definition).run
   end
 
+  def self.spawn_detached(argv, log_path)
+    log = File.open(log_path, "a")
+    pid = Process.spawn(*argv, out: log, err: log, pgroup: true)
+    Process.detach(pid)
+    pid
+  ensure
+    log&.close
+  end
+
   class << self
     alias application plugin
     alias app plugin

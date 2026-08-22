@@ -51,7 +51,7 @@ module OmarchyUI
     @stack = []
 
     def self.require_framework(feature)
-      return false if feature == "omarchy_ui"
+      return false if ["omarchy_ui", "fileutils", "json", "thread"].include?(feature)
 
       raise LoadError, "cannot load such file -- #{feature}"
     end
@@ -79,6 +79,19 @@ module OmarchyUI
     end
   end
 end
+
+module FileUtils
+  def self.mkdir_p(path)
+    current = path.start_with?(File::SEPARATOR) ? File::SEPARATOR : ""
+    path.split(File::SEPARATOR).each do |part|
+      next if part.empty?
+
+      current = File.join(current, part)
+      Dir.mkdir(current) unless File.directory?(current)
+    end
+    [path]
+  end
+end unless Object.const_defined?(:FileUtils)
 
 module Kernel
   unless method_defined?(:require)
