@@ -63,7 +63,8 @@ module OmarchyUI
     end
 
     def register_structure(node, renderer)
-      @structures << StructuralBinding.new(node:, renderer:, last_children: node.children.map(&:to_h))
+      sequence_start = @sequence - descendant_count(node)
+      @structures << StructuralBinding.new(node:, renderer:, last_children: node.children.map(&:to_h), sequence_start:)
     end
 
     def register_handler(control_id, event, handler)
@@ -193,7 +194,13 @@ module OmarchyUI
       previous_children = structure.last_children
       structure.node.children.dup.each { |child| unregister_subtree(child) }
       structure.node.children.clear
-      @builder.rebuild(structure.node, &structure.renderer)
+      sequence_checkpoint = @sequence
+      @sequence = structure.sequence_start
+      begin
+        @builder.rebuild(structure.node, &structure.renderer)
+      ensure
+        @sequence = [sequence_checkpoint, @sequence].max
+      end
       children = structure.node.children.map(&:to_h)
       return if children == structure.last_children
       if patchable_trees?(previous_children, children)
@@ -204,6 +211,10 @@ module OmarchyUI
       structure.last_children = children
       emit("v" => PROTOCOL_VERSION, "type" => "patch", "op" => "replace_children",
            "id" => structure.node.id, "children" => children)
+    end
+
+    def descendant_count(node)
+      node.children.inject(0) { |count, child| count + 1 + descendant_count(child) }
     end
 
     def patchable_trees?(previous, current)
@@ -221,11 +232,17 @@ module OmarchyUI
         before.fetch("props", {}).each do |property, old_value|
           value = after.fetch("props", {}).fetch(property)
           next if value == old_value
+          next if echoed_input_patch?(after.fetch("id"), property, value)
           emit("v" => PROTOCOL_VERSION, "type" => "patch", "op" => "set",
                "id" => after.fetch("id"), "property" => property, "value" => value)
         end
         emit_property_patches(before.fetch("children", []), after.fetch("children", []))
       end
+    end
+
+    def echoed_input_patch?(control_id, property, value)
+      @active_event && @active_event["event"] == "input" && @active_event["id"] == control_id &&
+        %w[text value].include?(property) && @active_event.dig("payload", "value") == value
     end
 
     def unregister_subtree(node)
@@ -240,7 +257,12 @@ module OmarchyUI
       key = [message.fetch("id"), message.fetch("event")]
       handler = @handlers[key]
       raise ProtocolError, "unknown event target: #{key.join('/')}" unless handler
-      @builder.instance_exec(message["payload"] || {}, &handler)
+      begin
+        @active_event = message
+        @builder.instance_exec(message["payload"] || {}, &handler)
+      ensure
+        @active_event = nil
+      end
       acknowledgement = {
         "v" => PROTOCOL_VERSION, "type" => "ack", "seq" => message["seq"],
         "id" => message.fetch("id"), "event" => message.fetch("event")

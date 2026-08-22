@@ -489,10 +489,12 @@ class OmarchyUITest < Minitest::Test
       state :name, ""
       panel :main do
         dynamic id: :form do
-          field = text_field "", id: :name do |payload|
-            state.name = payload.fetch("value")
+          column do
+            field = text_field "", id: :name do |payload|
+              state.name = payload.fetch("value")
+            end
+            bind(field, :text) { state.name }
           end
-          bind(field, :text) { state.name }
         end
       end
     end
@@ -502,10 +504,8 @@ class OmarchyUITest < Minitest::Test
     output.rewind
 
     app.receive(event("name", surface: "main", name: "input", payload: { "value" => "A" }))
-    patches = messages(output).select { |message| message["type"] == "patch" }
-    refute patches.any? { |message| message["op"] == "replace_children" }
-    assert_equal({ "op" => "set", "id" => "name", "property" => "text", "value" => "A" },
-                 patches.first.slice("op", "id", "property", "value"))
+    refute messages(output).any? { |message| message["type"] == "patch" }
+    assert_equal "A", app.state.name
   end
 
   def test_imperative_animation_emits_parallel_tracks
