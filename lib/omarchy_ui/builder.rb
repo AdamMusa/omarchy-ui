@@ -185,7 +185,7 @@ module OmarchyUI
     end
 
     def within_dynamic(node, &block)
-      @dynamic_scopes.push(id: node.id, sequence: 0)
+      @dynamic_scopes.push({ id: node.id, sequence: 0 })
       within(node, &block)
     ensure
       @dynamic_scopes.pop
