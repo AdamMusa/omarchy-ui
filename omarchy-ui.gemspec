@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = "omarchy-ui"
   spec.version = OmarchyUI::VERSION
   spec.summary = "Build native Omarchy plugins and applications in Ruby"
-  spec.description = "A persistent Ruby runtime, reactive UI model, and safe QML renderer for Omarchy."
+  spec.description = "The application framework for building native Omarchy apps with Ruby."
   spec.authors = ["Adam Moussa Ali"]
   spec.license = "MIT"
   spec.homepage = "https://github.com/AdamMusa/omarchy-ui"
