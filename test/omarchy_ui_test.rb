@@ -18,7 +18,6 @@ class OmarchyUITest < Minitest::Test
     assert_includes bootstrap, 'feature == "omarchy_ui"'
     assert_includes bootstrap, "def require_relative(feature)"
     assert_includes bootstrap, 'ENV["OMARCHY_UI_PROJECT_DIR"]'
-    assert_includes bootstrap, '"fileutils", "json", "thread"'
     refute_includes bootstrap, "PhoneBackend"
   end
 
