@@ -40,6 +40,14 @@ class PhoneBackendTest < Minitest::Test
     end
   end
 
+  class ConnectedAirPlayBackend < FakeBackend
+    def stop_airplay = PhoneBackend::Result.new(ok: true, message: "stopped")
+
+    private
+
+    def process_alive?(_pid) = true
+  end
+
   def test_snapshot_merges_attached_mdns_android_and_ios_devices
     Dir.mktmpdir do |directory|
       backend = FakeBackend.new(
@@ -86,6 +94,20 @@ class PhoneBackendTest < Minitest::Test
       assert_match(/\A\d{4}\z/, argv.fetch(5))
       assert_equal ["-p", "7100"], argv.slice(6, 2)
       assert_equal "4321\n", File.read(File.join(directory, "uxplay.pid"))
+    end
+  end
+
+  def test_snapshot_includes_active_airplay_clients
+    Dir.mktmpdir do |directory|
+      ss = ["ss", "-Hnt", "state", "established", "sport", "=", ":7100"]
+      backend = ConnectedAirPlayBackend.new(
+        { ss => success("0 0 192.168.1.129:7100 192.168.1.27:56203\n") }, state_dir: directory
+      )
+      device = backend.snapshot.fetch(:devices).find { |item| item.fetch(:transport) == "AirPlay" }
+
+      assert_equal "airplay:192.168.1.27", device.fetch(:id)
+      assert device.fetch(:connected)
+      assert_equal "active", device.dig(:capabilities, :mirror)
     end
   end
 

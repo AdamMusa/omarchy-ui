@@ -28,7 +28,7 @@ class PhoneBackend
   end
 
   def snapshot
-    devices = android_devices + ios_devices
+    devices = android_devices + ios_devices + airplay_devices
     {
       devices: devices.sort_by { |device| [device.fetch(:connected) ? 0 : 1, device.fetch(:name).downcase] },
       backends: backend_status,
@@ -140,6 +140,24 @@ class PhoneBackend
         capabilities: { mirror: "available", trust: "available", files: "experimental" }
       }
     end
+  end
+
+  def airplay_devices
+    return [] unless process_alive?(@airplay_pid)
+    result = command(["ss", "-Hnt", "state", "established", "sport", "=", ":7100"], timeout: 3)
+    return [] unless result&.success?
+    result.stdout.lines.filter_map do |line|
+      endpoint = line.strip.split.fetch(3, "")
+      separator = endpoint.rindex(":")
+      address = separator ? endpoint[0...separator] : endpoint
+      address = address[1...-1] if address.start_with?("[") && address.end_with?("]")
+      next if address.empty?
+      {
+        id: "airplay:#{address}", name: "AirPlay iPhone", platform: "iOS",
+        connected: true, paired: true, transport: "AirPlay", model: nil,
+        capabilities: { mirror: "active", audio: "active", control: "unavailable", files: "unavailable" }
+      }
+    end.uniq { |device| device.fetch(:id) }
   end
 
   def merge_mdns_devices(attached)
