@@ -5,6 +5,7 @@ require "fileutils"
 module OmarchyUI
   class Project
     RUNTIME_FILES = %w[Service.qml ControlNode.qml Panel.qml BarWidget.qml App.qml].freeze
+    RUNTIME_AUDIT_FILES = %w[omarchy-ui-runtime.sha256 RUNTIME_PROVENANCE.md].freeze
 
     def initialize(path:, name: nil, framework_root: FRAMEWORK_ROOT)
       @path = File.expand_path(path)
@@ -35,6 +36,10 @@ module OmarchyUI
         destination = File.join(path, "omarchy-ui-runtime")
         FileUtils.cp(bundled_runtime, destination)
         FileUtils.chmod(0o755, destination)
+      end
+      RUNTIME_AUDIT_FILES.each do |file|
+        source = File.join(framework_root, "vendor", "runtime", "x86_64-linux", file)
+        FileUtils.cp(source, File.join(path, file)) if File.file?(source)
       end
       FileUtils.mkdir_p(File.join(path, "Components"))
     end

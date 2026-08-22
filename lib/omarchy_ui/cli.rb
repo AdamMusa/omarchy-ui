@@ -139,7 +139,7 @@ module OmarchyUI
     end
 
     def application_entries(source)
-      generated = Project::RUNTIME_FILES + %w[omarchy-ui-runtime run Commons Ui]
+      generated = Project::RUNTIME_FILES + Project::RUNTIME_AUDIT_FILES + %w[omarchy-ui-runtime run Commons Ui]
       Dir.children(source).reject { |entry| %w[.git dist].include?(entry) || generated.include?(entry) }
     end
 
