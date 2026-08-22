@@ -13,6 +13,8 @@ Gem::Specification.new do |spec|
   spec.platform = Gem::Platform.new("x86_64-linux")
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["documentation_uri"] = "#{spec.homepage}#readme"
+  spec.metadata["release_status"] = "experimental"
+  spec.metadata["rubygems_mfa_required"] = "true"
   spec.required_ruby_version = ">= 3.1"
   spec.files = Dir["bin/*", "lib/**/*.rb", "*.qml", "Components/**/*", "vendor/runtime/**/*", "manifest.json", "README.md", "LICENSE"]
   spec.require_paths = ["lib"]

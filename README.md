@@ -1,5 +1,8 @@
 # Omarchy UI
 
+> **Experimental:** the API and packaging format are being validated with real Omarchy apps.
+> Pin the gem version for production projects and review release notes before upgrading.
+
 Omarchy UI is the official-style Ruby application framework for building native Omarchy
 interfaces. Ruby owns application state, events, tasks, commands, and models; a shared mruby
 runtime communicates with QML over a validated protocol. Applications do not need system Ruby
