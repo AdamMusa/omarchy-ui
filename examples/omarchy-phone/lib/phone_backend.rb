@@ -1,0 +1,186 @@
+# frozen_string_literal: true
+
+require "fileutils"
+require "json"
+require "thread"
+
+class PhoneBackend
+  Result = Struct.new(:ok, :message, keyword_init: true)
+
+  def initialize(state_dir: File.expand_path("~/.local/state/omarchy-phone-ruby"))
+    @state_dir = state_dir
+    @action_lock = Mutex.new
+    @airplay_pid = nil
+    FileUtils.mkdir_p(@state_dir)
+    at_exit { stop_airplay }
+  end
+
+  def snapshot
+    devices = android_devices + ios_devices
+    {
+      devices: devices.sort_by { |device| [device.fetch(:connected) ? 0 : 1, device.fetch(:name).downcase] },
+      backends: backend_status,
+      captured_at: Time.now.to_i
+    }
+  end
+
+  def refresh = snapshot
+
+  def open(device, options = {})
+    return start_airplay(fullscreen: options[:fullscreen] || options["fullscreen"]) if device["platform"] == "iOS"
+    argv = ["scrcpy", "--serial", device.fetch("id").to_s, "--keyboard=uhid"]
+    argv << "--fullscreen" if truthy?(options, :fullscreen)
+    argv << "--turn-screen-off" if truthy?(options, :screen_off)
+    argv << "--no-audio" unless options.fetch(:audio, options.fetch("audio", true))
+    add_numeric_option(argv, "--max-size", options, :max_size)
+    add_numeric_option(argv, "--max-fps", options, :max_fps)
+    bitrate = option(options, :bitrate_mbps)
+    argv << "--video-bit-rate=#{bitrate}M" if bitrate.to_i.positive?
+    spawn_gui(argv, "scrcpy")
+  end
+
+  def connect(device_id) = action(["adb", "connect", device_id.to_s], "Connected to #{device_id}")
+  def disconnect(device_id) = action(["adb", "disconnect", device_id.to_s], "Disconnected #{device_id}")
+  def forget(device_id) = disconnect(device_id)
+  def pair_android(address, code) = action(["adb", "pair", address.to_s, code.to_s], "Paired #{address}")
+  def trust_iphone(device_id) = action(["idevicepair", "-u", device_id.to_s, "pair"], "Trusted iPhone")
+
+  def start_airplay(fullscreen: false)
+    @action_lock.synchronize do
+      return Result.new(ok: true, message: "AirPlay receiver is already running") if process_alive?(@airplay_pid)
+      argv = ["uxplay", "-n", "Omarchy"]
+      argv << "-fs" if fullscreen
+      log = File.open(File.join(@state_dir, "uxplay.log"), "a")
+      @airplay_pid = Process.spawn(*argv, out: log, err: log, pgroup: true)
+      log.close
+      Process.detach(@airplay_pid)
+      Result.new(ok: true, message: "AirPlay receiver started")
+    rescue Errno::ENOENT
+      Result.new(ok: false, message: "UxPlay is not installed")
+    end
+  end
+
+  def stop_airplay
+    @action_lock.synchronize do
+      return Result.new(ok: true, message: "AirPlay receiver is stopped") unless process_alive?(@airplay_pid)
+      Process.kill("TERM", -@airplay_pid)
+      @airplay_pid = nil
+      Result.new(ok: true, message: "AirPlay receiver stopped")
+    rescue Errno::ESRCH
+      @airplay_pid = nil
+      Result.new(ok: true, message: "AirPlay receiver stopped")
+    end
+  end
+
+  def airplay_running? = process_alive?(@airplay_pid)
+
+  private
+
+  def backend_status
+    {
+      android: { adb: available?("adb"), scrcpy: available?("scrcpy") },
+      ios: { libimobiledevice: available?("idevice_id"), airplay: available?("uxplay") }
+    }
+  end
+
+  def android_devices
+    result = command(["adb", "devices", "-l"], timeout: 5)
+    return [] unless result&.success?
+    attached = result.stdout.lines.drop(1).filter_map do |line|
+      serial, status, *details = line.strip.split
+      next if serial.nil? || status.nil?
+      fields = details.filter_map { |field| field.split(":", 2) if field.include?(":") }.to_h
+      {
+        id: serial, name: fields["model"]&.tr("_", " ") || serial,
+        platform: "Android", connected: status == "device", paired: true,
+        transport: serial.include?(":") ? "Wi-Fi" : "USB",
+        model: fields["model"], capabilities: android_capabilities(status == "device")
+      }
+    end
+    merge_mdns_devices(attached)
+  end
+
+  def ios_devices
+    result = command(["idevice_id", "-l"], timeout: 5)
+    return [] unless result&.success?
+    result.stdout.lines.filter_map do |line|
+      id = line.strip
+      next if id.empty?
+      name = command(["ideviceinfo", "-u", id, "-k", "DeviceName"], timeout: 3)&.stdout&.strip
+      model = command(["ideviceinfo", "-u", id, "-k", "ProductType"], timeout: 3)&.stdout&.strip
+      {
+        id:, name: name.to_s.empty? ? "iPhone" : name, platform: "iOS",
+        connected: true, paired: true, transport: "USB", model:,
+        capabilities: { mirror: "available", trust: "available", files: "experimental" }
+      }
+    end
+  end
+
+  def merge_mdns_devices(attached)
+    result = command(["adb", "mdns", "services"], timeout: 5)
+    return attached unless result&.success?
+    known = attached.to_h { |device| [device.fetch(:id), device] }
+    result.stdout.each_line do |line|
+      match = line.strip.match(/\A(.+?)\s+(_adb-tls-(?:connect|pairing)\._tcp\.?)\s+(\S+):(\d+)\z/)
+      next unless match
+      address = "#{match[3]}:#{match[4]}"
+      next if known.key?(address) || match[2].include?("pairing")
+      known[address] = {
+        id: address, name: match[1].gsub("\\032", " "), platform: "Android",
+        connected: false, paired: true, transport: "Wi-Fi", model: nil,
+        capabilities: android_capabilities(false)
+      }
+    end
+    known.values
+  end
+
+  def android_capabilities(connected)
+    state = connected ? "available" : "unavailable"
+    { mirror: state, control: state, audio: state, files: state }
+  end
+
+  def action(argv, success_message)
+    @action_lock.synchronize do
+      result = command(argv, timeout: 20)
+      return Result.new(ok: false, message: "#{argv.first} is not installed") unless result
+      message = [result.stdout, result.stderr].join(" ").strip
+      Result.new(ok: result.success?, message: result.success? ? (message.empty? ? success_message : message) : message)
+    end
+  end
+
+  def spawn_gui(argv, name)
+    log = File.open(File.join(@state_dir, "#{name}.log"), "a")
+    pid = Process.spawn(*argv, out: log, err: log, pgroup: true)
+    log.close
+    Process.detach(pid)
+    Result.new(ok: true, message: "Opened phone")
+  rescue Errno::ENOENT
+    Result.new(ok: false, message: "#{argv.first} is not installed")
+  end
+
+  def command(argv, timeout:)
+    OmarchyUI::Command.run(argv, timeout:)
+  rescue Errno::ENOENT, OmarchyUI::CommandTimeout
+    nil
+  end
+
+  def available?(program)
+    ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).any? { |path| File.executable?(File.join(path, program)) }
+  end
+
+  def process_alive?(pid)
+    return false unless pid
+    Process.kill(0, pid)
+    true
+  rescue Errno::ESRCH
+    false
+  end
+
+  def truthy?(options, key) = options[key] == true || options[key.to_s] == true
+  def option(options, key) = options.fetch(key, options[key.to_s])
+
+  def add_numeric_option(argv, flag, options, key)
+    value = option(options, key)
+    argv << "#{flag}=#{value}" if value.to_i.positive?
+  end
+end
