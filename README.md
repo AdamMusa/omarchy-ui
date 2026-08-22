@@ -305,15 +305,6 @@ Component names, files, properties, events, IDs, effects, values, message sizes,
 limits are validated. Commands use argv arrays without a shell. Applications and plugins run with
 the current user's permissions, so review third-party code before installing it.
 
-## Omarchy Phone example
-
-`examples/omarchy-phone` demonstrates reactive controls, background discovery, safe commands,
-ADB pairing and connection, scrcpy launching, iPhone discovery, and UxPlay AirPlay mirroring.
-
-```bash
-omarchy_ui launch examples/omarchy-phone/main.rb
-```
-
 ## Development and verification
 
 ```bash

@@ -103,12 +103,15 @@ module OmarchyUI
       destination = File.join(source, "dist", File.basename(source))
       raise ArgumentError, "bundle destination already exists: #{destination}" if File.exist?(destination)
       FileUtils.mkdir_p(destination)
-      entries = Dir.children(source).reject { |entry| %w[.git dist].include?(entry) }
+      entries = application_entries(source)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, destination)
       Project.install_runtime(destination)
-      runtime = File.join(destination, "omarchy-ui-runtime")
-      FileUtils.cp(Runtime::BUNDLED, runtime)
-      FileUtils.chmod(0o755, runtime)
+      if File.file?(File.join(destination, "manifest.json"))
+        raise ArgumentError, "bundled plugin validation failed" unless system("omarchy", "plugin", "validate", destination)
+        @out.puts("Bundled plugin in #{destination}")
+        return 0
+      end
+
       %w[Commons Ui].each do |module_name|
         FileUtils.ln_s(File.join("/usr/share/omarchy/shell", module_name), File.join(destination, module_name))
       end
@@ -133,6 +136,11 @@ module OmarchyUI
 
     def qt_logging_rules
       [ENV["QT_LOGGING_RULES"], "qt.qpa.services.warning=false"].compact.reject(&:empty?).join(";")
+    end
+
+    def application_entries(source)
+      generated = Project::RUNTIME_FILES + %w[omarchy-ui-runtime run Commons Ui]
+      Dir.children(source).reject { |entry| %w[.git dist].include?(entry) || generated.include?(entry) }
     end
 
     def push(arguments)
@@ -185,7 +193,7 @@ module OmarchyUI
     def stage_project(source, parent: nil, prefix: ".omarchy-ui-staging-")
       raise ArgumentError, "project directory not found: #{source}" unless File.directory?(source)
       staging = parent ? Dir.mktmpdir(prefix, parent) : Dir.mktmpdir(prefix)
-      entries = Dir.children(source).reject { |entry| entry == ".git" }
+      entries = application_entries(source)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging) unless entries.empty?
       Project.install_runtime(staging) if File.file?(File.join(staging, "main.rb"))
       staging

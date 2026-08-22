@@ -28,7 +28,7 @@ module OmarchyUI
     def self.install_runtime(path, framework_root: FRAMEWORK_ROOT)
       RUNTIME_FILES.each do |file|
         destination = File.join(path, file)
-        FileUtils.cp(File.join(framework_root, file), destination) unless File.exist?(destination)
+        FileUtils.cp(File.join(framework_root, file), destination)
       end
       bundled_runtime = File.join(framework_root, "vendor", "runtime", "x86_64-linux", "omarchy-ui-runtime")
       if File.file?(bundled_runtime)

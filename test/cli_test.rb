@@ -133,6 +133,30 @@ class CLITest < Minitest::Test
     end
   end
 
+  def test_bundle_builds_plugin_from_application_owned_files
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "sample-plugin")
+      tools = File.join(directory, "bin")
+      FileUtils.mkdir_p([source, tools])
+      File.write(File.join(source, "main.rb"), "# app\n")
+      File.write(File.join(source, "manifest.json"), JSON.generate("id" => "test.sample"))
+      File.write(File.join(source, "ControlNode.qml"), "stale generated file\n")
+      omarchy = File.join(tools, "omarchy")
+      File.write(omarchy, "#!/bin/sh\ntest -x \"$3/omarchy-ui-runtime\"\n")
+      FileUtils.chmod(0o755, omarchy)
+
+      with_environment("PATH" => "#{tools}:#{ENV.fetch('PATH')}") do
+        status = OmarchyUI::CLI.run(["bundle", source], out: StringIO.new, err: StringIO.new)
+        bundle = File.join(source, "dist", "sample-plugin")
+        assert_equal 0, status
+        assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
+        assert_equal File.read(File.join(ROOT, "ControlNode.qml")), File.read(File.join(bundle, "ControlNode.qml"))
+        refute File.exist?(File.join(bundle, "run"))
+        refute File.exist?(File.join(bundle, "Commons"))
+      end
+    end
+  end
+
   private
 
   def with_environment(values)
