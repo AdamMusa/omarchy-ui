@@ -308,6 +308,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `dialog` | native titled dialog containing arbitrary Ruby controls with standard button roles, reactive opening, modal behavior, geometry, layout and styling | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
 | `alert_dialog` | severity-aware native alert with title/message, informative and selectable detailed text, icon/color mapping and standard buttons | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
 | `message_dialog` | platform-native Qt message box with title, primary/informative/detailed text, standard-button flags and modality | `button`, `accept`, `reject`, `open`, `close` |
+| `bottom_sheet` | bottom-anchored popup with arbitrary Ruby content, modal scrim, drag handle, swipe dismissal, responsive sizing and transitions | `open`, `close`, popup lifecycle, `drag`, `drag_end`, `dismiss` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

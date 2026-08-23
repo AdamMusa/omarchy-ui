@@ -2410,6 +2410,34 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_bottom_sheet_is_a_typed_reactive_content_container
+    application = OmarchyUI::Application.new do
+      app do
+        bottom_sheet id: :actions, opened: true, height: 280, max_width: 640,
+                     dismiss_threshold: 0.4, draggable: true, layout: :column do
+          text "Choose an action"
+          button "Continue", id: :continue
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "bottom_sheet", node.fetch("type")
+    assert_equal "actions", node.fetch("id")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal 280, node.dig("props", "height")
+    assert_equal 640, node.dig("props", "max_width")
+    assert_equal 0.4, node.dig("props", "dismiss_threshold")
+    assert_equal true, node.dig("props", "draggable")
+    assert_equal "column", node.dig("props", "layout")
+    assert_equal %w[text button], node.fetch("children").map { |child| child.fetch("type") }
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

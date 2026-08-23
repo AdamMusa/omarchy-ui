@@ -218,6 +218,11 @@ than an in-scene styled control. Informative/detailed text, native standard-butt
 application modality, and opening are reactive. `button` returns the native button and role names;
 accept/reject and open/close lifecycle events remain available to Ruby.
 
+`bottom_sheet(...) { ... }` is a bottom-anchored native popup surface for arbitrary Ruby content.
+It provides a modal scrim, constrained responsive width, a configurable drag handle,
+swipe-to-dismiss threshold, animated entry/exit, close policies, and reactive opening. Ruby can
+observe popup lifecycle, drag progress, drag completion, and explicit gesture dismissal.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

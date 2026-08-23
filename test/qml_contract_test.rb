@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 122, renderer_names.length
+    assert_equal 123, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1236,5 +1236,23 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"accept", {}'
     assert_includes renderer, '"reject", {}'
     assert_includes renderer, 'visible ? "open" : "close"'
+  end
+
+  def test_bottom_sheet_has_a_specific_draggable_popup_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "bottom_sheet"'
+    assert_includes renderer, "id: bottomSheetComponent"
+    assert_includes renderer, "id: sheetRoot"
+    assert_includes renderer, "QQC.Popup {"
+    assert_includes renderer, 'parent.height - height - sheetMargin'
+    assert_includes renderer, 'root.prop("max_width", 720)'
+    assert_includes renderer, "DragHandler {"
+    assert_includes renderer, 'root.prop("dismiss_threshold", 0.3)'
+    assert_includes renderer, '"drag", {'
+    assert_includes renderer, '"drag_end", {'
+    assert_includes renderer, '"dismiss", {'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, 'property: "y"'
   end
 end
