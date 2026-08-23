@@ -224,6 +224,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"frame", { value: currentFrame, count: frameCount }'
   end
 
+  def test_video_has_a_specific_native_multimedia_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, "import QtMultimedia"
+    assert_includes renderer, 'node.type === "video"'
+    assert_includes renderer, "id: videoComponent"
+    assert_includes renderer, "VideoOutput.PreserveAspectCrop"
+    assert_includes renderer, '"position", { value: position, duration: duration }'
+  end
+
   def test_avatar_has_a_specific_image_and_initials_renderer
     renderer = source("ControlNode.qml")
 

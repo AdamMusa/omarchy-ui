@@ -187,6 +187,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
 | `image` | `source`, `fill_mode` | — | no |
 | `animated_image` | source, dimensions/fill, playback, pause, speed, async/cache/mirror/smoothing | `frame`, `loaded`, `error`, `status` | no |
+| `video` | source, dimensions/fill, autoplay, loops, volume/mute, rate, orientation and mirroring | `play`, `pause`, `stop`, `error`, `position`, `duration` | no |
 | `avatar` | optional image source, initials name, size/radius, colors, font size and loading/cache | `click`, `loaded`, `error` | no |
 | `badge` | value, maximum-count formatting, dot mode, sizing/padding and colors | `click` | no |
 | `chip` | label/icon, selected and deletable states, enabled state, dimensions, spacing and colors | `click`, `change`, `delete` | no |

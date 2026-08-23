@@ -43,6 +43,7 @@ module OmarchyUI
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],
     image: [%i[source width height fill_mode visible], [], false],
     animated_image: [%i[source width height fill_mode playing paused speed asynchronous cache mirror smooth visible], %i[frame loaded error status], false],
+    video: [%i[source width height auto_play loops volume muted playback_rate fill_mode orientation mirrored visible], %i[play pause stop error position duration], false],
     avatar: [%i[source name size radius background foreground font_size asynchronous cache visible], %i[click loaded error], false],
     badge: [%i[value maximum dot size minimum_width padding background foreground font_size visible], %i[click], false],
     chip: [%i[text icon selected deletable enabled background selected_background foreground selected_foreground accent height radius horizontal_padding spacing font_size icon_size visible], %i[click change delete], false],

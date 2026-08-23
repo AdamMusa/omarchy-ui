@@ -358,6 +358,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_video_is_a_typed_native_multimedia_component
+    application = OmarchyUI::Application.new do
+      app { video "intro.mp4", auto_play: true, volume: 0.7, fill_mode: :cover }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "video", node.fetch("type")
+    assert_equal "intro.mp4", node.dig("props", "source")
+    assert_equal true, node.dig("props", "auto_play")
+    assert_equal 0.7, node.dig("props", "volume")
+  ensure
+    application&.stop
+  end
+
   def test_avatar_is_a_typed_image_with_initials_fallback
     application = OmarchyUI::Application.new do
       app { avatar "profile.png", name: "Ada Lovelace", size: 64 }

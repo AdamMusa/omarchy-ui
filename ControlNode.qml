@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls as QQC
 import QtQuick.Layouts
+import QtMultimedia
 import qs.Commons
 import qs.Ui as OmarchyUi
 
@@ -18,7 +19,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "video", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
@@ -204,6 +205,7 @@ Loader {
     if (node.type === "container") return containerComponent
     if (node.type === "image") return imageComponent
     if (node.type === "animated_image") return animatedImageComponent
+    if (node.type === "video") return videoComponent
     if (node.type === "avatar") return avatarComponent
     if (node.type === "badge") return badgeComponent
     if (node.type === "chip") return chipComponent
@@ -568,6 +570,40 @@ Loader {
         if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
         if (status === AnimatedImage.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height, frames: frameCount })
         if (status === AnimatedImage.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
+      }
+    }
+  }
+
+  Component {
+    id: videoComponent
+    Video {
+      source: String(root.prop("source", ""))
+      implicitWidth: Number(root.prop("width", 640))
+      implicitHeight: Number(root.prop("height", 360))
+      autoPlay: root.prop("auto_play", false) === true
+      loops: Number(root.prop("loops", 1))
+      volume: Math.max(0, Math.min(1, Number(root.prop("volume", 1))))
+      muted: root.prop("muted", false) === true
+      playbackRate: Number(root.prop("playback_rate", 1))
+      orientation: Number(root.prop("orientation", 0))
+      mirrored: root.prop("mirrored", false) === true
+      fillMode: {
+        var mode = String(root.prop("fill_mode", "contain"))
+        if (mode === "cover") return VideoOutput.PreserveAspectCrop
+        if (mode === "stretch") return VideoOutput.Stretch
+        return VideoOutput.PreserveAspectFit
+      }
+      onPlaying: root.bridge.sendEvent(root.surfaceName, root.controlId, "play", {})
+      onPaused: root.bridge.sendEvent(root.surfaceName, root.controlId, "pause", {})
+      onStopped: root.bridge.sendEvent(root.surfaceName, root.controlId, "stop", {})
+      onErrorOccurred: function(error, message) {
+        root.bridge.sendEvent(root.surfaceName, root.controlId, "error", { code: error, message: message })
+      }
+      onPositionChanged: {
+        if (root.subscribed("position")) root.bridge.sendEvent(root.surfaceName, root.controlId, "position", { value: position, duration: duration })
+      }
+      onDurationChanged: {
+        if (root.subscribed("duration")) root.bridge.sendEvent(root.surfaceName, root.controlId, "duration", { value: duration })
       }
     }
   }
