@@ -74,6 +74,7 @@ module OmarchyUI
     range_slider: [%i[lower upper minimum maximum step orientation snap live width height foreground background accent visible], %i[input change], false],
     dial: [%i[value minimum maximum step start_angle end_angle snap wrap live input_mode size foreground background accent visible], %i[input change press release], false],
     spin_box: [%i[value minimum maximum step editable wrap prefix suffix width enabled foreground background accent font_family font_size visible], %i[change increase decrease], false],
+    double_spin_box: [%i[value minimum maximum step decimals editable wrap prefix suffix width enabled foreground background accent font_family font_size visible], %i[change increase decrease], false],
     dropdown: [%i[label value options foreground background popup_border accent font_family row_height popup_row_height show_label cursor], %i[change hover], false],
     searchable_dropdown: [%i[label value options placeholder empty_text trigger_label foreground background popup_border accent font_family row_height popup_row_height popup_min_height show_label cursor], %i[change hover], false],
     multi_select: [%i[label values options options_command options_command_cwd placeholder empty_text no_selection_text trigger_label show_label foreground background popup_border accent font_family row_height popup_row_height popup_min_height cursor], %i[change hover], false],

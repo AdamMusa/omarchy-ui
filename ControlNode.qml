@@ -23,7 +23,7 @@ Loader {
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
-    "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dial", "spin_box", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
+    "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dial", "spin_box", "double_spin_box", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -266,6 +266,7 @@ Loader {
     if (node.type === "range_slider") return rangeSliderComponent
     if (node.type === "dial") return dialComponent
     if (node.type === "spin_box") return spinBoxComponent
+    if (node.type === "double_spin_box") return doubleSpinBoxComponent
     if (node.type === "dropdown") return dropdownComponent
     if (node.type === "multi_select") return multiSelectComponent
     if (node.type === "button_group") return buttonGroupComponent
@@ -2275,6 +2276,46 @@ Loader {
       palette.highlight: root.prop("accent", Color.accent)
       textFromValue: function(value, locale) {
         return String(root.prop("prefix", "")) + Number(value).toLocaleString(locale, "f", 0) + String(root.prop("suffix", ""))
+      }
+      valueFromText: function(text, locale) {
+        var prefix = String(root.prop("prefix", ""))
+        var suffix = String(root.prop("suffix", ""))
+        var numeric = String(text)
+        if (prefix.length > 0 && numeric.indexOf(prefix) === 0) numeric = numeric.slice(prefix.length)
+        if (suffix.length > 0 && numeric.lastIndexOf(suffix) === numeric.length - suffix.length) numeric = numeric.slice(0, -suffix.length)
+        return Number.fromLocaleString(locale, numeric)
+      }
+      onValueModified: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value })
+      up.onPressedChanged: {
+        if (up.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "increase", { value: value })
+      }
+      down.onPressedChanged: {
+        if (down.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "decrease", { value: value })
+      }
+    }
+  }
+
+  Component {
+    id: doubleSpinBoxComponent
+    QQC.DoubleSpinBox {
+      id: nativeDoubleSpinBox
+      from: Number(root.prop("minimum", 0))
+      to: Number(root.prop("maximum", 100))
+      value: Number(root.prop("value", from))
+      stepSize: Number(root.prop("step", 0.1))
+      decimals: Number(root.prop("decimals", 2))
+      editable: root.prop("editable", true) !== false
+      wrap: root.prop("wrap", false) === true
+      enabled: root.prop("enabled", true) !== false
+      implicitWidth: Number(root.prop("width", 160))
+      font.family: String(root.prop("font_family", root.fontFamily))
+      font.pixelSize: Number(root.prop("font_size", Style.font.body))
+      palette.text: root.prop("foreground", root.foreground)
+      palette.buttonText: root.prop("foreground", root.foreground)
+      palette.button: root.prop("background", Color.popups.background)
+      palette.highlight: root.prop("accent", Color.accent)
+      textFromValue: function(value, locale) {
+        return String(root.prop("prefix", "")) + Number(value).toLocaleString(locale, "f", decimals) + String(root.prop("suffix", ""))
       }
       valueFromText: function(text, locale) {
         var prefix = String(root.prop("prefix", ""))

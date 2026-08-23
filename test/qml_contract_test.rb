@@ -565,4 +565,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "textFromValue: function(value, locale)"
     assert_includes renderer, '"increase", { value: value }'
   end
+
+  def test_double_spin_box_has_a_specific_native_floating_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "double_spin_box"'
+    assert_includes renderer, "id: doubleSpinBoxComponent"
+    assert_includes renderer, "QQC.DoubleSpinBox {"
+    assert_includes renderer, 'root.prop("decimals", 2)'
+    assert_includes renderer, 'Number(value).toLocaleString(locale, "f", decimals)'
+  end
 end

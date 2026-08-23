@@ -1382,6 +1382,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_double_spin_box_is_a_typed_native_floating_input
+    application = OmarchyUI::Application.new do
+      app { double_spin_box 1.25, minimum: 0.0, maximum: 10.0, step: 0.25, decimals: 2, suffix: "x" }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "double_spin_box", node.fetch("type")
+    assert_equal 1.25, node.dig("props", "value")
+    assert_equal 0.25, node.dig("props", "step")
+    assert_equal 2, node.dig("props", "decimals")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
