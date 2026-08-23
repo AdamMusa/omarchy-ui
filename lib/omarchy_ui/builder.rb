@@ -212,6 +212,9 @@ module OmarchyUI
     def bottom_sheet(id: nil, **props, &block)
       component(:bottom_sheet, id:, **props, &block)
     end
+    def modal_sheet(title = "", id: nil, **props, &block)
+      component(:modal_sheet, id:, title: title.to_s, **props, &block)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

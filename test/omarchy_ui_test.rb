@@ -2438,6 +2438,36 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_modal_sheet_is_a_typed_reactive_content_container
+    application = OmarchyUI::Application.new do
+      app do
+        modal_sheet "Account settings", id: :settings_sheet, opened: true,
+                    edge: :left, width: 460, max_height: 780,
+                    show_close: true, dismissible: true do
+          text "Profile"
+          text_field "Ada"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "modal_sheet", node.fetch("type")
+    assert_equal "settings_sheet", node.fetch("id")
+    assert_equal "Account settings", node.dig("props", "title")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal "left", node.dig("props", "edge")
+    assert_equal 460, node.dig("props", "width")
+    assert_equal 780, node.dig("props", "max_height")
+    assert_equal true, node.dig("props", "show_close")
+    assert_equal true, node.dig("props", "dismissible")
+    assert_equal %w[text text_field], node.fetch("children").map { |child| child.fetch("type") }
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

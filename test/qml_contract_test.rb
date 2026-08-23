@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 123, renderer_names.length
+    assert_equal 124, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1254,5 +1254,24 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"dismiss", {'
     assert_includes renderer, "delegate: childDelegate"
     assert_includes renderer, 'property: "y"'
+  end
+
+  def test_modal_sheet_has_a_specific_edge_attached_popup_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "modal_sheet"'
+    assert_includes renderer, "id: modalSheetComponent"
+    assert_includes renderer, "id: modalSheetRoot"
+    assert_includes renderer, 'root.prop("edge", "right")'
+    assert_includes renderer, 'root.prop("max_width", 720)'
+    assert_includes renderer, 'root.prop("max_height", 900)'
+    assert_includes renderer, "function hiddenX()"
+    assert_includes renderer, "function hiddenY()"
+    assert_includes renderer, 'root.prop("show_header", true)'
+    assert_includes renderer, 'root.prop("show_close", true)'
+    assert_includes renderer, 'modalSheetRoot.dismiss("close_button")'
+    assert_includes renderer, 'reportDismiss("close_policy")'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, 'property: modalSheetRoot.horizontalEdge ? "y" : "x"'
   end
 end

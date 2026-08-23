@@ -223,6 +223,11 @@ It provides a modal scrim, constrained responsive width, a configurable drag han
 swipe-to-dismiss threshold, animated entry/exit, close policies, and reactive opening. Ruby can
 observe popup lifecycle, drag progress, drag completion, and explicit gesture dismissal.
 
+`modal_sheet(title, ...) { ... }` presents arbitrary Ruby content in a modal sheet attached to any
+window edge. Its responsive dimensions, edge, header, close affordance, styling, animation, and
+opening state are reactive. Escape, outside-click, and close-button dismissal are configurable;
+Ruby receives both lifecycle events and a reason-bearing `dismiss` event.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
