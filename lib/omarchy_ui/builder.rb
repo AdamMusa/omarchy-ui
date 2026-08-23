@@ -111,6 +111,9 @@ module OmarchyUI
     def window(title = "", id: nil, **props, &block)
       component(:window, id:, title: title.to_s, **props, &block)
     end
+    def application_window(title = "", id: nil, **props, &block)
+      component(:application_window, id:, title: title.to_s, **props, &block)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

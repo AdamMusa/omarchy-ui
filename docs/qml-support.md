@@ -26,6 +26,10 @@ constraints, visibility, modality, flags, opacity, color, and content orientatio
 while its Ruby children render in the window's content scene. Native close, activation,
 visibility, move, and resize changes are delivered as Ruby events.
 
+`application_window(title, ...) { ... }` uses `QtQuick.Controls.ApplicationWindow` for secondary
+windows that need the Controls content/background model, inherited font and layout direction,
+and active-focus-control reporting in addition to the native window lifecycle.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

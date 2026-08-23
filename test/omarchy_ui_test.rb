@@ -230,6 +230,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_application_window_is_a_typed_controls_window_container
+    application = OmarchyUI::Application.new do
+      app do
+        application_window "Settings", id: :settings_window, width: 720, height: 540,
+                           visible: false, background: "#101820", layout_direction: :right_to_left do
+          text "Settings content"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "application_window", node.fetch("type")
+    assert_equal "Settings", node.dig("props", "title")
+    assert_equal 720, node.dig("props", "width")
+    assert_equal "#101820", node.dig("props", "background")
+    assert_equal "right_to_left", node.dig("props", "layout_direction")
+    assert_equal "Settings content", node.dig("children", 0, "props", "text")
+  ensure
+    application&.stop
+  end
+
   def test_loader_is_a_typed_lazy_container
     application = OmarchyUI::Application.new do
       app do

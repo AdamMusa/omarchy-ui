@@ -37,6 +37,7 @@ module OmarchyUI
     flipable: [%i[flipped axis duration easing interactive width height visible], %i[click change], true],
     border_image: [%i[source width height border_left border_top border_right border_bottom horizontal_tile vertical_tile asynchronous cache mirror smooth visible], %i[click loaded error status], true],
     window: [%i[title x y width height minimum_width minimum_height maximum_width maximum_height color visible visibility modality flags opacity content_orientation], %i[close visible_change active_change visibility_change move resize], true],
+    application_window: [%i[title x y width height minimum_width minimum_height maximum_width maximum_height color background visible visibility modality flags opacity content_orientation layout_direction font_family font_size], %i[close visible_change active_change visibility_change move resize focus_change], true],
     text: [%i[text style size bold color wrap width visible], [], false],
     label: [%i[text color size bold width wrap elide horizontal_alignment vertical_alignment maximum_lines format visible], %i[link], false],
     rich_text: [%i[text color link_color size bold width wrap maximum_lines visible], %i[link], false],

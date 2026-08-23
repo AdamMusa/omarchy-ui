@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 85, renderer_names.length
+    assert_equal 86, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -215,6 +215,18 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("modality", "none")'
     assert_includes renderer, 'root.prop("flags", "window")'
     assert_includes renderer, '"close", {'
+    assert_includes renderer, "delegate: childDelegate"
+  end
+
+  def test_application_window_has_a_specific_controls_window_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "application_window"'
+    assert_includes renderer, "id: applicationWindowComponent"
+    assert_includes renderer, "QQC.ApplicationWindow {"
+    assert_includes renderer, 'root.prop("background", "transparent")'
+    assert_includes renderer, "onActiveFocusControlChanged"
+    assert_includes renderer, '"focus_change", {'
     assert_includes renderer, "delegate: childDelegate"
   end
 

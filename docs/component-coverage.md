@@ -44,7 +44,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] flipable
 - [x] border_image
 - [x] window
-- [ ] application_window
+- [x] application_window
 
 ## Display, content, and media
 
