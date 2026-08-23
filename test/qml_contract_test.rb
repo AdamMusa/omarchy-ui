@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 98, renderer_names.length
+    assert_equal 99, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -812,5 +812,19 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "delegate: childDelegate"
     assert_includes renderer, 'visible ? "show" : "hide"'
     assert_includes renderer, 'activeFocus ? "focus" : "blur"'
+  end
+
+  def test_group_box_has_a_specific_native_titled_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "group_box"'
+    assert_includes renderer, "id: groupBoxComponent"
+    assert_includes renderer, "QQC.GroupBox {"
+    assert_includes renderer, 'title: String(root.prop("title", ""))'
+    assert_includes renderer, 'root.prop("title_alignment", "left")'
+    assert_includes renderer, 'root.prop("top_padding", padding + titleLabel.implicitHeight + Style.spacing.sm)'
+    assert_includes renderer, 'root.prop("border_color", Color.border)'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, '"title_change", { value: title }'
   end
 end

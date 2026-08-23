@@ -1758,6 +1758,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_group_box_is_a_typed_native_titled_container
+    application = OmarchyUI::Application.new do
+      app do
+        group_box "Network", id: :network_group, layout: :row, spacing: 9,
+                  padding: 12, title_alignment: :center, border_color: "#89b482" do
+          text "Connected"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "group_box", node.fetch("type")
+    assert_equal "network_group", node.fetch("id")
+    assert_equal "Network", node.dig("props", "title")
+    assert_equal "row", node.dig("props", "layout")
+    assert_equal 9, node.dig("props", "spacing")
+    assert_equal 12, node.dig("props", "padding")
+    assert_equal "center", node.dig("props", "title_alignment")
+    assert_equal "#89b482", node.dig("props", "border_color")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

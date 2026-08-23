@@ -94,6 +94,11 @@ reactive content layouts and per-edge padding, while exposing its border width/c
 radius, direction, clipping, and geometry directly to Ruby. It emits the same pointer, visibility,
 and focus events as `pane`.
 
+`group_box(title, ...) { ... }` adds a reactive native Qt Controls `GroupBox` title to a bordered
+container. Ruby controls its title typography/alignment, row/column/stack child layout, padding,
+geometry, background, border, radius, direction, and clipping. Title changes, pointer clicks,
+visibility, and focus transitions are emitted as events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
