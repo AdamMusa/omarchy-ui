@@ -8,7 +8,7 @@ import qs.Ui as OmarchyUi
 
 VectorImage {
   required property var renderer
-      source: String(renderer.prop("source", ""))
+      source: renderer.assetUrl(renderer.prop("source", ""))
       width: Number(renderer.prop("width", 120))
       height: Number(renderer.prop("height", 120))
       fillMode: {

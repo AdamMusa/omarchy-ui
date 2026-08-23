@@ -465,6 +465,30 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_model_view_3d_is_a_typed_interactive_glb_component
+    application = OmarchyUI::Application.new do
+      app do
+        model_view_3d "heart.glb", rotation_x: -90, rotation_y: 12,
+                                   zoom: 1.4, pulse: true, bpm: 72,
+                                   interactive: true, reset_revision: 3
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "model_view_3d", node.fetch("type")
+    assert_equal "heart.glb", node.dig("props", "source")
+    assert_equal(-90, node.dig("props", "rotation_x"))
+    assert_equal 1.4, node.dig("props", "zoom")
+    assert_equal true, node.dig("props", "pulse")
+    assert_equal 72, node.dig("props", "bpm")
+    assert_equal 3, node.dig("props", "reset_revision")
+  ensure
+    application&.stop
+  end
+
   def test_font_loader_is_a_typed_native_font_resource
     application = OmarchyUI::Application.new do
       app { font_loader "fonts/Inter.woff2" }
@@ -823,6 +847,25 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_gauges_accept_the_generic_series_argument
+    application = OmarchyUI::Application.new do
+      app do
+        gauge [45], value: 45, minimum: 0, maximum: 100
+        radial_gauge [72], value: 72, minimum: 0, maximum: 100
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    nodes = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children")
+
+    assert_equal "gauge", nodes.fetch(0).fetch("type")
+    assert_equal [45], nodes.fetch(0).dig("props", "values")
+    assert_equal "radial_gauge", nodes.fetch(1).fetch("type")
+    assert_equal [72], nodes.fetch(1).dig("props", "values")
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0
@@ -1044,16 +1087,16 @@ class OmarchyUITest < Minitest::Test
 
   def test_qml_components_are_registered_with_a_validated_schema
     app = OmarchyUI::Application.new do
-      register_component :sparkline, qml: "Sparkline.qml", properties: %i[values color], events: %i[click]
+      register_component :custom_sparkline, qml: "Sparkline.qml", properties: %i[values color], events: %i[click]
       app do
-        component :sparkline, id: :history, values: [1, 3, 2], color: "#ff0000"
+        component :custom_sparkline, id: :history, values: [1, 3, 2], color: "#ff0000"
       end
     end
     output = StringIO.new
     app.start(output: output, error: StringIO.new)
     render = messages(output).last
 
-    assert_equal "Sparkline.qml", render.dig("components", "sparkline", "qml")
+    assert_equal "Sparkline.qml", render.dig("components", "custom_sparkline", "qml")
     assert_equal [1, 3, 2], render.dig("surfaces", "main", "children", 0, "props", "values")
   end
 
@@ -2330,6 +2373,7 @@ class OmarchyUITest < Minitest::Test
     application = OmarchyUI::Application.new do
       app do
         dialog "Save changes?", id: :save_dialog, opened: true,
+               centered: true,
                standard_buttons: %i[save discard cancel], modal: true,
                width: 500, height: 300 do
           text "Choose how to continue."
@@ -2345,6 +2389,7 @@ class OmarchyUITest < Minitest::Test
     assert_equal "save_dialog", node.fetch("id")
     assert_equal "Save changes?", node.dig("props", "title")
     assert_equal true, node.dig("props", "opened")
+    assert_equal true, node.dig("props", "centered")
     assert_equal %w[save discard cancel], node.dig("props", "standard_buttons")
     assert_equal true, node.dig("props", "modal")
     assert_equal 500, node.dig("props", "width")
@@ -2359,6 +2404,7 @@ class OmarchyUITest < Minitest::Test
       app do
         alert_dialog "Connection failed", "The server could not be reached.",
                      id: :connection_alert, severity: :error, opened: true,
+                     centered: true,
                      informative_text: "Check the network and retry.",
                      detailed_text: "ECONNREFUSED 127.0.0.1:443",
                      standard_buttons: %i[retry cancel]
@@ -2375,6 +2421,7 @@ class OmarchyUITest < Minitest::Test
     assert_equal "The server could not be reached.", node.dig("props", "message")
     assert_equal "error", node.dig("props", "severity")
     assert_equal true, node.dig("props", "opened")
+    assert_equal true, node.dig("props", "centered")
     assert_equal "Check the network and retry.", node.dig("props", "informative_text")
     assert_equal "ECONNREFUSED 127.0.0.1:443", node.dig("props", "detailed_text")
     assert_equal %w[retry cancel], node.dig("props", "standard_buttons")
@@ -2872,6 +2919,47 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_tree_view_is_a_typed_hierarchical_native_tree
+    rows = [
+      {
+        name: "Source", kind: "folder",
+        children: [
+          { name: "app.rb", kind: "file", children: [] },
+          { name: "components", kind: "folder", children: [{ name: "card.rb", kind: "file" }] }
+        ]
+      }
+    ]
+    columns = [
+      { key: :name, label: "Name", width: 280, editable: true },
+      { key: :kind, label: "Kind", width: 120, alignment: :center, editable: false }
+    ]
+    application = OmarchyUI::Application.new do
+      app do
+        tree_view rows, id: :source_tree, columns: columns, children_field: :children,
+                        selected_path: [0, 1], selected_column: 0,
+                        expanded_paths: [[0], [0, 1]], expand_depth: 2,
+                        selection_behavior: :rows, editable: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "tree_view", node.fetch("type")
+    assert_equal "source_tree", node.fetch("id")
+    assert_equal "children", node.dig("props", "children_field")
+    assert_equal "Source", node.dig("props", "rows", 0, "name")
+    assert_equal "components", node.dig("props", "rows", 0, "children", 1, "name")
+    assert_equal "name", node.dig("props", "columns", 0, "key")
+    assert_equal [0, 1], node.dig("props", "selected_path")
+    assert_equal [[0], [0, 1]], node.dig("props", "expanded_paths")
+    assert_equal 2, node.dig("props", "expand_depth")
+    assert_equal true, node.dig("props", "editable")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
@@ -2892,5 +2980,51 @@ class OmarchyUITest < Minitest::Test
     tracks = messages(output).first.fetch("tracks")
     assert_equal [0, 100], tracks.map { |track| track.fetch("delay") }
     assert_equal [1.0, 1.2], tracks.map { |track| track.fetch("from") }
+  end
+
+  def test_every_builtin_component_has_a_named_ruby_builder
+    missing = OmarchyUI::COMPONENTS.keys.reject do |component_name|
+      OmarchyUI::Builder.public_instance_methods.include?(component_name)
+    end
+
+    assert_empty missing
+    assert_operator OmarchyUI::COMPONENTS.length, :>=, 241
+  end
+
+  def test_gpu_animation_multimedia_and_model_builders_serialize_node_references
+    application = OmarchyUI::Application.new do
+      app do
+        target = rectangle id: :target, width: 160, height: 90
+        shader_effect :wave, id: :shader, running: true, frequency: 2.5 do
+          text "GPU content"
+        end
+        multi_effect id: :effect, blur_enabled: true, blur: 0.4 do
+          text "Effect source"
+        end
+        particle_system id: :particles, emit_rate: 24, life_span: 900
+        number_animation target, id: :fade, property: :opacity, from: 0, to: 1, running: true
+        parallel_animation [{ type: :number, target: target, property: :scale, from: 0.8, to: 1.0 }], id: :group
+        state :active, target: target, id: :active_state, properties: { opacity: 1 }, revision: 1
+        media_player "intro.ogg", id: :player, auto_play: false
+        video_output :player, id: :output
+        capture_session id: :capture do
+          text "Capture preview"
+        end
+        list_model [{ id: 1, name: "Ruby" }], id: :model, revision: 1
+        sort_filter_proxy_model [{ name: "Ruby" }], id: :proxy, filter_field: :name, sort_field: :name
+        clipboard "copied", id: :clipboard
+      end
+    end
+
+    children = application.tree.dig("main", "children")
+    by_id = children.to_h { |node| [node.fetch("id"), node] }
+    assert_equal "target", by_id.dig("fade", "props", "target")
+    assert_equal "target", by_id.dig("group", "props", "animations", 0, "target")
+    assert_equal "target", by_id.dig("active_state", "props", "target")
+    assert_equal "player", by_id.dig("output", "props", "source")
+    assert_equal "wave", by_id.dig("shader", "props", "fragment_shader")
+    assert_equal true, by_id.dig("effect", "props", "blur_enabled")
+    assert_equal "Ruby", by_id.dig("model", "props", "items", 0, "name")
+    assert_equal "copied", by_id.dig("clipboard", "props", "text")
   end
 end

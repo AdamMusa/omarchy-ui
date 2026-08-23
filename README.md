@@ -35,6 +35,13 @@ The gem contains everything required to launch and bundle an application. Develo
 not need to install a separate runtime or copy framework files. Bundled applications require only
 an Omarchy computer to run.
 
+Native 3D model surfaces use Qt Quick 3D. Install its system module before running an app that uses
+`model_view_3d`:
+
+```bash
+sudo pacman -S qt6-quick3d assimp
+```
+
 ## Start an application
 
 ```bash
@@ -189,13 +196,14 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `selectable_text` | read-only selectable text, typography, width/wrapping, format and selection colors | `selection`, `link` | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
-| `image` | `source`, `fill_mode` | — | no |
+| `image` | app-relative/local/URL `source`, dimensions/source size, fill mode, alignment, async/cache/smoothing/mipmap/mirroring and load retention | `progress`, `status`, `loaded`, `error` | no |
 | `vector_image` | source, dimensions/fill, geometry/curve renderer, trust policy, async shapes and animation controls | `source_change` | no |
+| `model_view_3d` | GLB/glTF source, fit/center, camera, lighting, rotation, zoom, auto-rotation, pulse and interaction controls | load/status/error, click/double-click, rotation/zoom changes | no |
 | `font_loader` | local or remote font source | `loaded`, `error`, `status` with resolved family name | no |
 | `text_metrics` | text/font settings, spacing, elision and elision width | `metrics` with native bounds, advance width and elided text | no |
 | `animated_image` | source, dimensions/fill, playback, pause, speed, async/cache/mirror/smoothing | `frame`, `loaded`, `error`, `status` | no |
 | `video` | source, dimensions/fill, autoplay, loops, volume/mute, rate, orientation and mirroring | `play`, `pause`, `stop`, `error`, `position`, `duration` | no |
-| `audio` | source, autoplay/reactive playback command, loops, volume/mute and playback rate | `play`, `pause`, `stop`, `error`, `position`, `duration` | no |
+| `audio` | app-relative source, autoplay/reactive playback, native seeking, loops, volume/mute and playback rate | play/pause/stop/end, load/status/error, position/duration | no |
 | `avatar` | optional image source, initials name, size/radius, colors, font size and loading/cache | `click`, `loaded`, `error` | no |
 | `badge` | value, maximum-count formatting, dot mode, sizing/padding and colors | `click` | no |
 | `chip` | label/icon, selected and deletable states, enabled state, dimensions, spacing and colors | `click`, `change`, `delete` | no |
@@ -306,7 +314,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `context_menu` | native right-click menu attached to a Ruby node/ID or activation area, with programmatic opening and the full item/separator schema | `request`, `trigger`, `toggle`, `highlight`, `open`, `close`, `about_to_show`, `about_to_hide` |
 | `popup` | native popup containing arbitrary Ruby controls with reactive opening, position, modal/dim/focus behavior, close policy, layout, styling and transitions | `open`, `close`, `about_to_show`, `about_to_hide`, `show`, `hide`, `focus`, `blur`, `position_change` |
 | `dialog` | native titled dialog containing arbitrary Ruby controls with standard button roles, reactive opening, modal behavior, geometry, layout and styling | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
-| `alert_dialog` | severity-aware native alert with title/message, informative and selectable detailed text, icon/color mapping and standard buttons | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
+| `alert_dialog` | Omarchy-themed severity alert with aligned icon/message, optional app-relative image, informative/selectable details and semantic button roles | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
 | `message_dialog` | platform-native Qt message box with title, primary/informative/detailed text, standard-button flags and modality | `button`, `accept`, `reject`, `open`, `close` |
 | `bottom_sheet` | bottom-anchored popup with arbitrary Ruby content, modal scrim, drag handle, swipe dismissal, responsive sizing and transitions | `open`, `close`, popup lifecycle, `drag`, `drag_end`, `dismiss` |
 | `modal_sheet` | edge-attached modal surface with title/header, close affordance, arbitrary Ruby content, responsive sizing and slide transitions | `open`, `close`, `dismiss`, popup lifecycle |
@@ -323,6 +331,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `swipe_delegate` | native swipeable collection row with configurable left/right action lanes, programmatic opening and position/completion lifecycle | `left_action`, `right_action`, swipe lifecycle, activation/pointer/focus |
 | `grid_view` | native virtualized grid for Ruby arrays with field mapping, selection, keyboard navigation, flow/RTL, snapping, highlight and empty state | `activate`, `change`, current/count/highlight/scroll/movement lifecycle |
 | `table_view` | arbitrary-column native virtualized table backed by a dynamic Qt TableModel, with headers, selection, editing and navigation | cell/selection/edit/count/scroll/movement lifecycle |
+| `tree_view` | hierarchical native virtualized tree backed by Qt TreeModel, with arbitrary columns, path selection, expansion and editing | cell/selection/edit/expand/collapse/count/scroll/movement lifecycle |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |
@@ -332,6 +341,44 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `widget_button` | text/font/colors, active state, dimensions, rotation, visibility states, interaction flags, tooltip | `click`, `right_click`, `middle_click`, `wheel` |
 | `list_view` | `items`, key/label/description/icon fields, `selected`, `orientation`, `spacing`, `empty_text` | `change`, `activate`, `scroll` |
 | `key_catcher` | `blocked`; contains keyboard-driven panel content | `move`, `activate`, `return`, `close`, `delete`, `tab`, `text` |
+
+### Extended native catalog
+
+The same named-builder contract covers the full application-facing QML catalog. Every entry has a
+validated Ruby schema, reactive properties, declared events, and a native QML adapter:
+
+| Family | Ruby builders |
+| --- | --- |
+| Data and calendars | `data_table`, horizontal/vertical headers and delegates, table/tree delegates, `reorderable_list`, `carousel`, `calendar`, `month_grid`, `week_number_column`, `day_of_week_row`, `tumbler` |
+| Charts | `stacked_bar_chart`, `pie_chart`, `donut_chart`, `scatter_chart`, `bubble_chart`, `radar_chart`, `heatmap`, `sparkline`, `gauge`, `radial_gauge`, `histogram`, `candlestick_chart`, `legend` |
+| Drawing, GPU and 3D | `canvas`, `shape`, `path`, `line`, `circle`, `gradient`, `shader_effect`, `shader_effect_source`, `particle_system`, `model_view_3d` |
+| Effects | `multi_effect`, `rectangular_shadow`, `opacity_mask`, `blur`, `drop_shadow`, `colorize`, `glow` |
+| Pointer/scrolling | `drag_area`, `drop_area`, `pinch_area`, `hover_area`, `selection_rectangle`, `scroll_bar`, `scroll_indicator` |
+| Animation and state | property/number/color/rotation/vector/path/physical/anchor/parent animations, all render-thread animators, groups/actions, frame/controller/behavior/transition, UI states/changes, `timer` |
+| Multimedia | `media_player`, `video_output`, `sound_effect`, `camera`, `capture_session`, `image_capture`, `media_recorder`, audio I/O/devices, screen/window capture |
+| Web | `web_view` (requires a host process that initializes Qt WebEngine before loading QML) |
+| Models/utilities | `list_model`, delegate/group/proxy models, `folder_list_model`, `settings`, `standard_paths`, `clipboard` |
+
+GPU content stays entirely Ruby:
+
+```ruby
+shader_effect :wave, frequency: 2.0, amplitude: 0.025, running: true do
+  image "assets/cover.png", width: 480, height: 270
+end
+
+multi_effect blur_enabled: true, blur: 0.35,
+             shadow_enabled: true, shadow_blur: 0.7 do
+  text "Native Qt Quick Effects", style: :heading
+end
+
+particle_system emit_rate: 60, life_span: 1400,
+                color: "#ff6655", gravity: 35
+```
+
+Built-in shaders (`passthrough`, `grayscale`, `wave`, `pixelate`, and `vignette`) ship as
+precompiled cross-backend QSB assets. Custom shader paths must point to trusted `.qsb` files; Ruby
+strings are never evaluated as shader source. The complete property/event reference lives in
+[QML support](docs/qml-support.md).
 
 Convenience methods return their node, so it can be bound, animated, or passed to `on`:
 
@@ -430,7 +477,7 @@ Any QtQuick, QtQuick.Controls, Quickshell, Omarchy `qs.Ui`, Canvas, shader, part
 third-party QML component can be exposed through a validated adapter contract:
 
 ```ruby
-register_component :sparkline,
+register_component :custom_sparkline,
   qml: "Sparkline.qml",
   properties: %i[values color line_width],
   property_map: { color: :strokeColor, line_width: :lineWidth },
@@ -439,7 +486,7 @@ register_component :sparkline,
   container: false,
   auto_bind: true
 
-chart = component :sparkline, values: [2, 8, 5], color: "#ff6655"
+chart = component :custom_sparkline, values: [2, 8, 5], color: "#ff6655"
 on(chart, :point_hover) { |event| state.hovered = event.fetch("index") }
 ```
 
@@ -447,6 +494,31 @@ Place adapter files under `Components/`. Declared properties are assigned to the
 declared signals are forwarded to Ruby. A container adapter can expose an `Item` property named
 `contentHost`; framework children are parented into it automatically. See
 [the QML support matrix](docs/qml-support.md) for the adapter contract and supported APIs.
+
+## Example applications
+
+[Table Pour](examples/restaurant_drinks/README.md) is a complete restaurant drink-ordering app
+written entirely in Ruby. It demonstrates searchable/category-filtered menus, responsive drink
+cards, cart quantities, size pricing, dine-in/takeaway service, table numbers, tips, tax, totals,
+and order confirmation without application-owned QML.
+
+[Nebula Command](examples/futuristic_dashboard/README.md) is a futuristic operations dashboard
+written entirely in Ruby. It combines live state, navigation, GPU particles, SVG images, area and
+radar charts, radial gauges, animated telemetry, switches, commands, and an image-backed dialog.
+
+Seven additional pure-Ruby visual stress tests cover distinct product categories and renderer paths:
+
+- [Tesla Drive Lab](examples/tesla_drive_dashboard/README.md) — cinematic electric-vehicle cockpit;
+- [Lumen Forge](examples/shader_studio/README.md) — live compiled GPU shader laboratory;
+- [Pulse Atlas](examples/cardiac_health_monitor/README.md) — cardiac wellness and heartbeat visualization;
+- [Stratos](examples/orbital_weather_console/README.md) — orbital weather intelligence console;
+- [Quantum Market](examples/quantum_market_terminal/README.md) — multi-asset trading simulation;
+- [Habitat One](examples/smart_home_energy/README.md) — smart-home energy and comfort twin;
+- [Nocturne](examples/cinematic_music_studio/README.md) — cinematic spatial-music studio.
+
+Together they exercise generated PNGs, SVGs, image-backed dialogs, shaders, particles, charts,
+gauges, tables, draggable lists, controls, state, events, animation, and scheduled telemetry without
+application-owned QML.
 
 ## Safety
 

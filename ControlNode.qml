@@ -29,15 +29,22 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "model_view_3d", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "layout_item_proxy", "loader", "flickable", "focus_scope", "flipable", "border_image", "window", "application_window",
-    "stack", "scroll", "rectangle", "page", "pane", "frame", "group_box", "tabs", "tab_bar", "tab_button", "page_indicator", "stack_view", "swipe_view", "drawer", "navigation_rail", "breadcrumb", "pagination", "expansion_panel", "accordion", "tool_bar", "tool_separator", "menu", "menu_item", "menu_separator", "menu_bar", "context_menu", "popup", "dialog", "alert_dialog", "message_dialog", "bottom_sheet", "modal_sheet", "snackbar", "banner", "toast", "busy_indicator", "progress_ring", "skeleton", "item_delegate", "check_delegate", "radio_delegate", "switch_delegate", "swipe_delegate", "grid_view", "table_view", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
+    "stack", "scroll", "rectangle", "page", "pane", "frame", "group_box", "tabs", "tab_bar", "tab_button", "page_indicator", "stack_view", "swipe_view", "drawer", "navigation_rail", "breadcrumb", "pagination", "expansion_panel", "accordion", "tool_bar", "tool_separator", "menu", "menu_item", "menu_separator", "menu_bar", "context_menu", "popup", "dialog", "alert_dialog", "message_dialog", "bottom_sheet", "modal_sheet", "snackbar", "banner", "toast", "busy_indicator", "progress_ring", "skeleton", "item_delegate", "check_delegate", "radio_delegate", "switch_delegate", "swipe_delegate", "grid_view", "table_view", "tree_view", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
     "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dial", "spin_box", "double_spin_box", "color_picker", "date_picker", "time_picker", "file_picker", "folder_picker", "font_picker", "dialog_button_box", "action", "action_group", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
-    "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
+    "cursor_surface", "widget_button", "list_view", "key_catcher", "canvas", "shape", "line", "path", "circle", "gradient", "shader_effect", "shader_effect_source", "multi_effect", "rectangular_shadow", "opacity_mask", "blur", "drop_shadow", "colorize", "glow", "particle_system",
+    "web_view", "data_table", "horizontal_header", "vertical_header", "table_view_delegate", "tree_view_delegate", "horizontal_header_delegate", "vertical_header_delegate", "reorderable_list", "carousel", "calendar", "month_grid", "week_number_column", "day_of_week_row", "tumbler",
+    "stacked_bar_chart", "pie_chart", "donut_chart", "scatter_chart", "bubble_chart", "radar_chart", "heatmap", "sparkline", "gauge", "radial_gauge", "histogram", "candlestick_chart", "legend",
+    "drag_area", "drop_area", "pinch_area", "hover_area", "selection_rectangle", "scroll_bar", "scroll_indicator",
+    "animation", "number_animation", "color_animation", "rotation_animation", "vector_animation", "path_animation", "property_animation", "pause_animation", "script_action", "property_action", "parallel_animation", "sequential_animation", "spring_animation", "smoothed_animation", "anchor_animation", "parent_animation", "opacity_animator", "rotation_animator", "scale_animator", "x_animator", "y_animator", "uniform_animator", "frame_animation", "animation_controller", "behavior", "transition", "state", "state_group", "property_changes", "anchor_changes", "parent_change", "timer",
+    "media_player", "video_output", "sound_effect", "camera", "capture_session", "image_capture", "media_recorder", "audio_input", "audio_output", "media_devices", "screen_capture", "window_capture",
+    "list_model", "delegate_model", "delegate_model_group", "sort_filter_proxy_model", "folder_list_model", "settings", "standard_paths", "clipboard"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image", "key_catcher", "shader_effect", "shader_effect_source", "multi_effect", "rectangular_shadow", "opacity_mask", "blur", "drop_shadow", "colorize", "glow", "drag_area", "drop_area", "pinch_area", "hover_area", "capture_session"]
     .indexOf(node ? node.type : "") >= 0
+  property string loadedAdapterKey: ""
 
   function prop(name, fallback) {
     var props = node && node.props ? node.props : null
@@ -136,6 +143,35 @@ Loader {
     if (mode === "repeat") return BorderImage.Repeat
     if (mode === "round") return BorderImage.Round
     return BorderImage.Stretch
+  }
+
+  function assetUrl(value) {
+    var source = String(value || "")
+    if (source === "") return ""
+    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(source)) return source
+    if (source[0] === "/") return "file://" + source
+    return bridge && bridge.pluginDir ? bridge.pluginDir + "/" + source : Qt.resolvedUrl(source)
+  }
+
+  function builtInSource(typeName) {
+    var parts = String(typeName || "").split("_")
+    for (var index = 0; index < parts.length; index++)
+      parts[index] = parts[index].charAt(0).toUpperCase() + parts[index].slice(1)
+    return Qt.resolvedUrl("Components/Builtins/" + parts.join("") + ".qml")
+  }
+
+  function ensureAdapterLoaded() {
+    if (!node || sourceComponent !== null) {
+      loadedAdapterKey = ""
+      if (source !== "") source = ""
+      return
+    }
+    var adapterSource = builtIn ? builtInSource(node.type) : bridge.componentSource(node.type)
+    var adapterKey = String(node.type) + ":" + String(adapterSource)
+    if (loadedAdapterKey === adapterKey && item) return
+    loadedAdapterKey = adapterKey
+    if (builtIn) setSource(adapterSource, { renderer: root })
+    else source = adapterSource
   }
 
   function nativeDefinition() {
@@ -318,6 +354,23 @@ Loader {
     if (node.type === "swipe_delegate") return swipeDelegateComponent
     if (node.type === "grid_view") return gridViewComponent
     if (node.type === "table_view") return tableViewComponent
+    if (node.type === "tree_view") return treeViewComponent
+    if (node.type === "canvas") return canvasComponent
+    if (node.type === "shape") return shapeComponent
+    if (node.type === "line") return lineComponent
+    if (node.type === "path") return pathComponent
+    if (node.type === "circle") return circleComponent
+    if (node.type === "gradient") return gradientComponent
+    if (node.type === "shader_effect") return shaderEffectComponent
+    if (node.type === "shader_effect_source") return shaderEffectSourceComponent
+    if (node.type === "multi_effect") return multiEffectComponent
+    if (node.type === "rectangular_shadow") return rectangularShadowComponent
+    if (node.type === "opacity_mask") return opacityMaskComponent
+    if (node.type === "blur") return blurComponent
+    if (node.type === "drop_shadow") return dropShadowComponent
+    if (node.type === "colorize") return colorizeComponent
+    if (node.type === "glow") return glowComponent
+    if (node.type === "particle_system") return particleSystemComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -368,10 +421,12 @@ Loader {
     if (node.type === "key_catcher") return keyCatcherComponent
     return null
   }
-  source: node && !builtIn ? bridge.componentSource(node.type) : ""
+  source: ""
   onLoaded: {
     if (!item) return
-    if (!builtIn) {
+    if (builtIn && item.hasOwnProperty("renderer")) {
+      item.renderer = root
+    } else if (!builtIn) {
       if (item.hasOwnProperty("bridge")) item.bridge = bridge
       if (item.hasOwnProperty("surfaceName")) item.surfaceName = surfaceName
       if (item.hasOwnProperty("controlId")) item.controlId = controlId
@@ -383,10 +438,13 @@ Loader {
     if (subscribed("mount")) bridge.sendEvent(surfaceName, controlId, "mount", {})
   }
   onNodeChanged: {
+    Qt.callLater(ensureAdapterLoaded)
     if (item && !builtIn && item.hasOwnProperty("node")) item.node = node
     if (!builtIn) syncNativeProperties()
     Qt.callLater(runTransition)
   }
+  onSourceComponentChanged: Qt.callLater(ensureAdapterLoaded)
+  Component.onCompleted: Qt.callLater(ensureAdapterLoaded)
 
   TapHandler {
     enabled: root.structuralContainer && root.subscribed("click")
@@ -858,6 +916,91 @@ Loader {
   Component {
     id: tableViewComponent
     Builtins.TableView { renderer: root }
+  }
+
+  Component {
+    id: treeViewComponent
+    Builtins.TreeView { renderer: root }
+  }
+
+  Component {
+    id: canvasComponent
+    Builtins.Canvas { renderer: root }
+  }
+
+  Component {
+    id: shapeComponent
+    Builtins.Shape { renderer: root }
+  }
+
+  Component {
+    id: lineComponent
+    Builtins.Line { renderer: root }
+  }
+
+  Component {
+    id: pathComponent
+    Builtins.Path { renderer: root }
+  }
+
+  Component {
+    id: circleComponent
+    Builtins.Circle { renderer: root }
+  }
+
+  Component {
+    id: gradientComponent
+    Builtins.Gradient { renderer: root }
+  }
+
+  Component {
+    id: shaderEffectComponent
+    Builtins.ShaderEffect { renderer: root }
+  }
+
+  Component {
+    id: shaderEffectSourceComponent
+    Builtins.ShaderEffectSource { renderer: root }
+  }
+
+  Component {
+    id: multiEffectComponent
+    Builtins.MultiEffect { renderer: root }
+  }
+
+  Component {
+    id: rectangularShadowComponent
+    Builtins.RectangularShadow { renderer: root }
+  }
+
+  Component {
+    id: opacityMaskComponent
+    Builtins.OpacityMask { renderer: root }
+  }
+
+  Component {
+    id: blurComponent
+    Builtins.Blur { renderer: root }
+  }
+
+  Component {
+    id: dropShadowComponent
+    Builtins.DropShadow { renderer: root }
+  }
+
+  Component {
+    id: colorizeComponent
+    Builtins.Colorize { renderer: root }
+  }
+
+  Component {
+    id: glowComponent
+    Builtins.Glow { renderer: root }
+  }
+
+  Component {
+    id: particleSystemComponent
+    Builtins.ParticleSystem { renderer: root }
   }
 
   Component {

@@ -9,7 +9,7 @@ renderer, reactive property support, applicable events, tests, and reference doc
 ## Scope
 
 This catalog targets public, application-facing types from Qt Quick, Qt Quick Controls, Qt Quick
-Layouts, Qt Quick Dialogs, Qt Quick Effects, Qt Quick Shapes, and Qt Multimedia, plus useful
+Layouts, Qt Quick Dialogs, Qt Quick Effects, Qt Quick Shapes, Qt WebEngine, and Qt Multimedia, plus useful
 Omarchy-native controls and charts. Private `impl` types, style implementations, abstract base
 classes, QML compiler infrastructure, compositor protocols, and operating-system service objects
 are not widgets and are intentionally excluded. Framework concepts such as state, timers,
@@ -68,8 +68,9 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] chip
 - [x] divider
 - [x] markdown
-- [ ] web_view
+- [x] web_view
 - [x] vector_image
+- [x] model_view_3d
 - [x] font_loader
 - [x] text_metrics
 
@@ -166,124 +167,127 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] swipe_delegate
 - [x] grid_view
 - [x] table_view
-- [ ] tree_view
-- [ ] data_table
-- [ ] horizontal_header
-- [ ] vertical_header
-- [ ] table_view_delegate
-- [ ] tree_view_delegate
-- [ ] horizontal_header_delegate
-- [ ] vertical_header_delegate
-- [ ] reorderable_list
-- [ ] carousel
-- [ ] calendar
-- [ ] month_grid
-- [ ] week_number_column
-- [ ] day_of_week_row
-- [ ] tumbler
+- [x] tree_view
+- [x] data_table
+- [x] horizontal_header
+- [x] vertical_header
+- [x] table_view_delegate
+- [x] tree_view_delegate
+- [x] horizontal_header_delegate
+- [x] vertical_header_delegate
+- [x] reorderable_list
+- [x] carousel
+- [x] calendar
+- [x] month_grid
+- [x] week_number_column
+- [x] day_of_week_row
+- [x] tumbler
 
 ## Charts and visualization
 
 - [x] line_chart
 - [x] area_chart
 - [x] bar_chart
-- [ ] stacked_bar_chart
-- [ ] pie_chart
-- [ ] donut_chart
-- [ ] scatter_chart
-- [ ] bubble_chart
-- [ ] radar_chart
-- [ ] heatmap
-- [ ] sparkline
-- [ ] gauge
-- [ ] radial_gauge
-- [ ] histogram
-- [ ] candlestick_chart
-- [ ] legend
+- [x] stacked_bar_chart
+- [x] pie_chart
+- [x] donut_chart
+- [x] scatter_chart
+- [x] bubble_chart
+- [x] radar_chart
+- [x] heatmap
+- [x] sparkline
+- [x] gauge
+- [x] radial_gauge
+- [x] histogram
+- [x] candlestick_chart
+- [x] legend
 
 ## Drawing and interaction
 
-- [ ] canvas
-- [ ] shape
-- [ ] line
-- [ ] path
-- [ ] circle
-- [ ] gradient
-- [ ] drag_area
-- [ ] drop_area
-- [ ] pinch_area
-- [ ] hover_area
-- [ ] selection_rectangle
-- [ ] scroll_bar
-- [ ] scroll_indicator
+- [x] canvas
+- [x] shape
+- [x] line
+- [x] path
+- [x] circle
+- [x] gradient
+- [x] shader_effect
+- [x] shader_effect_source
+- [x] particle_system
+- [x] drag_area
+- [x] drop_area
+- [x] pinch_area
+- [x] hover_area
+- [x] selection_rectangle
+- [x] scroll_bar
+- [x] scroll_indicator
 
 ## Animation, state, and timing
 
-- [ ] animation
-- [ ] number_animation
-- [ ] color_animation
-- [ ] rotation_animation
-- [ ] vector_animation
-- [ ] path_animation
-- [ ] property_animation
-- [ ] pause_animation
-- [ ] script_action
-- [ ] property_action
-- [ ] parallel_animation
-- [ ] sequential_animation
-- [ ] spring_animation
-- [ ] smoothed_animation
-- [ ] anchor_animation
-- [ ] parent_animation
-- [ ] opacity_animator
-- [ ] rotation_animator
-- [ ] scale_animator
-- [ ] x_animator
-- [ ] y_animator
-- [ ] uniform_animator
-- [ ] frame_animation
-- [ ] animation_controller
-- [ ] behavior
-- [ ] transition
-- [ ] state
-- [ ] state_group
-- [ ] property_changes
-- [ ] anchor_changes
-- [ ] parent_change
-- [ ] timer
+- [x] animation
+- [x] number_animation
+- [x] color_animation
+- [x] rotation_animation
+- [x] vector_animation
+- [x] path_animation
+- [x] property_animation
+- [x] pause_animation
+- [x] script_action
+- [x] property_action
+- [x] parallel_animation
+- [x] sequential_animation
+- [x] spring_animation
+- [x] smoothed_animation
+- [x] anchor_animation
+- [x] parent_animation
+- [x] opacity_animator
+- [x] rotation_animator
+- [x] scale_animator
+- [x] x_animator
+- [x] y_animator
+- [x] uniform_animator
+- [x] frame_animation
+- [x] animation_controller
+- [x] behavior
+- [x] transition
+- [x] state
+- [x] state_group
+- [x] property_changes
+- [x] anchor_changes
+- [x] parent_change
+- [x] timer
 
 ## Effects
 
-- [ ] multi_effect
-- [ ] rectangular_shadow
-- [ ] opacity_mask
-- [ ] blur
-- [ ] drop_shadow
-- [ ] colorize
-- [ ] glow
+- [x] multi_effect
+- [x] rectangular_shadow
+- [x] opacity_mask
+- [x] blur
+- [x] drop_shadow
+- [x] colorize
+- [x] glow
 
 ## Multimedia and capture
 
-- [ ] media_player
-- [ ] video_output
-- [ ] sound_effect
-- [ ] camera
-- [ ] capture_session
-- [ ] image_capture
-- [ ] media_recorder
-- [ ] audio_input
-- [ ] audio_output
-- [ ] media_devices
-- [ ] screen_capture
-- [ ] window_capture
+- [x] media_player
+- [x] video_output
+- [x] sound_effect
+- [x] camera
+- [x] capture_session
+- [x] image_capture
+- [x] media_recorder
+- [x] audio_input
+- [x] audio_output
+- [x] media_devices
+- [x] screen_capture
+- [x] window_capture
 
 ## Models and utilities
 
-- [ ] list_model
-- [ ] delegate_model
-- [ ] delegate_model_group
-- [ ] sort_filter_proxy_model
-- [ ] folder_list_model
-- [ ] settings
-- [ ] standard_paths
-- [ ] clipboard
+- [x] list_model
+- [x] delegate_model
+- [x] delegate_model_group
+- [x] sort_filter_proxy_model
+- [x] folder_list_model
+- [x] settings
+- [x] standard_paths
+- [x] clipboard

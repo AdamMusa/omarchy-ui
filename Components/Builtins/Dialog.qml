@@ -9,6 +9,11 @@ QQC.Dialog {
   readonly property bool requestedOpen: renderer.prop("opened", false) === true
     && renderer.prop("visible", true) !== false
   readonly property string contentLayout: String(renderer.prop("layout", "column"))
+  readonly property bool centered: renderer.prop("centered", true) !== false
+  readonly property bool hasExplicitX: renderer.node && renderer.node.props
+    && renderer.node.props.x !== undefined
+  readonly property bool hasExplicitY: renderer.node && renderer.node.props
+    && renderer.node.props.y !== undefined
 
   function standardButtonsValue(value) {
     var names = Array.isArray(value) ? value : (value === null || value === undefined ? [] : [value])
@@ -57,8 +62,11 @@ QQC.Dialog {
 
   title: String(renderer.prop("title", ""))
   standardButtons: standardButtonsValue(renderer.prop("standard_buttons", ["ok", "cancel"]))
-  x: Number(renderer.prop("x", 0))
-  y: Number(renderer.prop("y", 0))
+  parent: QQC.Overlay.overlay
+  x: hasExplicitX ? Number(renderer.prop("x", 0))
+    : (centered && parent ? Math.round((parent.width - width) / 2) : 0)
+  y: hasExplicitY ? Number(renderer.prop("y", 0))
+    : (centered && parent ? Math.round((parent.height - height) / 2) : 0)
   width: Number(renderer.prop("width", 480))
   height: Number(renderer.prop("height", 320))
   modal: renderer.prop("modal", true) !== false

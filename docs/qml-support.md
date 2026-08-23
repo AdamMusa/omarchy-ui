@@ -204,14 +204,17 @@ about-to-show/hide, visibility, focus, and position events.
 `dialog(title, standard_buttons: ...) { ... }` maps to native Qt Controls `Dialog` and contains
 arbitrary Ruby controls. Ruby selects native standard button roles (`ok`, `cancel`, `yes`, `no`,
 `apply`, `reset`, `discard`, `help`, and others) and receives their distinct semantic events.
-Opening, geometry, modal/dim/focus behavior, close policy, layout, spacing, padding, typography,
+Dialogs are centered in the application window by default; `centered: false` or explicit `x:`/`y:`
+supports intentional placement. Opening, geometry, modal/dim/focus behavior, close policy, layout, spacing, padding, typography,
 styling, visibility, and the complete popup lifecycle are reactive.
 
-`alert_dialog(title, message, severity: ...)` is a dedicated native dialog for informational,
-success, warning, and error alerts. It renders the corresponding icon/color plus optional
-informative and selectable detailed text, supports native standard-button roles, and exposes the
-same semantic button and popup lifecycle events as `dialog`. Content typography, spacing,
-geometry, modal behavior, colors, and visibility are independently reactive.
+`alert_dialog(title, message, severity: ...)` is a dedicated Omarchy-themed dialog for
+informational, success, warning, and error alerts. Its icon and message share a vertically centered
+layout, and `image:`/`image_source:` can add an app-relative, absolute, or URL image with reactive
+width, height, fill mode, radius, async loading, and caching. Semantic standard-button roles render
+with Omarchy `Button` controls instead of the host platform's gray dialog footer. Header/footer and
+button colors, labels, alignment, padding, typography, spacing, window-centered placement, geometry, modal behavior, and the
+complete popup lifecycle are reactive.
 
 `message_dialog(title, message, ...)` uses Qt Quick Dialogs’ platform-native message box rather
 than an in-scene styled control. Informative/detailed text, native standard-button flags, window or
@@ -299,6 +302,163 @@ Headers, dimensions, spacing, row/cell/column selection, editing triggers, alter
 virtualized item reuse, animation, keyboard/pointer navigation, styling, accessibility, and empty
 state are reactive. Ruby receives cell click/activation, selection/current/edit, row/column count,
 scroll/movement, focus, and visibility events.
+
+`tree_view(rows, columns: ..., children_field: :children) { |event| ... }` recursively maps Ruby
+trees into a native QML `TreeView` backed by `Qt.labs.qmlmodels.TreeModel`. Columns accept the same
+key, label, width, alignment, and editability metadata as `table_view`; child collections may use any
+Ruby field name and are normalized to Qt's reserved `rows` relationship. Selected and expanded index
+paths, initial expansion depth, headers, selection modes, editing, indentation, virtualization,
+navigation, styling, accessibility, and empty state are reactive. Ruby receives original source nodes
+and stable tree paths with cell, selection, edit, expand/collapse, count, scroll, movement, focus, and
+visibility events.
+
+## Data, calendars, and navigation views
+
+The remaining Qt model/view catalog is exposed through named builders. `data_table` adds Ruby-side
+filter, sort, and paging properties to the arbitrary-column `table_view` contract. `horizontal_header`
+and `vertical_header` render independently controlled header sections; their matching delegate
+builders plus `table_view_delegate` and `tree_view_delegate` are reusable styled native delegates.
+
+`reorderable_list` keeps a typed Ruby `items` array and reports drag lifecycle plus the reordered
+array. `carousel` uses a native curved `PathView`; `tumbler` uses the native Controls picker.
+`calendar`, `month_grid`, `week_number_column`, and `day_of_week_row` accept Ruby date strings and
+locale names, and return date/week/day payloads without exposing QML date objects.
+
+| Ruby builders | Main events |
+| --- | --- |
+| `data_table` | cell, activation, selection, edit, sort, filter, page, count, scroll, movement |
+| `horizontal_header`, `vertical_header` | click, move, sort where applicable |
+| `table_view_delegate`, `tree_view_delegate` | click, activation, edit or expand/collapse |
+| `horizontal_header_delegate`, `vertical_header_delegate` | click and sort |
+| `reorderable_list` | reorder, activate, change, drag lifecycle |
+| `carousel`, `tumbler` | input, change, activate, movement lifecycle |
+| `calendar`, `month_grid`, `week_number_column`, `day_of_week_row` | input/change/navigation and date-part clicks |
+
+## Charts and visualization
+
+All chart builders consume only arrays/hashes/numbers/strings and render through a native Qt Canvas
+backend. The common chart properties cover dimensions, labels, series colors, explicit ranges,
+grid styling, typography, and visibility; `select` and `hover` payloads identify the visual datum.
+
+| Family | Ruby builders |
+| --- | --- |
+| Cartesian | `line_chart`, `area_chart`, `bar_chart`, `stacked_bar_chart`, `scatter_chart`, `bubble_chart` |
+| Circular | `pie_chart`, `donut_chart`, `radar_chart`, `gauge`, `radial_gauge` |
+| Dense/specialized | `heatmap`, `sparkline`, `histogram`, `candlestick_chart` |
+| Annotation | `legend` |
+
+## Drawing, shaders, particles, and effects
+
+`canvas(commands, ...)` is a structured 2D drawing API: Ruby supplies command hashes instead of
+JavaScript. It supports paths, lines, Bézier/quadratic curves, arcs, rectangles/rounded rectangles,
+fill/stroke/clip, text, transforms, compositing, shadows, and linear/radial gradient styles. Canvas
+paint and pointer lifecycle are ordinary Ruby events, and continuous repainting is controlled by
+`continuous` plus `fps`.
+
+`shape`, `path`, `line`, `circle`, and `gradient` use Qt Quick Shapes. They expose stroke/fill,
+caps/joins/dashes, fill rules, antialiasing, geometry, and arbitrary gradient color stops. Linear,
+radial, and conical gradients are selected with `type`.
+
+`shader_effect(:wave) { ... }` turns its first Ruby child into a texture and applies a native
+`ShaderEffect`. Built-in cross-backend shader packs are `passthrough`, `grayscale`, `wave`,
+`pixelate`, and `vignette`; a project-relative or absolute `.qsb` path selects a custom trusted
+shader. Standard uniforms include `source`, `time`, `resolution`, `mouse`, `intensity`, `amount`,
+`radius`, `progress`, `frequency`, `amplitude`, two colors, and a four-number `parameters` vector.
+Qt 6 shader source is never evaluated from a Ruby string: custom shaders must be precompiled QSB.
+`shader_effect_source { ... }` exposes native texture size, format, samples, wrapping, mirroring,
+mipmap, live/recursive capture, and source hiding as Ruby properties.
+
+`model_view_3d("assets/model.glb", ...)` loads actual GLB/glTF geometry through Qt Quick 3D's
+runtime asset loader. Mesh bounds are centered and fitted when available; explicit `model_scale`
+and center coordinates cover assets whose importer does not publish bounds. Camera, antialiasing,
+key/fill lights, rotation, wheel/pinch/double-click zoom, drag orbit, automatic rotation, and
+geometry-scale pulse animation are Ruby properties and events. This optional surface requires the
+`qt6-quick3d` system module; `assimp` enables the broad runtime import path.
+
+`particle_system` owns a native particle system, emitter, image particle, velocity/acceleration,
+gravity, and turbulence. Emission, lifetime, size, texture/color/alpha/rotation variation, bounds,
+pause/running state, and revision-triggered bursts are reactive; Ruby can observe start/stop,
+pause/resume, empty, and burst events.
+
+The effect containers `multi_effect`, `rectangular_shadow`, `opacity_mask`, `blur`, `drop_shadow`,
+`colorize`, and `glow` accept ordinary Ruby child content. They are backed by Qt Quick Effects and
+cover brightness/contrast/saturation/colorization, blur, shadows, masks, offsets, scale, padding,
+cache, and antialiasing without application-owned QML.
+
+## Pointer and scrolling interaction
+
+`drag_area`, `drop_area`, `pinch_area`, and `hover_area` are child containers backed by native Qt
+pointer handlers. A target may be the Ruby node returned by another builder or its ID. Axis and
+position/scale/rotation constraints remain reactive, and event payloads report coordinates,
+translation, scale, rotation, centroids, keys, and dropped data as applicable. `drag_area` also
+emits `click` and `double_click`, so direct-manipulation surfaces can zoom or activate without
+layering application-owned QML pointer handlers over the draggable content.
+
+`selection_rectangle(target, ...)` attaches native table selection UI. `scroll_bar(target, ...)`
+and `scroll_indicator(target, ...)` attach to a Flickable-like node or operate from explicit
+position/size properties. Their input, committed change, active-state, and selection-state events
+are forwarded to Ruby.
+
+## Animation, state, and timing
+
+The declarative animation catalog is available independently of patch animations. Every target
+argument accepts a returned Ruby node or ID.
+
+| Family | Ruby builders |
+| --- | --- |
+| Property animation | `animation`, `property_animation`, `number_animation`, `color_animation`, `rotation_animation`, `vector_animation`, `path_animation` |
+| Physical/smoothed | `spring_animation`, `smoothed_animation` |
+| Geometry | `anchor_animation`, `parent_animation` |
+| Render-thread animators | `opacity_animator`, `rotation_animator`, `scale_animator`, `x_animator`, `y_animator`, `uniform_animator` |
+| Composition/actions | `pause_animation`, `script_action`, `property_action`, `parallel_animation`, `sequential_animation` |
+| Control | `frame_animation`, `animation_controller`, `behavior`, `transition`, `timer` |
+| State | `state`, `state_group`, `property_changes`, `anchor_changes`, `parent_change` |
+
+Animations expose running/paused state, loops, duration/delay/easing, start/stop/finish, and running
+changes. Parallel/sequential definitions are safe Ruby hashes and can contain Ruby node targets.
+`frame_animation` reports frame timing; `animation_controller` scrubs progress. State/change
+builders apply validated property/anchor/parent hashes on a `revision`, and `timer` provides native
+interval, repeat, running, triggered-on-start, and restart semantics.
+
+The name `state` remains backward compatible: `state :count, 0` defines reactive Ruby application
+state, while `state :active, target: card, properties: { opacity: 1 }` builds a native UI state.
+Likewise `animation(duration: 180)` creates the existing patch-animation value, while
+`animation(target: card, property: :opacity, ...)` creates a declarative animation component.
+
+## Multimedia and capture
+
+The compact `audio` builder resolves app-relative assets, drives native play/pause/stop commands,
+supports revisioned millisecond seeking, and reports loading/status/error, position/duration, and
+end-of-media events. It is suitable for a fully state-driven Ruby transport rather than a simulated
+playback timer.
+
+`media_player`, `video_output`, and `sound_effect` cover playback source, loops, rate, position,
+volume/mute, output routing, commands, status, buffering, tracks, duration, and errors.
+`camera` exposes device selection, focus/flash/torch/exposure/white-balance modes, ISO, shutter,
+color temperature, zoom, and lifecycle events.
+
+`capture_session { ... }` owns a native camera, audio input/output, image capture, recorder, and
+video preview while also accepting Ruby overlay children. `image_capture` and `media_recorder`
+reference that session by returned node or ID. `audio_input`, `audio_output`, and `media_devices`
+provide device enumeration/routing. `screen_capture` and `window_capture` expose the native desktop
+capture sources and command/error lifecycle.
+
+`web_view` wraps `QtWebEngine.WebEngineView` with URL or HTML loading, zoom, background, storage,
+JavaScript/image settings, navigation commands, progress, title/URL changes, fullscreen,
+permissions, and new-window events. Qt WebEngine must be initialized by the host before QML loads;
+stock Quickshell builds that do not enable Qt WebEngine cannot safely instantiate this component.
+
+## Models, persistence, and platform utilities
+
+| Ruby builder | Native responsibility |
+| --- | --- |
+| `list_model` | mutable typed rows and count/change events |
+| `delegate_model`, `delegate_model_group` | native delegate grouping/filter membership |
+| `sort_filter_proxy_model` | native value filtering and sorting over Ruby rows |
+| `folder_list_model` | folder entries, filters, visibility/sort options, status and folder changes |
+| `settings` | Qt settings category/file persistence and explicit synchronization |
+| `standard_paths` | standard locations, file lookup, and executable lookup |
+| `clipboard` | read/write/watch the Quickshell clipboard as Ruby text |
 
 ## Portable `qs.Ui` controls
 

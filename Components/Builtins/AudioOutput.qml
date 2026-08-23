@@ -1,0 +1,9 @@
+import QtQuick
+import QtMultimedia
+
+Item {
+  id:outputRoot;property var renderer:null;property alias audioOutput:nativeOutput
+  function device(){var requested=String(renderer?renderer.prop("device",""):"");var list=nativeDevices.audioOutputs;for(var index=0;index<list.length;index++)if(String(list[index].id)===requested||list[index].description===requested)return list[index];return nativeDevices.defaultAudioOutput}
+  MediaDevices{id:nativeDevices}
+  AudioOutput{id:nativeOutput;device:outputRoot.device();muted:renderer&&renderer.prop("muted",false)===true;volume:Math.max(0,Math.min(1,Number(renderer?renderer.prop("volume",1):1)));onMutedChanged:if(renderer)renderer.bridge.sendEvent(renderer.surfaceName,renderer.controlId,"muted_change",{value:muted});onVolumeChanged:if(renderer)renderer.bridge.sendEvent(renderer.surfaceName,renderer.controlId,"volume_change",{value:volume});onDeviceChanged:if(renderer)renderer.bridge.sendEvent(renderer.surfaceName,renderer.controlId,"device_change",{description:device.description,id:String(device.id)})}
+}

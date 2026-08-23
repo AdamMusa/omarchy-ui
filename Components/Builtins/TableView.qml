@@ -324,8 +324,11 @@ Rectangle {
       "movement_start", { x: contentX, y: contentY })
     onMovementEnded: renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId,
       "movement_end", { x: contentX, y: contentY })
-    onActiveFocusChanged: renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId,
-      activeFocus ? "focus" : "blur", {})
+    onActiveFocusChanged: {
+      if (renderer && renderer.bridge)
+        renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId,
+          activeFocus ? "focus" : "blur", {})
+    }
   }
 
   Connections {

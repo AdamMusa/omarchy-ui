@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require_relative "../lib/omarchy_ui"
 
 class QmlContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
@@ -26,15 +27,55 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 137, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
-    renderer_names.each do |name|
+    assert_includes router, "function builtInSource(typeName)"
+    assert_includes router, "builtInSource(node.type)"
+
+    OmarchyUI::COMPONENTS.each_key do |component_name|
+      name = component_name.to_s.split("_").map(&:capitalize).join
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
       assert File.file?(path), "missing #{path}"
-      assert_includes File.read(path), "required property var renderer"
+      assert_match(/(?:(?:required\s+)?property var renderer|renderer:\s*null)/, File.read(path), "#{path} does not expose its renderer bridge")
     end
     refute_includes router, "QQC.Button {"
     refute_includes router, "OmarchyUi.WidgetButton {"
+  end
+
+  def test_every_qml_property_read_is_declared_in_its_ruby_schema
+    common = OmarchyUI::ComponentRegistry::ITEM_PROPERTIES.map(&:to_s)
+    undeclared = {}
+
+    OmarchyUI::COMPONENTS.each do |component_name, (properties, _events, _container)|
+      adapter_name = component_name.to_s.split("_").map(&:capitalize).join
+      qml = File.read(File.join(ROOT, "Components", "Builtins", "#{adapter_name}.qml"))
+      property_reads = qml.scan(/(?:renderer|root)\.prop\(\s*["']([^"']+)["']/).flatten.uniq
+      missing = property_reads - properties.map(&:to_s) - common
+      undeclared[component_name] = missing unless missing.empty?
+    end
+
+    assert_empty undeclared
+  end
+
+  def test_gpu_adapters_ship_native_effects_particles_and_precompiled_shaders
+    shader = source("Components/Builtins/ShaderEffect.qml")
+    effect = source("Components/Builtins/MultiEffect.qml")
+    particles = source("Components/Builtins/ParticleSystem.qml")
+
+    assert_includes shader, "ShaderEffect {"
+    assert_includes shader, ".frag.qsb"
+    assert_includes effect, "MultiEffect {"
+    assert_includes particles, "ParticleSystem {"
+    assert_includes particles, "Emitter {"
+    %w[passthrough grayscale wave pixelate vignette].each do |name|
+      path = File.join(ROOT, "Components", "Builtins", "Shaders", "#{name}.frag.qsb")
+      assert_operator File.size(path), :>, 100, "invalid precompiled shader: #{path}"
+    end
+  end
+
+  def test_component_coverage_catalog_has_no_unimplemented_entries
+    coverage = File.read(File.join(ROOT, "docs", "component-coverage.md"))
+
+    refute_match(/^- \[ \] /, coverage)
   end
 
   def test_service_uses_one_tracked_bidirectional_process_without_a_shell
@@ -332,6 +373,30 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "id: vectorImageComponent"
     assert_includes renderer, "VectorImage.CurveRenderer"
     assert_includes renderer, "animations.paused"
+    vector_image = source("Components/Builtins/VectorImage.qml")
+    assert_includes vector_image, 'source: renderer.assetUrl(renderer.prop("source", ""))'
+  end
+
+  def test_model_view_3d_loads_real_geometry_and_native_pointer_controls
+    renderer = File.read(File.join(ROOT, "ControlNode.qml"))
+    host = source("Components/Builtins/ModelView3d.qml")
+    model = source("Components/Builtins/Support/ModelView3dScene.qml")
+
+    assert_includes renderer, '"model_view_3d"'
+    assert_includes host, 'Qt.resolvedUrl("Support/ModelView3dScene.qml")'
+    assert_includes host, 'renderer.prop("fallback_source", "")'
+    assert_includes host, '"code": "qtquick3d_unavailable"'
+    assert_includes model, "import QtQuick3D"
+    assert_includes model, "import QtQuick3D.AssetUtils"
+    assert_includes model, "View3D {"
+    assert_includes model, "RuntimeLoader {"
+    assert_includes model, 'source: renderer.assetUrl(renderer.prop("source", ""))'
+    assert_includes model, "onBoundsChanged: modelViewRoot.updateBounds()"
+    assert_includes model, "DragHandler {"
+    assert_includes model, "PinchHandler {"
+    assert_includes model, "WheelHandler {"
+    assert_includes model, "onDoubleTapped:"
+    assert_includes model, 'renderer.prop("pulse", false)'
   end
 
   def test_font_loader_has_a_specific_native_resource_renderer
@@ -371,6 +436,20 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "MediaPlayer {"
     assert_includes renderer, "audioOutput: AudioOutput {"
     assert_includes renderer, 'requested === "pause"'
+    assert_includes renderer, 'source: root.assetUrl(root.prop("source", ""))'
+    assert_includes renderer, "audioPlayer.setPosition"
+    assert_includes renderer, 'audioRoot.send("end"'
+  end
+
+  def test_reorderable_list_has_padded_fluid_drag_feedback
+    list = source("Components/Builtins/ReorderableList.qml")
+
+    assert_includes list, 'renderer.prop("item_padding", 12)'
+    assert_includes list, 'renderer.prop("drag_transition_duration", 180)'
+    assert_includes list, "Behavior on dragOffsetY"
+    assert_includes list, "Easing.OutCubic"
+    assert_includes list, 'target: null'
+    assert_includes list, '"drag_move"'
   end
 
   def test_avatar_has_a_specific_image_and_initials_renderer
@@ -1191,6 +1270,8 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "QQC.Dialog.SaveAll"
     assert_includes renderer, "QQC.Dialog.RestoreDefaults"
     assert_includes renderer, 'modal: root.prop("modal", true) !== false'
+    assert_includes renderer, "parent: QQC.Overlay.overlay"
+    assert_includes renderer, 'root.prop("centered", true)'
     assert_includes renderer, "delegate: childDelegate"
     assert_includes renderer, '"accept", {}'
     assert_includes renderer, '"reject", {}'
@@ -1202,22 +1283,43 @@ class QmlContractTest < Minitest::Test
 
   def test_alert_dialog_has_a_specific_native_severity_renderer
     renderer = source("ControlNode.qml")
+    alert = source("Components/Builtins/AlertDialog.qml")
 
     assert_includes renderer, 'node.type === "alert_dialog"'
     assert_includes renderer, "id: alertDialogComponent"
-    assert_includes renderer, "QQC.Dialog {"
-    assert_includes renderer, 'root.prop("severity", "info")'
-    assert_includes renderer, 'return "circle_check"'
-    assert_includes renderer, 'return "warning"'
-    assert_includes renderer, 'return "circle_xmark"'
-    assert_includes renderer, 'root.prop("message", "")'
-    assert_includes renderer, 'root.prop("informative_text", "")'
-    assert_includes renderer, 'root.prop("detailed_text", "")'
-    assert_includes renderer, "QQC.ScrollView {"
-    assert_includes renderer, "QQC.TextArea {"
-    assert_includes renderer, 'standardButtonsValue(root.prop("standard_buttons", ["ok"]))'
-    assert_includes renderer, '"accept", {}'
-    assert_includes renderer, '"reject", {}'
+    assert_includes alert, "QQC.Dialog {"
+    assert_includes alert, 'renderer.prop("severity", "info")'
+    assert_includes alert, 'renderer.prop("show_icon", true)'
+    assert_includes alert, "anchors.verticalCenter: parent.verticalCenter"
+    assert_includes alert, 'renderer.prop("message", "")'
+    assert_includes alert, 'renderer.prop("informative_text", "")'
+    assert_includes alert, 'renderer.prop("detailed_text", "")'
+    assert_includes alert, "QQC.ScrollView {"
+    assert_includes alert, "QQC.TextArea {"
+    assert_includes alert, "standardButtons: QQC.Dialog.NoButton"
+    assert_includes alert, "parent: QQC.Overlay.overlay"
+    assert_includes alert, 'renderer.prop("centered", true)'
+    assert_includes alert, "Math.round((parent.width - width) / 2)"
+    assert_includes alert, "Math.round((parent.height - height) / 2)"
+    assert_includes alert, "delegate: OmarchyUi.Button {"
+    assert_includes alert, 'renderer.prop("button_accent"'
+    assert_includes alert, 'renderer.prop("image"'
+    assert_includes alert, "renderer.assetUrl(alertRoot.imageSource)"
+    assert_includes alert, '"accept", {'
+    assert_includes alert, '"reject", {'
+  end
+
+  def test_image_resolves_app_assets_and_exposes_native_loading_controls
+    image = source("Components/Builtins/Image.qml")
+
+    assert_includes image, 'source: renderer.assetUrl(renderer.prop("source", ""))'
+    assert_includes image, 'renderer.prop("fill_mode", "preserve_aspect_fit")'
+    assert_includes image, 'renderer.prop("asynchronous", true)'
+    assert_includes image, 'renderer.prop("cache", true)'
+    assert_includes image, 'renderer.prop("horizontal_alignment", "center")'
+    assert_includes image, 'renderer.prop("vertical_alignment", "center")'
+    assert_includes image, 'send("loaded", payload)'
+    assert_includes image, 'send("error", payload)'
   end
 
   def test_message_dialog_has_a_specific_platform_native_renderer
@@ -1532,5 +1634,26 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"edit",'
     assert_includes renderer, '"row_count_change", { value: rows }'
     assert_includes renderer, '"column_count_change", { value: columns }'
+  end
+
+  def test_tree_view_has_a_specific_dynamic_native_tree_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "tree_view"'
+    assert_includes renderer, "id: treeViewComponent"
+    assert_includes renderer, "TreeView {"
+    assert_includes renderer, 'root.prop("children_field", "children")'
+    assert_includes renderer, 'Qt.createQmlObject(modelSource(), treeRoot, "OmarchyUiDynamicTreeModel")'
+    assert_includes renderer, 'TreeModel {'
+    assert_includes renderer, 'normalized.rows = []'
+    assert_includes renderer, "delegate: QQC.TreeViewDelegate {"
+    assert_includes renderer, "treeControl.expandToIndex(expandedIndex)"
+    assert_includes renderer, "treeControl.expandRecursively(rootCell.y, depth - 1)"
+    assert_includes renderer, "treeModel.index(cleanPath(expandedPaths[index]), 0)"
+    assert_includes renderer, "current = current.parent"
+    assert_includes renderer, "TableView.editDelegate: FocusScope {"
+    assert_includes renderer, '"expand",'
+    assert_includes renderer, '"collapse",'
+    assert_includes renderer, '"selection_change", payload'
   end
 end
