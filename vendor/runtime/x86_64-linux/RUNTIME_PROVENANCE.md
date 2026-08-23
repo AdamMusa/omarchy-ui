@@ -1,11 +1,13 @@
 # Omarchy UI runtime provenance
 
 - Omarchy UI source: https://github.com/AdamMusa/omarchy-ui
-- Omarchy UI source base revision: `2da1474019783516b3d8a8638cc38d819728ed86`
-- Source state: development working tree containing the first-class QML catalog
-- mruby source revision: `831da26b9021de0369d17b71b5667e2941a1a32d`
+- Omarchy UI revision: `33ee34c3baf676517b66af7ab27342c111ec5709`
+- Zui source: https://github.com/AdamMusa/zui
+- Zui revision: `6b4bc277fe4dc78ebd10017ab35662df70fcd4c7`
+- mruby revision: `831da26b9021de0369d17b71b5667e2941a1a32d`
 - Target: x86-64 Linux
-- SHA-256: `7956b71f9b902decba6f7af8b45507fcc7561d47879163e06b3d3bbbf25b663c`
+- SHA-256: `0d628ffc059551d85de1668ab611d3105ef560c842e40fe4ffd3d24c7946cf7e`
 
-Rebuild and verification instructions are committed at
-[`docs/runtime-build.md`](https://github.com/AdamMusa/omarchy-ui/blob/2da1474019783516b3d8a8638cc38d819728ed86/docs/runtime-build.md).
+The executable embeds the Zui Ruby core and exposes the `OmarchyUI` compatibility
+namespace through the adapter. Rebuild and verification instructions are in
+[`docs/runtime-build.md`](../../../docs/runtime-build.md).
