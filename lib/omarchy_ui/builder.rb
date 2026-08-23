@@ -203,6 +203,9 @@ module OmarchyUI
     def dialog(title = "", id: nil, **props, &block)
       component(:dialog, id:, title: title.to_s, **props, &block)
     end
+    def alert_dialog(title = "", message = "", id: nil, **props)
+      component(:alert_dialog, id:, title: title.to_s, message: message.to_s, **props)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

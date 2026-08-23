@@ -306,6 +306,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `context_menu` | native right-click menu attached to a Ruby node/ID or activation area, with programmatic opening and the full item/separator schema | `request`, `trigger`, `toggle`, `highlight`, `open`, `close`, `about_to_show`, `about_to_hide` |
 | `popup` | native popup containing arbitrary Ruby controls with reactive opening, position, modal/dim/focus behavior, close policy, layout, styling and transitions | `open`, `close`, `about_to_show`, `about_to_hide`, `show`, `hide`, `focus`, `blur`, `position_change` |
 | `dialog` | native titled dialog containing arbitrary Ruby controls with standard button roles, reactive opening, modal behavior, geometry, layout and styling | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
+| `alert_dialog` | severity-aware native alert with title/message, informative and selectable detailed text, icon/color mapping and standard buttons | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

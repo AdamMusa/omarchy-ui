@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 120, renderer_names.length
+    assert_equal 121, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1198,5 +1198,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"reset", {}'
     assert_includes renderer, '"discard", {}'
     assert_includes renderer, '"help", {}'
+  end
+
+  def test_alert_dialog_has_a_specific_native_severity_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "alert_dialog"'
+    assert_includes renderer, "id: alertDialogComponent"
+    assert_includes renderer, "QQC.Dialog {"
+    assert_includes renderer, 'root.prop("severity", "info")'
+    assert_includes renderer, 'return "circle_check"'
+    assert_includes renderer, 'return "warning"'
+    assert_includes renderer, 'return "circle_xmark"'
+    assert_includes renderer, 'root.prop("message", "")'
+    assert_includes renderer, 'root.prop("informative_text", "")'
+    assert_includes renderer, 'root.prop("detailed_text", "")'
+    assert_includes renderer, "QQC.ScrollView {"
+    assert_includes renderer, "QQC.TextArea {"
+    assert_includes renderer, 'standardButtonsValue(root.prop("standard_buttons", ["ok"]))'
+    assert_includes renderer, '"accept", {}'
+    assert_includes renderer, '"reject", {}'
   end
 end

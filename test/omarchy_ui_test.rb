@@ -2354,6 +2354,34 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_alert_dialog_is_a_typed_native_severity_control
+    application = OmarchyUI::Application.new do
+      app do
+        alert_dialog "Connection failed", "The server could not be reached.",
+                     id: :connection_alert, severity: :error, opened: true,
+                     informative_text: "Check the network and retry.",
+                     detailed_text: "ECONNREFUSED 127.0.0.1:443",
+                     standard_buttons: %i[retry cancel]
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "alert_dialog", node.fetch("type")
+    assert_equal "connection_alert", node.fetch("id")
+    assert_equal "Connection failed", node.dig("props", "title")
+    assert_equal "The server could not be reached.", node.dig("props", "message")
+    assert_equal "error", node.dig("props", "severity")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal "Check the network and retry.", node.dig("props", "informative_text")
+    assert_equal "ECONNREFUSED 127.0.0.1:443", node.dig("props", "detailed_text")
+    assert_equal %w[retry cancel], node.dig("props", "standard_buttons")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

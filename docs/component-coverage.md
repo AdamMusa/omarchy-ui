@@ -146,7 +146,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] context_menu
 - [x] popup
 - [x] dialog
-- [ ] alert_dialog
+- [x] alert_dialog
 - [ ] message_dialog
 - [ ] bottom_sheet
 - [ ] modal_sheet

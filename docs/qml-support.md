@@ -207,6 +207,12 @@ arbitrary Ruby controls. Ruby selects native standard button roles (`ok`, `cance
 Opening, geometry, modal/dim/focus behavior, close policy, layout, spacing, padding, typography,
 styling, visibility, and the complete popup lifecycle are reactive.
 
+`alert_dialog(title, message, severity: ...)` is a dedicated native dialog for informational,
+success, warning, and error alerts. It renders the corresponding icon/color plus optional
+informative and selectable detailed text, supports native standard-button roles, and exposes the
+same semantic button and popup lifecycle events as `dialog`. Content typography, spacing,
+geometry, modal behavior, colors, and visibility are independently reactive.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
