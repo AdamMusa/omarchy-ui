@@ -2326,6 +2326,34 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_dialog_is_a_typed_native_standard_button_container
+    application = OmarchyUI::Application.new do
+      app do
+        dialog "Save changes?", id: :save_dialog, opened: true,
+               standard_buttons: %i[save discard cancel], modal: true,
+               width: 500, height: 300 do
+          text "Choose how to continue."
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "dialog", node.fetch("type")
+    assert_equal "save_dialog", node.fetch("id")
+    assert_equal "Save changes?", node.dig("props", "title")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal %w[save discard cancel], node.dig("props", "standard_buttons")
+    assert_equal true, node.dig("props", "modal")
+    assert_equal 500, node.dig("props", "width")
+    assert_equal 300, node.dig("props", "height")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 119, renderer_names.length
+    assert_equal 120, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1178,5 +1178,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"open", {}'
     assert_includes renderer, '"close", {}'
     assert_includes renderer, '"position_change", { x: x, y: y }'
+  end
+
+  def test_dialog_has_a_specific_native_standard_button_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "dialog"'
+    assert_includes renderer, "id: dialogComponent"
+    assert_includes renderer, "QQC.Dialog {"
+    assert_includes renderer, 'title: String(root.prop("title", ""))'
+    assert_includes renderer, 'standardButtonsValue(root.prop("standard_buttons", ["ok", "cancel"]))'
+    assert_includes renderer, "QQC.Dialog.SaveAll"
+    assert_includes renderer, "QQC.Dialog.RestoreDefaults"
+    assert_includes renderer, 'modal: root.prop("modal", true) !== false'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, '"accept", {}'
+    assert_includes renderer, '"reject", {}'
+    assert_includes renderer, '"apply", {}'
+    assert_includes renderer, '"reset", {}'
+    assert_includes renderer, '"discard", {}'
+    assert_includes renderer, '"help", {}'
   end
 end

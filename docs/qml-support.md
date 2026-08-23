@@ -201,6 +201,12 @@ controls. Position, size, modal/dim/focus behavior, escape/outside close policy,
 layout, spacing, padding, styling, and enter/exit animation are reactive. Ruby receives open/close,
 about-to-show/hide, visibility, focus, and position events.
 
+`dialog(title, standard_buttons: ...) { ... }` maps to native Qt Controls `Dialog` and contains
+arbitrary Ruby controls. Ruby selects native standard button roles (`ok`, `cancel`, `yes`, `no`,
+`apply`, `reset`, `discard`, `help`, and others) and receives their distinct semantic events.
+Opening, geometry, modal/dim/focus behavior, close policy, layout, spacing, padding, typography,
+styling, visibility, and the complete popup lifecycle are reactive.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
