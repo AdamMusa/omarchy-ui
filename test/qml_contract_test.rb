@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 111, renderer_names.length
+    assert_equal 112, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1033,5 +1033,20 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"toggle", payload'
     assert_includes renderer, '"change", payload'
     assert_includes renderer, 'opening ? "expand" : "collapse"'
+  end
+
+  def test_tool_bar_has_a_specific_native_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "tool_bar"'
+    assert_includes renderer, "id: toolBarComponent"
+    assert_includes renderer, "QQC.ToolBar {"
+    assert_includes renderer, 'root.prop("position", "header")'
+    assert_includes renderer, "QQC.ToolBar.Footer"
+    assert_includes renderer, 'root.prop("layout", "row")'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, '"position_change",'
+    assert_includes renderer, '"footer" : "header"'
+    assert_includes renderer, '"click", {}'
   end
 end

@@ -2099,6 +2099,32 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_tool_bar_is_a_typed_native_control_container
+    application = OmarchyUI::Application.new do
+      app do
+        tool_bar id: :editor_tools, position: :footer, layout: :row,
+                 spacing: 8, padding: 10 do
+          tool_button "Save", icon: :save
+          tool_button "Close", icon: :xmark
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "tool_bar", node.fetch("type")
+    assert_equal "editor_tools", node.fetch("id")
+    assert_equal "footer", node.dig("props", "position")
+    assert_equal "row", node.dig("props", "layout")
+    assert_equal 8, node.dig("props", "spacing")
+    assert_equal 10, node.dig("props", "padding")
+    assert_equal %w[tool_button tool_button], node.fetch("children").map { |child| child.fetch("type") }
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

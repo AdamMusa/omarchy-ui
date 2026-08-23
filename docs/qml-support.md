@@ -159,6 +159,11 @@ index set, and animates independent native headers/content regions. Subtitles, t
 padding, geometry, typography, colors, and visibility are reactive; every toggle reports its index
 and the resulting expanded set.
 
+`tool_bar(...) { ... }` is a native Qt Controls `ToolBar` containing arbitrary Ruby controls. It
+supports header/footer position, row or column child layout, spacing, padding, geometry, colors,
+border, radius, layout direction, enabled state, and visibility. Click, position, visibility, and
+focus changes are available as Ruby events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
