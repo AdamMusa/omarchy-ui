@@ -178,6 +178,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `flickable` | viewport/content dimensions, direction, bounds behavior, interaction and clipping | `click`, `scroll`, `flick_start`, `flick_end` | yes |
 | `focus_scope` | `focus`, `active_focus`, optional dimensions; establishes a keyboard-focus boundary | `click`, `focus`, `blur` | yes |
 | `flipable` | `flipped`, horizontal/vertical axis, duration, easing, interaction and dimensions; first two children are front/back | `click`, `change` | yes |
+| `border_image` | source, dimensions, four border slices, horizontal/vertical tiling, loading/cache/mirror/smoothing | `click`, `loaded`, `error`, `status` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |

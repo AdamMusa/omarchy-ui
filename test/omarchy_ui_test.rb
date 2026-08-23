@@ -257,6 +257,27 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_border_image_is_a_typed_nine_slice_container
+    application = OmarchyUI::Application.new do
+      app do
+        border_image "frame.png", border_left: 12, border_top: 10, horizontal_tile: :repeat do
+          text "Framed"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "border_image", node.fetch("type")
+    assert_equal "frame.png", node.dig("props", "source")
+    assert_equal 12, node.dig("props", "border_left")
+    assert_equal "repeat", node.dig("props", "horizontal_tile")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do

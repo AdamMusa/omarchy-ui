@@ -34,6 +34,7 @@ module OmarchyUI
     flickable: [%i[width height content_width content_height direction bounds_behavior interactive clip visible], %i[click scroll flick_start flick_end], true],
     focus_scope: [%i[focus active_focus width height visible], %i[click focus blur], true],
     flipable: [%i[flipped axis duration easing interactive width height visible], %i[click change], true],
+    border_image: [%i[source width height border_left border_top border_right border_bottom horizontal_tile vertical_tile asynchronous cache mirror smooth visible], %i[click loaded error status], true],
     text: [%i[text style size bold color wrap width visible], [], false],
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],

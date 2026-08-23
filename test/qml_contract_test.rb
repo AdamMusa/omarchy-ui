@@ -176,6 +176,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "root.configureFace(item, root.node.children[1])"
   end
 
+  def test_border_image_has_a_specific_native_nine_slice_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "border_image"'
+    assert_includes renderer, "id: borderImageComponent"
+    assert_includes renderer, "BorderImage {"
+    assert_includes renderer, 'border.left: Number(root.prop("border_left", 0))'
+    assert_includes renderer, "BorderImage.Round"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

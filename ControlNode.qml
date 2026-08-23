@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -100,6 +100,13 @@ Loader {
     face.controlId = String(childNode.id)
     face.foreground = foreground
     face.fontFamily = fontFamily
+  }
+
+  function borderImageTileMode(value) {
+    var mode = String(value || "stretch")
+    if (mode === "repeat") return BorderImage.Repeat
+    if (mode === "round") return BorderImage.Round
+    return BorderImage.Stretch
   }
 
   function nativeDefinition() {
@@ -212,6 +219,7 @@ Loader {
     if (node.type === "flickable") return flickableComponent
     if (node.type === "focus_scope") return focusScopeComponent
     if (node.type === "flipable") return flipableComponent
+    if (node.type === "border_image") return borderImageComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -785,6 +793,39 @@ Loader {
       TapHandler {
         enabled: root.prop("interactive", false) === true
         onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !nativeFlipable.flipped })
+      }
+    }
+  }
+
+  Component {
+    id: borderImageComponent
+    BorderImage {
+      id: nativeBorderImage
+      source: String(root.prop("source", ""))
+      implicitWidth: Number(root.prop("width", sourceSize.width > 0 ? sourceSize.width : 160))
+      implicitHeight: Number(root.prop("height", sourceSize.height > 0 ? sourceSize.height : 100))
+      border.left: Number(root.prop("border_left", 0))
+      border.top: Number(root.prop("border_top", 0))
+      border.right: Number(root.prop("border_right", 0))
+      border.bottom: Number(root.prop("border_bottom", 0))
+      horizontalTileMode: root.borderImageTileMode(root.prop("horizontal_tile", "stretch"))
+      verticalTileMode: root.borderImageTileMode(root.prop("vertical_tile", "stretch"))
+      asynchronous: root.prop("asynchronous", true) !== false
+      cache: root.prop("cache", true) !== false
+      mirror: root.prop("mirror", false) === true
+      smooth: root.prop("smooth", true) !== false
+      onStatusChanged: {
+        if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
+        if (status === BorderImage.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height })
+        if (status === BorderImage.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
+      }
+      Item {
+        anchors.fill: parent
+        anchors.leftMargin: nativeBorderImage.border.left
+        anchors.topMargin: nativeBorderImage.border.top
+        anchors.rightMargin: nativeBorderImage.border.right
+        anchors.bottomMargin: nativeBorderImage.border.bottom
+        Repeater { model: root.node.children || []; delegate: childDelegate }
       }
     }
   }
