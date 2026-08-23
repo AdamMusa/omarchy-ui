@@ -57,6 +57,11 @@ dialog state and labels, native-dialog preference, and button styling are reacti
 the selected and current directories reactive as Ruby strings, and exposes dialog lifecycle,
 selection, rejection, and folder-navigation events without requiring `file_picker` mode options.
 
+`font_picker(family, ...)` opens Qt's native `FontDialog` while keeping its value Ruby-friendly.
+Family, point or pixel size, weight, italic, underline, and strikeout properties are reactive, and
+the same fields are returned in `input`, `change`, and `accept` payloads. The dialog also reports
+`reject`, `open`, and `close` and supports the shared native-dialog and button styling options.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

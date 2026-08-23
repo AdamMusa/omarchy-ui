@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 91, renderer_names.length
+    assert_equal 92, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -706,5 +706,19 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"input", payload'
     assert_includes renderer, '"change", payload'
     assert_includes renderer, '"folder_change", { value: value }'
+  end
+
+  def test_font_picker_has_a_specific_native_font_dialog_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "font_picker"'
+    assert_includes renderer, "id: fontPickerComponent"
+    assert_includes renderer, "FontDialog {"
+    assert_includes renderer, "Qt.font(specification)"
+    assert_includes renderer, "family: value.family"
+    assert_includes renderer, 'root.prop("point_size", -1)'
+    assert_includes renderer, '"input", picker.fontPayload(selectedFont)'
+    assert_includes renderer, '"change", payload'
+    assert_includes renderer, '"accept", payload'
   end
 end

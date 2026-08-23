@@ -1588,6 +1588,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_font_picker_is_a_typed_native_font_input
+    application = OmarchyUI::Application.new do
+      app do
+        font_picker "JetBrains Mono", label: "Editor font", point_size: 12,
+                    weight: 600, italic: true, underline: false
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "font_picker", node.fetch("type")
+    assert_equal "JetBrains Mono", node.dig("props", "family")
+    assert_equal "Editor font", node.dig("props", "label")
+    assert_equal 12, node.dig("props", "point_size")
+    assert_equal 600, node.dig("props", "weight")
+    assert_equal true, node.dig("props", "italic")
+    assert_equal false, node.dig("props", "underline")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

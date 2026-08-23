@@ -21,6 +21,7 @@ module OmarchyUI
       time_picker: :time,
       file_picker: :path,
       folder_picker: :path,
+      font_picker: :family,
       dropdown: :value,
       multi_select: :values,
       button_group: :value,
