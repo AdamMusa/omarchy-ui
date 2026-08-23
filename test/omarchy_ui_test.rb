@@ -1839,6 +1839,30 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_tab_button_is_a_typed_native_action_control
+    application = OmarchyUI::Application.new do
+      app do
+        tab_button "Settings", id: :settings_tab, checked: true, icon: :gear,
+                   shortcut: "Ctrl+2", auto_exclusive: false, width: 150
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "tab_button", node.fetch("type")
+    assert_equal "settings_tab", node.fetch("id")
+    assert_equal "Settings", node.dig("props", "text")
+    assert_equal true, node.dig("props", "checked")
+    assert_equal "gear", node.dig("props", "icon")
+    assert_equal "Ctrl+2", node.dig("props", "shortcut")
+    assert_equal false, node.dig("props", "auto_exclusive")
+    assert_equal 150, node.dig("props", "width")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -110,6 +110,10 @@ labels or hashes containing `label`, `enabled`, and `icon`; the selected index i
 emits `input`, committed `change`, and `tab_click` payloads. Position, spacing, sizing, colors,
 typography, direction, visibility, and focus are independently configurable.
 
+`tab_button(label, ...)` is an individually usable native Qt Controls `TabButton`. Checked and
+enabled state, auto-exclusivity, icon/shortcut, geometry, typography, colors, border, radius, and
+visibility are reactive. Ruby receives click, checked-state, press/release, hover, and focus events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

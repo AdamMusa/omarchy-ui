@@ -139,6 +139,9 @@ module OmarchyUI
     def tab_bar(items = [], id: nil, **props)
       component(:tab_bar, id:, items: Array(items), **props)
     end
+    def tab_button(label = "", id: nil, **props, &handler)
+      action_component(:tab_button, :text, label, id:, props:, handler:)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?
