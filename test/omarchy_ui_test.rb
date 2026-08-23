@@ -568,6 +568,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_delay_button_is_a_typed_hold_to_activate_control
+    application = OmarchyUI::Application.new do
+      app { delay_button "Delete", delay: 1500, width: 160 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "delay_button", node.fetch("type")
+    assert_equal "Delete", node.dig("props", "text")
+    assert_equal 1500, node.dig("props", "delay")
+    assert_equal 160, node.dig("props", "width")
+  ensure
+    application&.stop
+  end
+
   def test_bar_indicator_serializes_active_and_inactive_states
     application = OmarchyUI::Application.new do
       bar_widget do

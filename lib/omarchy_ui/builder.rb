@@ -120,6 +120,12 @@ module OmarchyUI
       action_component(:tool_button, :text, label, id:, props:, handler:)
     end
 
+    def delay_button(label, id: nil, **props, &handler)
+      node = action_component(:delay_button, :text, label, id:, props: props, handler: nil)
+      @application.register_handler(node.id, :activate, handler) if handler
+      node
+    end
+
     def action_button(icon, id: nil, **props, &handler)
       action_component(:action_button, :icon, icon, id:, props:, handler:)
     end

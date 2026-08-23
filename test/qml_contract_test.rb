@@ -49,6 +49,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'nativeToolButton.hovered ? Color.popups.background'
   end
 
+  def test_delay_button_has_a_specific_native_hold_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "delay_button"'
+    assert_includes renderer, "id: delayButtonComponent"
+    assert_includes renderer, "QQC.DelayButton {"
+    assert_includes renderer, '"activate", {}'
+    assert_includes renderer, '"progress", { value: progress }'
+  end
+
   def test_native_qml_bridge_maps_properties_events_children_and_animations
     qml = source("ControlNode.qml")
     assert_includes qml, "function syncNativeProperties()"

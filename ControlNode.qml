@@ -20,7 +20,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
@@ -204,6 +204,7 @@ Loader {
     if (node.type === "button") return buttonComponent
     if (node.type === "round_button") return roundButtonComponent
     if (node.type === "tool_button") return toolButtonComponent
+    if (node.type === "delay_button") return delayButtonComponent
     if (node.type === "row") return rowComponent
     if (node.type === "column") return columnComponent
     if (node.type === "container") return containerComponent
@@ -572,6 +573,48 @@ Loader {
       onPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "press", {})
       onReleased: root.bridge.sendEvent(root.surfaceName, root.controlId, "release", {})
       onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
+    }
+  }
+
+  Component {
+    id: delayButtonComponent
+    QQC.DelayButton {
+      id: nativeDelayButton
+      text: String(root.prop("text", ""))
+      delay: Number(root.prop("delay", 1000))
+      enabled: root.prop("enabled", true) !== false
+      implicitWidth: Number(root.prop("width", 140))
+      implicitHeight: Number(root.prop("height", 40))
+      background: Rectangle {
+        radius: Style.cornerRadius
+        color: root.prop("background", Color.popups.background)
+        border.width: Style.normalBorderWidth
+        border.color: nativeDelayButton.activeFocus ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
+        Rectangle {
+          width: parent.width * nativeDelayButton.progress
+          height: parent.height
+          radius: parent.radius
+          color: root.prop("progress_background", root.prop("accent", Color.accent))
+          opacity: 0.45
+        }
+      }
+      contentItem: Text {
+        text: nativeDelayButton.text
+        textFormat: Text.PlainText
+        color: root.prop("foreground", root.foreground)
+        font.family: String(root.prop("font_family", root.fontFamily))
+        font.pixelSize: Number(root.prop("font_size", Style.font.body))
+        font.bold: true
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+      }
+      onActivated: root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", {})
+      onProgressChanged: {
+        if (root.subscribed("progress")) root.bridge.sendEvent(root.surfaceName, root.controlId, "progress", { value: progress })
+      }
+      onPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "press", {})
+      onReleased: root.bridge.sendEvent(root.surfaceName, root.controlId, "release", {})
+      onCanceled: root.bridge.sendEvent(root.surfaceName, root.controlId, "cancel", {})
     }
   }
 
