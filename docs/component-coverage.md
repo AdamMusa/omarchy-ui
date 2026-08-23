@@ -6,6 +6,15 @@ a complete UI framework. A custom `register_component` adapter does not count as
 Each completed component must include a registry schema, named Ruby builder method, native QML
 renderer, reactive property support, applicable events, tests, and reference documentation.
 
+## Scope
+
+This catalog targets public, application-facing types from Qt Quick, Qt Quick Controls, Qt Quick
+Layouts, Qt Quick Dialogs, Qt Quick Effects, Qt Quick Shapes, and Qt Multimedia, plus useful
+Omarchy-native controls and charts. Private `impl` types, style implementations, abstract base
+classes, QML compiler infrastructure, compositor protocols, and operating-system service objects
+are not widgets and are intentionally excluded. Framework concepts such as state, timers,
+transitions, and animation groups receive Ruby APIs even though they are not visual widgets.
+
 ## Foundation and layout
 
 - [x] container
@@ -29,6 +38,13 @@ renderer, reactive property support, applicable events, tests, and reference doc
 - [ ] split_view
 - [ ] stack_layout
 - [ ] layout_item_proxy
+- [ ] loader
+- [ ] flickable
+- [ ] focus_scope
+- [ ] flipable
+- [ ] border_image
+- [ ] window
+- [ ] application_window
 
 ## Display, content, and media
 
@@ -53,6 +69,9 @@ renderer, reactive property support, applicable events, tests, and reference doc
 - [ ] divider
 - [ ] markdown
 - [ ] web_view
+- [ ] vector_image
+- [ ] font_loader
+- [ ] text_metrics
 
 ## Buttons and input
 
@@ -88,6 +107,10 @@ renderer, reactive property support, applicable events, tests, and reference doc
 - [ ] file_picker
 - [ ] folder_picker
 - [ ] font_picker
+- [ ] double_spin_box
+- [ ] dialog_button_box
+- [ ] action
+- [ ] action_group
 
 ## Navigation and structure
 
@@ -109,6 +132,8 @@ renderer, reactive property support, applicable events, tests, and reference doc
 - [ ] pagination
 - [ ] expansion_panel
 - [ ] accordion
+- [ ] tool_bar
+- [ ] tool_separator
 
 ## Menus, dialogs, and feedback
 
@@ -145,6 +170,10 @@ renderer, reactive property support, applicable events, tests, and reference doc
 - [ ] data_table
 - [ ] horizontal_header
 - [ ] vertical_header
+- [ ] table_view_delegate
+- [ ] tree_view_delegate
+- [ ] horizontal_header_delegate
+- [ ] vertical_header_delegate
 - [ ] reorderable_list
 - [ ] carousel
 - [ ] calendar
@@ -187,3 +216,74 @@ renderer, reactive property support, applicable events, tests, and reference doc
 - [ ] selection_rectangle
 - [ ] scroll_bar
 - [ ] scroll_indicator
+
+## Animation, state, and timing
+
+- [ ] animation
+- [ ] number_animation
+- [ ] color_animation
+- [ ] rotation_animation
+- [ ] vector_animation
+- [ ] path_animation
+- [ ] property_animation
+- [ ] pause_animation
+- [ ] script_action
+- [ ] property_action
+- [ ] parallel_animation
+- [ ] sequential_animation
+- [ ] spring_animation
+- [ ] smoothed_animation
+- [ ] anchor_animation
+- [ ] parent_animation
+- [ ] opacity_animator
+- [ ] rotation_animator
+- [ ] scale_animator
+- [ ] x_animator
+- [ ] y_animator
+- [ ] uniform_animator
+- [ ] frame_animation
+- [ ] animation_controller
+- [ ] behavior
+- [ ] transition
+- [ ] state
+- [ ] state_group
+- [ ] property_changes
+- [ ] anchor_changes
+- [ ] parent_change
+- [ ] timer
+
+## Effects
+
+- [ ] multi_effect
+- [ ] rectangular_shadow
+- [ ] opacity_mask
+- [ ] blur
+- [ ] drop_shadow
+- [ ] colorize
+- [ ] glow
+
+## Multimedia and capture
+
+- [ ] media_player
+- [ ] video_output
+- [ ] sound_effect
+- [ ] camera
+- [ ] capture_session
+- [ ] image_capture
+- [ ] media_recorder
+- [ ] audio_input
+- [ ] audio_output
+- [ ] media_devices
+- [ ] screen_capture
+- [ ] window_capture
+
+## Models and utilities
+
+- [ ] list_model
+- [ ] delegate_model
+- [ ] delegate_model_group
+- [ ] sort_filter_proxy_model
+- [ ] folder_list_model
+- [ ] settings
+- [ ] standard_paths
+- [ ] clipboard
