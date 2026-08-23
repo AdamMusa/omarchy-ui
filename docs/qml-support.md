@@ -238,6 +238,11 @@ action button, and dismiss control. Its content, explicit icon/color overrides, 
 and styling react to Ruby state. It emits action, dismissal, click, hover, focus, and visibility
 events without creating a window or popup.
 
+`toast(message, ...)` presents compact transient feedback with optional title and severity icon.
+Corner/edge placement, timeout, persistent mode, hover pausing, click dismissal, responsive width,
+colors, typography, and transitions are reactive. Timeout, dismissal, click, hover, visibility, and
+popup lifecycle are exposed as Ruby events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

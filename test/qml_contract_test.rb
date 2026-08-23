@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 126, renderer_names.length
+    assert_equal 127, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1312,5 +1312,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"action", {}'
     assert_includes renderer, '"dismiss", {}'
     assert_includes renderer, 'visible ? "show" : "hide"'
+  end
+
+  def test_toast_has_a_specific_timed_severity_popup_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "toast"'
+    assert_includes renderer, "id: toastComponent"
+    assert_includes renderer, "id: toastRoot"
+    assert_includes renderer, 'root.prop("position", "top_right")'
+    assert_includes renderer, 'root.prop("severity", "info")'
+    assert_includes renderer, 'root.prop("duration", 3500)'
+    assert_includes renderer, "function severityIcon()"
+    assert_includes renderer, "function severityColor()"
+    assert_includes renderer, "function pauseTimeout()"
+    assert_includes renderer, "HoverHandler {"
+    assert_includes renderer, "id: dismissTimer"
+    assert_includes renderer, '"click", {}'
+    assert_includes renderer, '"timeout", {}'
+    assert_includes renderer, 'toastRoot.dismiss("click")'
+    assert_includes renderer, 'toastRoot.dismiss("timeout")'
   end
 end

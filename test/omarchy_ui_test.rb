@@ -2522,6 +2522,34 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_toast_is_a_typed_timed_severity_control
+    application = OmarchyUI::Application.new do
+      app do
+        toast "The export has completed.", id: :export_toast,
+              title: "Export ready", severity: :success,
+              opened: true, duration: 5000, position: :bottom_left,
+              pause_on_hover: true, dismiss_on_click: false
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "toast", node.fetch("type")
+    assert_equal "export_toast", node.fetch("id")
+    assert_equal "The export has completed.", node.dig("props", "message")
+    assert_equal "Export ready", node.dig("props", "title")
+    assert_equal "success", node.dig("props", "severity")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal 5000, node.dig("props", "duration")
+    assert_equal "bottom_left", node.dig("props", "position")
+    assert_equal true, node.dig("props", "pause_on_hover")
+    assert_equal false, node.dig("props", "dismiss_on_click")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
