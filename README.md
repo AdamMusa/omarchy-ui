@@ -292,6 +292,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `stack_view` | native push/pop stack over Ruby child pages, driven by a reactive index with optional transitions, dimensions and styling | `change`, `push`, `pop`, `depth_change`, `busy_change`, `show`, `hide`, `focus`, `blur` |
 | `swipe_view` | native horizontal/vertical swipe navigation over Ruby child pages with reactive index, interaction, dimensions, direction and styling | `input`, `change`, `count_change`, `show`, `hide`, `focus`, `blur` |
 | `drawer` | native edge drawer with reactive opening, edge gestures, modal/dim behavior, close policy, child layout, dimensions and styling | `open`, `close`, `about_to_show`, `about_to_hide`, `position_change`, `show`, `hide`, `focus`, `blur` |
+| `navigation_rail` | compact or extended vertical destination rail accepting label/icon item hashes, with reactive selection, alignment, dimensions and styling | `input`, `change`, `select`, `show`, `hide`, `focus`, `blur` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

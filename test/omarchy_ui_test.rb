@@ -1967,6 +1967,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_navigation_rail_is_a_typed_native_destination_control
+    application = OmarchyUI::Application.new do
+      app do
+        navigation_rail ["Home", { label: "Settings", icon: "gear", enabled: false }],
+                        id: :primary_rail, current_index: 1, extended: true,
+                        alignment: :center, item_height: 60
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "navigation_rail", node.fetch("type")
+    assert_equal "primary_rail", node.fetch("id")
+    assert_equal "Home", node.dig("props", "items", 0)
+    assert_equal "Settings", node.dig("props", "items", 1, "label")
+    assert_equal "gear", node.dig("props", "items", 1, "icon")
+    assert_equal false, node.dig("props", "items", 1, "enabled")
+    assert_equal 1, node.dig("props", "current_index")
+    assert_equal true, node.dig("props", "extended")
+    assert_equal "center", node.dig("props", "alignment")
+    assert_equal 60, node.dig("props", "item_height")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

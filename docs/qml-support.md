@@ -133,6 +133,11 @@ Opening, modal/dim behavior, edge dragging, drag margin, outside/escape close po
 geometry, padding, and styling are reactive. Ruby receives open/close, about-to-show/hide,
 position, visibility, and focus lifecycle events.
 
+`navigation_rail(items, current_index: ...)` provides a dedicated vertical navigation surface built
+from native Qt Controls. String destinations and hashes with `label`, `icon`, `icon_source`, and
+`enabled` are supported. Compact/extended presentation, alignment, spacing, dimensions, colors,
+typography, and selection are reactive; activation emits `input`, `change`, and `select`.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 106, renderer_names.length
+    assert_equal 107, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -944,5 +944,22 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"about_to_show", {}'
     assert_includes renderer, '"about_to_hide", {}'
     assert_includes renderer, '"position_change", { value: position }'
+  end
+
+  def test_navigation_rail_has_a_specific_native_destination_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "navigation_rail"'
+    assert_includes renderer, "id: navigationRailComponent"
+    assert_includes renderer, "QQC.Pane {"
+    assert_includes renderer, "QQC.ToolButton {"
+    assert_includes renderer, 'root.prop("items", [])'
+    assert_includes renderer, 'root.prop("current_index", 0)'
+    assert_includes renderer, 'root.prop("extended", false) === true'
+    assert_includes renderer, 'itemValue(index, "enabled", true)'
+    assert_includes renderer, 'itemValue(index, "icon_source", "")'
+    assert_includes renderer, '"select",'
+    assert_includes renderer, '"input", { value: currentIndex }'
+    assert_includes renderer, '"change", { value: currentIndex }'
   end
 end
