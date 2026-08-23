@@ -311,6 +311,21 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_rich_text_is_an_explicit_typed_markup_component
+    application = OmarchyUI::Application.new do
+      app { rich_text '<b>Omarchy</b> <a href="docs">docs</a>', link_color: "#7aa2f7" }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "rich_text", node.fetch("type")
+    assert_includes node.dig("props", "text"), "<b>Omarchy</b>"
+    assert_equal "#7aa2f7", node.dig("props", "link_color")
+  ensure
+    application&.stop
+  end
+
   def test_bar_icon_button_registers_click_handler_and_optical_properties
     application = OmarchyUI::Application.new do
       bar_widget do

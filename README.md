@@ -181,6 +181,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `border_image` | source, dimensions, four border slices, horizontal/vertical tiling, loading/cache/mirror/smoothing | `click`, `loaded`, `error`, `status` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `label` | text, typography, dimensions, wrapping, elision, alignment, line limit and plain/styled/rich/Markdown format | `link` | no |
+| `rich_text` | explicit rich markup, typography, width/wrapping, line limit and link color | `link` | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
 | `image` | `source`, `fill_mode` | — | no |

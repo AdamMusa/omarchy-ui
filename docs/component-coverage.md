@@ -58,7 +58,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] optical_glyph
 - [x] tooltip
 - [x] label
-- [ ] rich_text
+- [x] rich_text
 - [ ] selectable_text
 - [ ] animated_image
 - [ ] video

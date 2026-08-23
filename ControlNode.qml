@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
@@ -194,6 +194,7 @@ Loader {
     if (!node) return null
     if (node.type === "text") return textComponent
     if (node.type === "label") return labelComponent
+    if (node.type === "rich_text") return richTextComponent
     if (node.type === "icon") return iconComponent
     if (node.type === "tooltip") return tooltipComponent
     if (node.type === "button") return buttonComponent
@@ -359,6 +360,24 @@ Loader {
         return Text.PlainText
       }
       onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
+    }
+  }
+
+  Component {
+    id: richTextComponent
+    Text {
+      text: String(root.prop("text", ""))
+      textFormat: Text.RichText
+      color: root.prop("color", root.foreground)
+      linkColor: root.prop("link_color", Color.accent)
+      font.family: root.fontFamily
+      font.pixelSize: Number(root.prop("size", Style.font.body))
+      font.bold: root.prop("bold", false) === true
+      implicitWidth: root.prop("width", null) === null ? contentWidth : Number(root.prop("width", contentWidth))
+      wrapMode: root.prop("wrap", true) !== false ? Text.Wrap : Text.NoWrap
+      maximumLineCount: Number(root.prop("maximum_lines", 2147483647))
+      onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
+      HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor }
     }
   }
 

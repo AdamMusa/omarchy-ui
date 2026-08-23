@@ -196,6 +196,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"link", { value: link }'
   end
 
+  def test_rich_text_has_an_explicit_native_markup_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "rich_text"'
+    assert_includes renderer, "id: richTextComponent"
+    assert_includes renderer, "textFormat: Text.RichText"
+    assert_includes renderer, "linkColor: root.prop"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'
