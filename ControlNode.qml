@@ -23,7 +23,7 @@ Loader {
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
-    "number_field", "text_area", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
+    "number_field", "text_area", "search_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -260,6 +260,7 @@ Loader {
     if (node.type === "text_field") return textFieldComponent
     if (node.type === "number_field") return numberFieldComponent
     if (node.type === "text_area") return textAreaComponent
+    if (node.type === "search_field") return searchFieldComponent
     if (node.type === "slider") return sliderComponent
     if (node.type === "dropdown") return dropdownComponent
     if (node.type === "multi_select") return multiSelectComponent
@@ -2075,6 +2076,37 @@ Loader {
         onSelectionChanged: {
           if (root.subscribed("selection")) root.bridge.sendEvent(root.surfaceName, root.controlId, "selection", { start: selectionStart, end: selectionEnd, text: selectedText })
         }
+      }
+    }
+  }
+
+  Component {
+    id: searchFieldComponent
+    QQC.SearchField {
+      id: nativeSearchField
+      text: String(root.prop("text", ""))
+      suggestionModel: root.prop("suggestions", [])
+      textRole: String(root.prop("text_role", ""))
+      live: root.prop("live", false) === true
+      currentIndex: Number(root.prop("current_index", -1))
+      enabled: root.prop("enabled", true) !== false
+      implicitWidth: Number(root.prop("width", 260))
+      font.family: String(root.prop("font_family", root.fontFamily))
+      font.pixelSize: Number(root.prop("font_size", Style.font.body))
+      palette.text: root.prop("foreground", root.foreground)
+      palette.buttonText: root.prop("foreground", root.foreground)
+      palette.button: root.prop("background", Color.popups.background)
+      palette.highlight: root.prop("accent", Color.accent)
+      palette.highlightedText: Color.background
+      onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
+      onSearchTriggered: root.bridge.sendEvent(root.surfaceName, root.controlId, "search", { value: text })
+      onAccepted: root.bridge.sendEvent(root.surfaceName, root.controlId, "submit", { value: text })
+      onActivated: function(index) { root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", { index: index, value: text }) }
+      onHighlighted: function(index) { root.bridge.sendEvent(root.surfaceName, root.controlId, "highlight", { index: index }) }
+      onClearButtonPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "clear", {})
+      onActiveFocusChanged: {
+        root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
+        if (!activeFocus && root.subscribed("change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
       }
     }
   }

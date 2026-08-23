@@ -516,4 +516,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "QQC.TextArea {"
     assert_includes renderer, '"selection", { start: selectionStart'
   end
+
+  def test_search_field_has_a_specific_native_suggestion_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "search_field"'
+    assert_includes renderer, "id: searchFieldComponent"
+    assert_includes renderer, "QQC.SearchField {"
+    assert_includes renderer, 'suggestionModel: root.prop("suggestions", [])'
+    assert_includes renderer, '"search", { value: text }'
+  end
 end

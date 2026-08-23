@@ -1302,6 +1302,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_search_field_is_a_typed_native_suggestion_input
+    application = OmarchyUI::Application.new do
+      app { search_field "oma", suggestions: %w[omarchy omarchy-ui], live: true, current_index: 0 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "search_field", node.fetch("type")
+    assert_equal "oma", node.dig("props", "text")
+    assert_equal %w[omarchy omarchy-ui], node.dig("props", "suggestions")
+    assert_equal true, node.dig("props", "live")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

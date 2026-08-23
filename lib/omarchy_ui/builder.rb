@@ -152,6 +152,12 @@ module OmarchyUI
       input_component(:radio_button, :checked, checked, id:, props: props.merge(label: label.to_s), handler:)
     end
 
+    def search_field(value = "", id: nil, **props, &handler)
+      node = component(:search_field, id:, text: value.to_s, **props)
+      @application.register_handler(node.id, :search, handler) if handler
+      node
+    end
+
     def toggle_switch(id: nil, checked: UNSET, **props, &handler)
       input_component(:toggle_switch, :checked, checked, id:, props:, handler:)
     end

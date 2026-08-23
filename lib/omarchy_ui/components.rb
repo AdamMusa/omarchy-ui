@@ -67,6 +67,7 @@ module OmarchyUI
     toggle_switch: [%i[checked busy interactive cursor cursor_ring cursor_pad rounded foreground accent track_height track_width knob_size knob_inset], %i[change hover], false],
     text_field: [%i[text placeholder password foreground accent selection_tint horizontal_padding vertical_padding cursor], %i[change submit focus blur input], false],
     text_area: [%i[text placeholder width height wrap read_only maximum_length foreground background accent selection_tint font_family font_size padding visible], %i[input change focus blur selection], false],
+    search_field: [%i[text suggestions text_role live current_index width enabled foreground background accent font_family font_size visible], %i[input change search submit activate highlight clear focus blur], false],
     number_field: [%i[label value from to step foreground accent font_family font_size field_width cursor], %i[change hover], false],
     slider: [%i[value minimum maximum step integer track_color fill_color knob_color track_height knob_size ticks tick_color], %i[input change right_click], false],
     dropdown: [%i[label value options foreground background popup_border accent font_family row_height popup_row_height show_label cursor], %i[change hover], false],
