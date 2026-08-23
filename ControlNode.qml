@@ -20,7 +20,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "vector_image", "font_loader", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
@@ -208,6 +208,7 @@ Loader {
     if (node.type === "image") return imageComponent
     if (node.type === "vector_image") return vectorImageComponent
     if (node.type === "font_loader") return fontLoaderComponent
+    if (node.type === "text_metrics") return textMetricsComponent
     if (node.type === "animated_image") return animatedImageComponent
     if (node.type === "video") return videoComponent
     if (node.type === "audio") return audioComponent
@@ -599,6 +600,40 @@ Loader {
           if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status, name: name })
           if (status === FontLoader.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { name: name })
           if (status === FontLoader.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
+        }
+      }
+    }
+  }
+
+  Component {
+    id: textMetricsComponent
+    Item {
+      implicitWidth: 0
+      implicitHeight: 0
+      TextMetrics {
+        id: nativeTextMetrics
+        text: String(root.prop("text", ""))
+        font.family: String(root.prop("font_family", root.fontFamily))
+        font.pixelSize: Number(root.prop("font_size", Style.font.body))
+        font.bold: root.prop("bold", false) === true
+        font.italic: root.prop("italic", false) === true
+        font.letterSpacing: Number(root.prop("letter_spacing", 0))
+        font.wordSpacing: Number(root.prop("word_spacing", 0))
+        elide: {
+          var mode = String(root.prop("elide", "none"))
+          if (mode === "left") return Text.ElideLeft
+          if (mode === "middle") return Text.ElideMiddle
+          if (mode === "right") return Text.ElideRight
+          return Text.ElideNone
+        }
+        elideWidth: Number(root.prop("elide_width", 0))
+        onMetricsChanged: {
+          if (!root.subscribed("metrics")) return
+          root.bridge.sendEvent(root.surfaceName, root.controlId, "metrics", {
+            width: width, height: height, advance_width: advanceWidth, elided_text: elidedText,
+            bounding_rect: { x: boundingRect.x, y: boundingRect.y, width: boundingRect.width, height: boundingRect.height },
+            tight_bounding_rect: { x: tightBoundingRect.x, y: tightBoundingRect.y, width: tightBoundingRect.width, height: tightBoundingRect.height }
+          })
         }
       }
     }

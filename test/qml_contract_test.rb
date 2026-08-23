@@ -252,6 +252,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"loaded", { name: name }'
   end
 
+  def test_text_metrics_has_a_specific_native_measurement_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "text_metrics"'
+    assert_includes renderer, "id: textMetricsComponent"
+    assert_includes renderer, "TextMetrics {"
+    assert_includes renderer, "advance_width: advanceWidth"
+    assert_includes renderer, "tight_bounding_rect:"
+  end
+
   def test_video_has_a_specific_native_multimedia_renderer
     renderer = source("ControlNode.qml")
 

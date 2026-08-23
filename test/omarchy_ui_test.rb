@@ -403,6 +403,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_text_metrics_is_a_typed_native_measurement_component
+    application = OmarchyUI::Application.new do
+      app { text_metrics "Measure me", font_size: 18, bold: true, elide: :right, elide_width: 100 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "text_metrics", node.fetch("type")
+    assert_equal "Measure me", node.dig("props", "text")
+    assert_equal 18, node.dig("props", "font_size")
+    assert_equal "right", node.dig("props", "elide")
+  ensure
+    application&.stop
+  end
+
   def test_video_is_a_typed_native_multimedia_component
     application = OmarchyUI::Application.new do
       app { video "intro.mp4", auto_play: true, volume: 0.7, fill_mode: :cover }

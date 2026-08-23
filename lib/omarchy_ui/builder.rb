@@ -90,6 +90,7 @@ module OmarchyUI
     def image(source, id: nil, **props) = component(:image, id:, source: source.to_s, **props)
     def vector_image(source, id: nil, **props) = component(:vector_image, id:, source: source.to_s, **props)
     def font_loader(source, id: nil, **props) = component(:font_loader, id:, source: source.to_s, **props)
+    def text_metrics(value, id: nil, **props) = component(:text_metrics, id:, text: value.to_s, **props)
     def animated_image(source, id: nil, **props) = component(:animated_image, id:, source: source.to_s, **props)
     def video(source, id: nil, **props) = component(:video, id:, source: source.to_s, **props)
     def audio(source, id: nil, **props) = component(:audio, id:, source: source.to_s, **props)
