@@ -31,7 +31,7 @@ Loader {
 
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "layout_item_proxy", "loader", "flickable", "focus_scope", "flipable", "border_image", "window", "application_window",
-    "stack", "scroll", "rectangle", "page", "pane", "frame", "group_box", "tabs", "tab_bar", "tab_button", "page_indicator", "stack_view", "swipe_view", "drawer", "navigation_rail", "breadcrumb", "pagination", "expansion_panel", "accordion", "tool_bar", "tool_separator", "menu", "menu_item", "menu_separator", "menu_bar", "context_menu", "popup", "dialog", "alert_dialog", "message_dialog", "bottom_sheet", "modal_sheet", "snackbar", "banner", "toast", "busy_indicator", "progress_ring", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
+    "stack", "scroll", "rectangle", "page", "pane", "frame", "group_box", "tabs", "tab_bar", "tab_button", "page_indicator", "stack_view", "swipe_view", "drawer", "navigation_rail", "breadcrumb", "pagination", "expansion_panel", "accordion", "tool_bar", "tool_separator", "menu", "menu_item", "menu_separator", "menu_bar", "context_menu", "popup", "dialog", "alert_dialog", "message_dialog", "bottom_sheet", "modal_sheet", "snackbar", "banner", "toast", "busy_indicator", "progress_ring", "skeleton", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
     "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dial", "spin_box", "double_spin_box", "color_picker", "date_picker", "time_picker", "file_picker", "folder_picker", "font_picker", "dialog_button_box", "action", "action_group", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
@@ -310,6 +310,7 @@ Loader {
     if (node.type === "toast") return toastComponent
     if (node.type === "busy_indicator") return busyIndicatorComponent
     if (node.type === "progress_ring") return progressRingComponent
+    if (node.type === "skeleton") return skeletonComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -810,6 +811,11 @@ Loader {
   Component {
     id: progressRingComponent
     Builtins.ProgressRing { renderer: root }
+  }
+
+  Component {
+    id: skeletonComponent
+    Builtins.Skeleton { renderer: root }
   }
 
   Component {

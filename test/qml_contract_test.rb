@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 129, renderer_names.length
+    assert_equal 130, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1367,5 +1367,23 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("label_format", "{percent}%")'
     assert_includes renderer, '"value_change", {'
     assert_includes renderer, "normalized: normalizedValue"
+  end
+
+  def test_skeleton_has_a_specific_multivariant_shimmer_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "skeleton"'
+    assert_includes renderer, "id: skeletonComponent"
+    assert_includes renderer, "id: skeletonRoot"
+    assert_includes renderer, 'root.prop("variant", "rectangle")'
+    assert_includes renderer, 'root.prop("lines", 3)'
+    assert_includes renderer, 'root.prop("line_height", 14)'
+    assert_includes renderer, 'root.prop("last_line_width", 0.68)'
+    assert_includes renderer, 'skeletonRoot.variant === "circle"'
+    assert_includes renderer, "GradientStop { position: 0.5; color: skeletonRoot.highlightColor }"
+    assert_includes renderer, 'root.prop("direction", "left_to_right")'
+    assert_includes renderer, "NumberAnimation on shimmerProgress"
+    assert_includes renderer, 'root.prop("duration", 1200)'
+    assert_includes renderer, '"animation_change", { running: shimmerRunning }'
   end
 end

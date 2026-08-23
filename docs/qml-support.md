@@ -252,6 +252,11 @@ minimum/maximum range; omitting the value selects an indeterminate rotating arc.
 and progress colors, start angle, direction, dimensions, animation, center label/format,
 accessibility, and visibility are reactive. Ruby receives normalized value and visibility changes.
 
+`skeleton(...)` renders reactive loading placeholders as rectangles, circles, or multiline text.
+Line count/height/spacing, final-line width, radius, dimensions, base/highlight colors, shimmer
+direction/speed, opacity, accessibility, and visibility are configurable. Animation and visibility
+changes are observable from Ruby.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

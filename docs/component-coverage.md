@@ -155,7 +155,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] toast
 - [x] busy_indicator
 - [x] progress_ring
-- [ ] skeleton
+- [x] skeleton
 
 ## Data and collections
 

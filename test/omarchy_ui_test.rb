@@ -2607,6 +2607,39 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_skeleton_is_a_typed_multivariant_loading_placeholder
+    application = OmarchyUI::Application.new do
+      app do
+        skeleton id: :avatar_placeholder, variant: :circle, width: 72, height: 72,
+                 animated: false
+        skeleton id: :copy_placeholder, variant: :text, width: 360,
+                 lines: 4, line_height: 16, spacing: 10,
+                 last_line_width: 0.5, direction: :right_to_left
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    nodes = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children")
+    avatar, copy = nodes
+
+    assert_equal "skeleton", avatar.fetch("type")
+    assert_equal "avatar_placeholder", avatar.fetch("id")
+    assert_equal "circle", avatar.dig("props", "variant")
+    assert_equal 72, avatar.dig("props", "width")
+    assert_equal 72, avatar.dig("props", "height")
+    assert_equal false, avatar.dig("props", "animated")
+    assert_equal "skeleton", copy.fetch("type")
+    assert_equal "text", copy.dig("props", "variant")
+    assert_equal 4, copy.dig("props", "lines")
+    assert_equal 16, copy.dig("props", "line_height")
+    assert_equal 10, copy.dig("props", "spacing")
+    assert_equal 0.5, copy.dig("props", "last_line_width")
+    assert_equal "right_to_left", copy.dig("props", "direction")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
