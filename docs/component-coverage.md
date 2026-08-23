@@ -120,7 +120,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] pane
 - [x] frame
 - [x] group_box
-- [ ] tabs
+- [x] tabs
 - [ ] tab_bar
 - [ ] tab_button
 - [ ] page_indicator

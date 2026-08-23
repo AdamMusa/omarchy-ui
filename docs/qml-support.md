@@ -99,6 +99,12 @@ container. Ruby controls its title typography/alignment, row/column/stack child 
 geometry, background, border, radius, direction, and clipping. Title changes, pointer clicks,
 visibility, and focus transitions are emitted as events.
 
+`tabs(labels, current_index: ...) { ... }` combines a native Qt Controls `TabBar` with a
+`StackLayout`; each Ruby child is one tab page. Labels may be supplied explicitly or inherited from
+each child's `title`. Selection is reactive in both directions and emits `input`, `change`, and
+`tab_click`, while bar position, sizing, colors, typography, direction, and visibility remain Ruby
+properties.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 99, renderer_names.length
+    assert_equal 100, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -826,5 +826,22 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("border_color", Color.border)'
     assert_includes renderer, "delegate: childDelegate"
     assert_includes renderer, '"title_change", { value: title }'
+  end
+
+  def test_tabs_has_a_specific_native_bar_and_stack_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "tabs"'
+    assert_includes renderer, "id: tabsComponent"
+    assert_includes renderer, "QQC.TabBar {"
+    assert_includes renderer, "QQC.TabButton {"
+    assert_includes renderer, "StackLayout {"
+    assert_includes renderer, 'root.prop("labels", [])'
+    assert_includes renderer, 'root.prop("current_index", 0)'
+    assert_includes renderer, 'root.prop("position", "top")'
+    assert_includes renderer, "delegate: layoutChildDelegate"
+    assert_includes renderer, '"tab_click", { value: index, label: text }'
+    assert_includes renderer, '"input", { value: currentIndex }'
+    assert_includes renderer, '"change", { value: currentIndex }'
   end
 end

@@ -1785,6 +1785,35 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_tabs_is_a_typed_native_navigation_container
+    application = OmarchyUI::Application.new do
+      app do
+        tabs %w[General Advanced], id: :settings_tabs, current_index: 1,
+             position: :bottom, tab_height: 48 do
+          pane { text "General page" }
+          page "Advanced" do
+            text "Advanced page"
+          end
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "tabs", node.fetch("type")
+    assert_equal "settings_tabs", node.fetch("id")
+    assert_equal %w[General Advanced], node.dig("props", "labels")
+    assert_equal 1, node.dig("props", "current_index")
+    assert_equal "bottom", node.dig("props", "position")
+    assert_equal 48, node.dig("props", "tab_height")
+    assert_equal %w[pane page], node.fetch("children").map { |child| child.fetch("type") }
+    assert_equal "Advanced", node.dig("children", 1, "props", "title")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -285,6 +285,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `pane` | native untitled content surface with row/column/stack layout, per-edge padding, dimensions, background, border, radius, direction and clipping; contains Ruby children | `click`, `show`, `hide`, `focus`, `blur` |
 | `frame` | native bordered content surface with row/column/stack layout, per-edge padding, dimensions, background, border, radius, direction and clipping; contains Ruby children | `click`, `show`, `hide`, `focus`, `blur` |
 | `group_box` | titled native bordered container with reactive typography/alignment, row/column/stack layout, per-edge padding, dimensions and styling; contains Ruby children | `click`, `show`, `hide`, `focus`, `blur`, `title_change` |
+| `tabs` | native tab bar and stacked child pages; labels or child titles, reactive selected index, top/bottom bar position, dimensions and styling | `input`, `change`, `tab_click`, `show`, `hide`, `focus`, `blur` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |
