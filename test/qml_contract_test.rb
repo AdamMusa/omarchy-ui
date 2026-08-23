@@ -205,6 +205,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "linkColor: root.prop"
   end
 
+  def test_markdown_has_a_specific_native_document_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "markdown"'
+    assert_includes renderer, "id: markdownComponent"
+    assert_includes renderer, "textFormat: Text.MarkdownText"
+    assert_includes renderer, 'baseUrl: String(root.prop("base_url", ""))'
+  end
+
   def test_selectable_text_has_a_specific_native_selection_renderer
     renderer = source("ControlNode.qml")
 

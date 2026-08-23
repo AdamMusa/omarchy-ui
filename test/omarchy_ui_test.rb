@@ -326,6 +326,21 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_markdown_is_a_dedicated_typed_document_component
+    application = OmarchyUI::Application.new do
+      app { markdown "# Omarchy UI\n\n[Guide](guide.md)", base_url: "file:///docs/" }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "markdown", node.fetch("type")
+    assert_includes node.dig("props", "text"), "# Omarchy UI"
+    assert_equal "file:///docs/", node.dig("props", "base_url")
+  ensure
+    application&.stop
+  end
+
   def test_selectable_text_is_a_typed_read_only_selection_component
     application = OmarchyUI::Application.new do
       app { selectable_text "Copy this value", selection_color: "#7aa2f7", wrap: false }
