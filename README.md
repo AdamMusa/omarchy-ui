@@ -147,6 +147,9 @@ Every component supports `visible`, `enabled`, `opacity`, `scale`, `rotation`, `
 
 ## Built-in component reference
 
+The versioned [component coverage matrix](docs/component-coverage.md) tracks the complete built-in
+catalog. Generic custom adapters are intentionally excluded from its completion count.
+
 ### Layout and display
 
 | Ruby component | Component-specific properties | Events | Container |
