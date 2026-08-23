@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 86, renderer_names.length
+    assert_equal 87, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -637,5 +637,19 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "QQC.DoubleSpinBox {"
     assert_includes renderer, 'root.prop("decimals", 2)'
     assert_includes renderer, 'Number(value).toLocaleString(locale, "f", decimals)'
+  end
+
+  def test_color_picker_has_a_specific_native_dialog_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "color_picker"'
+    assert_includes renderer, "id: colorPickerComponent"
+    assert_includes renderer, "ColorDialog {"
+    assert_includes renderer, 'selectedColor: root.prop("color", "#ffffff")'
+    assert_includes renderer, "ColorDialog.ShowAlphaChannel"
+    assert_includes renderer, '"input", {'
+    assert_includes renderer, '"change", { value: value }'
+    assert_includes renderer, '"accept", { value: value }'
+    assert_includes renderer, '"reject", {'
   end
 end

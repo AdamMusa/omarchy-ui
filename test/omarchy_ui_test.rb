@@ -1474,6 +1474,28 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_color_picker_is_a_typed_native_color_input
+    application = OmarchyUI::Application.new do
+      app do
+        color_picker "#336699", label: "Accent", title: "Choose accent",
+                     show_alpha: true, opened: false
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "color_picker", node.fetch("type")
+    assert_equal "#336699", node.dig("props", "color")
+    assert_equal "Accent", node.dig("props", "label")
+    assert_equal "Choose accent", node.dig("props", "title")
+    assert_equal true, node.dig("props", "show_alpha")
+    assert_equal false, node.dig("props", "opened")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

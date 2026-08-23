@@ -16,6 +16,7 @@ module OmarchyUI
       dial: :value,
       spin_box: :value,
       double_spin_box: :value,
+      color_picker: :color,
       dropdown: :value,
       multi_select: :values,
       button_group: :value,

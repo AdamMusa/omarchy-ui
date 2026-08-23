@@ -30,6 +30,13 @@ visibility, move, and resize changes are delivered as Ruby events.
 windows that need the Controls content/background model, inherited font and layout direction,
 and active-focus-control reporting in addition to the native window lifecycle.
 
+## Native dialogs
+
+`color_picker(color, ...)` opens Qt's native `ColorDialog` from a styled Ruby-controlled button.
+Its color, label, title, opened state, alpha-channel mode, button mode, native-dialog preference,
+dimensions, and visual styling remain reactive. Preview changes emit `input`; completion and
+lifecycle changes emit `change`, `accept`, `reject`, `open`, and `close`.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
