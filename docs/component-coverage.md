@@ -159,7 +159,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 
 ## Data and collections
 
-- [ ] item_delegate
+- [x] item_delegate
 - [ ] check_delegate
 - [ ] radio_delegate
 - [ ] switch_delegate

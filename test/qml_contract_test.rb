@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 130, renderer_names.length
+    assert_equal 131, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1385,5 +1385,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "NumberAnimation on shimmerProgress"
     assert_includes renderer, 'root.prop("duration", 1200)'
     assert_includes renderer, '"animation_change", { running: shimmerRunning }'
+  end
+
+  def test_item_delegate_has_a_specific_native_collection_row_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "item_delegate"'
+    assert_includes renderer, "id: itemDelegateComponent"
+    assert_includes renderer, "QQC.ItemDelegate {"
+    assert_includes renderer, 'root.prop("description", "")'
+    assert_includes renderer, 'root.prop("icon_source", "")'
+    assert_includes renderer, 'root.prop("trailing_text", "")'
+    assert_includes renderer, 'root.prop("show_indicator", false)'
+    assert_includes renderer, 'root.prop("selected", false)'
+    assert_includes renderer, 'root.prop("checkable", false)'
+    assert_includes renderer, 'root.prop("checked", false)'
+    assert_includes renderer, 'root.prop("value", text)'
+    assert_includes renderer, '"click", payload'
+    assert_includes renderer, '"activate", payload'
+    assert_includes renderer, '"toggle", payload'
+    assert_includes renderer, '"change", payload'
   end
 end

@@ -2640,6 +2640,35 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_item_delegate_is_a_typed_native_collection_row
+    application = OmarchyUI::Application.new do
+      app do
+        item_delegate "Downloads", id: :downloads_item, value: :downloads,
+                      description: "12 files", icon: :download,
+                      trailing_text: "2.4 GB", selected: true,
+                      checkable: true, checked: true, show_indicator: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "item_delegate", node.fetch("type")
+    assert_equal "downloads_item", node.fetch("id")
+    assert_equal "Downloads", node.dig("props", "text")
+    assert_equal "downloads", node.dig("props", "value")
+    assert_equal "12 files", node.dig("props", "description")
+    assert_equal "download", node.dig("props", "icon")
+    assert_equal "2.4 GB", node.dig("props", "trailing_text")
+    assert_equal true, node.dig("props", "selected")
+    assert_equal true, node.dig("props", "checkable")
+    assert_equal true, node.dig("props", "checked")
+    assert_equal true, node.dig("props", "show_indicator")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -257,6 +257,12 @@ Line count/height/spacing, final-line width, radius, dimensions, base/highlight 
 direction/speed, opacity, accessibility, and visibility are configurable. Animation and visibility
 changes are observable from Ruby.
 
+`item_delegate(text, value: ...) { |event| ... }` maps to Qt Quick Controls’ native item delegate.
+It supports leading icons/images, primary and secondary text, trailing text or disclosure indicator,
+selection/highlight styling, checkable state, responsive sizing, accessibility, and keyboard/pointer
+activation. Ruby receives value-bearing activation, toggle/change, press/release, hover, focus, and
+visibility events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
