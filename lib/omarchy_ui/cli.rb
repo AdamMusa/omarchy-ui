@@ -55,10 +55,11 @@ module OmarchyUI
       Dir.mktmpdir("omarchy-ui-app-") do |runtime_dir|
         runtime_program = File.join(runtime_dir, "main.rb")
         File.write(runtime_program, SourceBundle.new(file, root: project_dir).call)
-        Project::RUNTIME_FILES.each do |name|
+        Runtime::FILES.each do |name|
           source = File.file?(File.join(project_dir, name)) ? File.join(project_dir, name) : File.join(FRAMEWORK_ROOT, name)
           FileUtils.cp(source, runtime_dir)
         end
+        Runtime.install_components(runtime_dir)
         %w[Commons Ui].each do |module_name|
           source = File.join("/usr/share/omarchy/shell", module_name)
           raise ArgumentError, "Omarchy QML module not found: #{source}" unless File.directory?(source)
@@ -80,7 +81,7 @@ module OmarchyUI
       name = arguments.shift || raise(ArgumentError, "new requires a project name")
       raise ArgumentError, "new accepts only an application name" unless arguments.empty?
       destination = File.expand_path(slug(name))
-      Project.new(path: destination, name: name).create
+      Generator.new(path: destination, name: name).create
       @out.puts("Created standalone Omarchy UI app in #{destination}")
       0
     end
@@ -108,7 +109,7 @@ module OmarchyUI
       entries = application_entries(source)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, destination)
       bundle_ruby_entrypoint(source, destination)
-      Project.install_runtime(destination)
+      Runtime.install_package(destination)
       if File.file?(File.join(destination, "manifest.json"))
         raise ArgumentError, "bundled plugin validation failed" unless system("omarchy", "plugin", "validate", destination)
         @out.puts("Bundled plugin in #{destination}")
@@ -142,7 +143,7 @@ module OmarchyUI
     end
 
     def application_entries(source)
-      generated = Project::RUNTIME_FILES + Project::RUNTIME_AUDIT_FILES + %w[omarchy-ui-runtime run Commons Ui]
+      generated = Runtime::FILES + Runtime::AUDIT_FILES + %w[omarchy-ui-runtime run Commons Ui]
       Dir.children(source).reject { |entry| %w[.git dist].include?(entry) || generated.include?(entry) }
     end
 
@@ -199,7 +200,7 @@ module OmarchyUI
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging) unless entries.empty?
       if File.file?(File.join(staging, "main.rb"))
         bundle_ruby_entrypoint(source, staging)
-        Project.install_runtime(staging)
+        Runtime.install_package(staging)
       end
       staging
     rescue StandardError

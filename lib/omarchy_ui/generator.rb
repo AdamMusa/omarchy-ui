@@ -3,14 +3,10 @@
 require "fileutils"
 
 module OmarchyUI
-  class Project
-    RUNTIME_FILES = %w[Service.qml ControlNode.qml Panel.qml BarWidget.qml App.qml].freeze
-    RUNTIME_AUDIT_FILES = %w[omarchy-ui-runtime.sha256 RUNTIME_PROVENANCE.md].freeze
-
-    def initialize(path:, name: nil, framework_root: FRAMEWORK_ROOT)
+  class Generator
+    def initialize(path:, name: nil)
       @path = File.expand_path(path)
       @name = name || File.basename(@path).split(/[-_]/).map(&:capitalize).join(" ")
-      @framework_root = framework_root
     end
 
     def create
@@ -26,24 +22,6 @@ module OmarchyUI
       raise
     end
 
-    def self.install_runtime(path, framework_root: FRAMEWORK_ROOT)
-      RUNTIME_FILES.each do |file|
-        destination = File.join(path, file)
-        FileUtils.cp(File.join(framework_root, file), destination)
-      end
-      bundled_runtime = File.join(framework_root, "vendor", "runtime", "x86_64-linux", "omarchy-ui-runtime")
-      if File.file?(bundled_runtime)
-        destination = File.join(path, "omarchy-ui-runtime")
-        FileUtils.cp(bundled_runtime, destination)
-        FileUtils.chmod(0o755, destination)
-      end
-      RUNTIME_AUDIT_FILES.each do |file|
-        source = File.join(framework_root, "vendor", "runtime", "x86_64-linux", file)
-        FileUtils.cp(source, File.join(path, file)) if File.file?(source)
-      end
-      FileUtils.mkdir_p(File.join(path, "Components"))
-    end
-
     private
 
     def main_program
@@ -53,7 +31,7 @@ module OmarchyUI
         require "omarchy_ui"
         require_relative "components/welcome"
 
-        OmarchyUI.plugin do
+        OmarchyUI.app do
           app :main, title: "#{@name}", width: 760, height: 520 do
             welcome_card(
               title: "Welcome to #{@name}",
@@ -87,7 +65,7 @@ module OmarchyUI
       <<~MARKDOWN
         # #{@name}
 
-        A standalone application built with the official Omarchy UI framework.
+        A standalone application built with Omarchy UI.
 
         ## Run
 
@@ -95,13 +73,8 @@ module OmarchyUI
         omarchy_ui launch main.rb
         ```
 
-        The shared `omarchy-ui-runtime` must be installed on `PATH`. No system Ruby,
-        application manifest, or copied framework QML files are required.
-
-        Edit `main.rb` for application state and behavior. Reusable Ruby UI components live in
-        `components/` and load with ordinary Ruby `require_relative`; `welcome.rb` is included as a
-        working example. `omarchy_ui bundle` generates
-        the native QML bridge and embeds the runtime for distribution.
+        Reusable Ruby UI components live in `components/` and load with ordinary Ruby
+        `require_relative`. Run `omarchy_ui bundle` to create a self-contained distribution.
       MARKDOWN
     end
   end

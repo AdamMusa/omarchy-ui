@@ -188,6 +188,7 @@ class CLITest < Minitest::Test
         assert_equal 0, status
         assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
         assert_equal File.read(File.join(ROOT, "ControlNode.qml")), File.read(File.join(bundle, "ControlNode.qml"))
+        assert_equal File.read(File.join(ROOT, "Components", "Builtins", "Button.qml")), File.read(File.join(bundle, "Components", "Builtins", "Button.qml"))
         refute File.exist?(File.join(bundle, "run"))
         refute File.exist?(File.join(bundle, "Commons"))
       end

@@ -392,7 +392,7 @@ on(chart, :point_hover) { |event| state.hovered = event.fetch("index") }
 Place adapter files under `Components/`. Declared properties are assigned to the QML root and
 declared signals are forwarded to Ruby. A container adapter can expose an `Item` property named
 `contentHost`; framework children are parented into it automatically. See
-[the QML support matrix](docs/qml-support.md) and [Sparkline.qml](Components/Sparkline.qml).
+[the QML support matrix](docs/qml-support.md) for the adapter contract and supported APIs.
 
 ## Safety
 

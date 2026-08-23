@@ -6,7 +6,35 @@ class QmlContractTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
 
   def source(name)
-    File.read(File.join(ROOT, name))
+    contents = File.read(File.join(ROOT, name))
+    return contents unless name == "ControlNode.qml"
+
+    extracted = Dir[File.join(ROOT, "Components", "Builtins", "*.qml")].sort.map do |path|
+      File.read(path)
+        .gsub(/\brenderer\./, "root.")
+        .gsub("root.childDelegateComponent", "childDelegate")
+        .gsub("root.rowChildDelegateComponent", "rowChildDelegate")
+        .gsub("root.columnChildDelegateComponent", "columnChildDelegate")
+        .gsub("root.layoutChildDelegateComponent", "layoutChildDelegate")
+        .gsub("root.splitChildDelegateComponent", "splitChildDelegate")
+        .gsub('../../ControlNode.qml', 'ControlNode.qml')
+    end
+    ([contents] + extracted).join("\n")
+  end
+
+  def test_each_builtin_renderer_lives_in_its_own_qml_file
+    router = File.read(File.join(ROOT, "ControlNode.qml"))
+    renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
+
+    assert_equal 83, renderer_names.length
+    assert_equal renderer_names.uniq.sort, renderer_names.sort
+    renderer_names.each do |name|
+      path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
+      assert File.file?(path), "missing #{path}"
+      assert_includes File.read(path), "required property var renderer"
+    end
+    refute_includes router, "QQC.Button {"
+    refute_includes router, "OmarchyUi.WidgetButton {"
   end
 
   def test_service_uses_one_tracked_bidirectional_process_without_a_shell

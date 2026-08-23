@@ -1,5 +1,10 @@
 # QML component adapters
 
+`Builtins/` contains the framework-owned renderer for each Ruby component. Every built-in
+widget has one file—for example, `Builtins/Button.qml`, `Builtins/Icon.qml`, and
+`Builtins/Text.qml`. `ControlNode.qml` only selects a renderer and provides shared lifecycle,
+event, animation, and recursive-child infrastructure.
+
 Applications can extend the framework without modifying `ControlNode.qml` or `Service.qml`.
 Register an adapter before declaring surfaces:
 

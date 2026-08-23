@@ -5,6 +5,7 @@ import QtMultimedia
 import QtQuick.VectorImage
 import qs.Commons
 import qs.Ui as OmarchyUi
+import "Components/Builtins" as Builtins
 
 Loader {
   id: root
@@ -14,6 +15,14 @@ Loader {
   property string controlId: ""
   property color foreground: Color.foreground
   property string fontFamily: Style.font.family
+
+  // Shared recursive delegates are framework infrastructure. Individual built-in
+  // renderers consume these without duplicating ControlNode's lifecycle wiring.
+  readonly property Component childDelegateComponent: childDelegate
+  readonly property Component rowChildDelegateComponent: rowChildDelegate
+  readonly property Component columnChildDelegateComponent: columnChildDelegate
+  readonly property Component layoutChildDelegateComponent: layoutChildDelegate
+  readonly property Component splitChildDelegateComponent: splitChildDelegate
 
   readonly property var node: {
     var currentRevision = bridge ? bridge.revision : 0
@@ -341,1145 +350,242 @@ Loader {
   }
   Component {
     id: textComponent
-
-    Text {
-      text: String(root.prop("text", ""))
-      textFormat: Text.PlainText
-      color: root.prop("color", root.foreground)
-      font.family: root.fontFamily
-      font.pixelSize: {
-        var style = String(root.prop("style", "body"))
-        if (style === "heading") return Style.font.heading
-        if (style === "caption") return Style.font.caption
-        return Number(root.prop("size", Style.font.body))
-      }
-      font.bold: root.prop("bold", false) || String(root.prop("style", "body")) === "heading"
-      wrapMode: root.prop("wrap", true) ? Text.Wrap : Text.NoWrap
-      width: Number(root.prop("width", implicitWidth))
-    }
+    Builtins.Text { renderer: root }
   }
 
   Component {
     id: labelComponent
-    QQC.Label {
-      text: String(root.prop("text", ""))
-      color: root.prop("color", root.foreground)
-      font.family: root.fontFamily
-      font.pixelSize: Number(root.prop("size", Style.font.body))
-      font.bold: root.prop("bold", false) === true
-      implicitWidth: root.prop("width", null) === null ? contentWidth : Number(root.prop("width", contentWidth))
-      wrapMode: root.prop("wrap", false) === true ? Text.Wrap : Text.NoWrap
-      elide: {
-        var mode = String(root.prop("elide", "none"))
-        if (mode === "left") return Text.ElideLeft
-        if (mode === "middle") return Text.ElideMiddle
-        if (mode === "right") return Text.ElideRight
-        return Text.ElideNone
-      }
-      horizontalAlignment: {
-        var alignment = String(root.prop("horizontal_alignment", "left"))
-        if (alignment === "center") return Text.AlignHCenter
-        if (alignment === "right") return Text.AlignRight
-        if (alignment === "justify") return Text.AlignJustify
-        return Text.AlignLeft
-      }
-      verticalAlignment: String(root.prop("vertical_alignment", "center")) === "top" ? Text.AlignTop
-        : (String(root.prop("vertical_alignment", "center")) === "bottom" ? Text.AlignBottom : Text.AlignVCenter)
-      maximumLineCount: Number(root.prop("maximum_lines", 2147483647))
-      textFormat: {
-        var format = String(root.prop("format", "plain"))
-        if (format === "rich") return Text.RichText
-        if (format === "markdown") return Text.MarkdownText
-        if (format === "styled") return Text.StyledText
-        return Text.PlainText
-      }
-      onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
-    }
+    Builtins.Label { renderer: root }
   }
 
   Component {
     id: richTextComponent
-    Text {
-      text: String(root.prop("text", ""))
-      textFormat: Text.RichText
-      color: root.prop("color", root.foreground)
-      linkColor: root.prop("link_color", Color.accent)
-      font.family: root.fontFamily
-      font.pixelSize: Number(root.prop("size", Style.font.body))
-      font.bold: root.prop("bold", false) === true
-      implicitWidth: root.prop("width", null) === null ? contentWidth : Number(root.prop("width", contentWidth))
-      wrapMode: root.prop("wrap", true) !== false ? Text.Wrap : Text.NoWrap
-      maximumLineCount: Number(root.prop("maximum_lines", 2147483647))
-      onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
-      HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor }
-    }
+    Builtins.RichText { renderer: root }
   }
 
   Component {
     id: markdownComponent
-    Text {
-      text: String(root.prop("text", ""))
-      textFormat: Text.MarkdownText
-      baseUrl: String(root.prop("base_url", ""))
-      color: root.prop("color", root.foreground)
-      linkColor: root.prop("link_color", Color.accent)
-      font.family: root.fontFamily
-      font.pixelSize: Number(root.prop("size", Style.font.body))
-      implicitWidth: root.prop("width", null) === null ? contentWidth : Number(root.prop("width", contentWidth))
-      wrapMode: root.prop("wrap", true) !== false ? Text.Wrap : Text.NoWrap
-      maximumLineCount: Number(root.prop("maximum_lines", 2147483647))
-      onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
-      HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor }
-    }
+    Builtins.Markdown { renderer: root }
   }
 
   Component {
     id: selectableTextComponent
-    TextEdit {
-      text: String(root.prop("text", ""))
-      readOnly: true
-      selectByMouse: true
-      persistentSelection: true
-      color: root.prop("color", root.foreground)
-      selectionColor: root.prop("selection_color", Color.accent)
-      selectedTextColor: root.prop("selected_text_color", Color.background)
-      font.family: root.fontFamily
-      font.pixelSize: Number(root.prop("size", Style.font.body))
-      font.bold: root.prop("bold", false) === true
-      implicitWidth: root.prop("width", null) === null ? contentWidth : Number(root.prop("width", contentWidth))
-      wrapMode: root.prop("wrap", true) !== false ? TextEdit.Wrap : TextEdit.NoWrap
-      textFormat: {
-        var format = String(root.prop("format", "plain"))
-        if (format === "rich") return TextEdit.RichText
-        if (format === "markdown") return TextEdit.MarkdownText
-        return TextEdit.PlainText
-      }
-      onSelectionChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "selection", {
-        start: selectionStart, end: selectionEnd, text: selectedText
-      })
-      onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
-    }
+    Builtins.SelectableText { renderer: root }
   }
 
   Component {
     id: iconComponent
-
-    Text {
-      text: root.iconGlyph(root.prop("name", root.prop("text", "")))
-      textFormat: Text.PlainText
-      color: root.prop("color", root.foreground)
-      font.family: root.fontFamily
-      font.pixelSize: Number(root.prop("size", Style.font.icon))
-    }
+    Builtins.Icon { renderer: root }
   }
 
   Component {
     id: tooltipComponent
-    OmarchyUi.PanelToolTip {
-      text: root.escapeAutoText(root.prop("text", ""))
-      visible: root.prop("visible", false) === true
-      delay: Number(root.prop("delay", 400))
-      timeout: Number(root.prop("timeout", -1))
-      panelForeground: root.prop("foreground", Color.tooltip.text)
-      panelBackground: root.prop("background", Color.tooltip.background)
-      panelBorder: root.prop("border", Color.tooltip.border)
-      fontFamily: String(root.prop("font_family", root.fontFamily))
-      fontSize: Number(root.prop("font_size", Style.font.bodySmall))
-    }
+    Builtins.Tooltip { renderer: root }
   }
 
   Component {
     id: buttonComponent
-
-    OmarchyUi.Button {
-      text: root.escapeAutoText(root.prop("text", ""))
-      iconText: root.iconGlyph(root.prop("icon", ""))
-      tooltipText: root.escapeAutoText(root.prop("tooltip", ""))
-      selected: root.prop("selected", false) === true
-      active: root.prop("active", false) === true
-      hasCursor: root.prop("cursor", false) === true
-      focusable: root.prop("focusable", true) !== false
-      bordered: root.prop("bordered", true) !== false
-      foreground: root.prop("foreground", root.foreground)
-      background: root.prop("background", "transparent")
-      accent: root.prop("accent", Color.accent)
-      fontFamily: String(root.prop("font_family", root.fontFamily))
-      fontSize: Number(root.prop("font_size", Style.font.body))
-      iconSize: Number(root.prop("icon_size", Style.font.icon))
-      iconRotation: Number(root.prop("icon_rotation", 0))
-      iconSpinning: root.prop("icon_spinning", false) === true
-      horizontalPadding: Number(root.prop("horizontal_padding", Style.spacing.controlPaddingX))
-      verticalPadding: Number(root.prop("vertical_padding", Style.spacing.controlPaddingY))
-      leftAlign: root.prop("left_align", false) === true
-      tooltipBackground: root.prop("tooltip_background", Color.tooltip.background)
-      tooltipForeground: root.prop("tooltip_foreground", Color.tooltip.text)
-      tooltipBorder: root.prop("tooltip_border", Color.tooltip.border)
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
-      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.Button { renderer: root }
   }
 
   Component {
     id: roundButtonComponent
-    QQC.RoundButton {
-      id: nativeRoundButton
-      text: String(root.prop("text", ""))
-      checkable: root.prop("checkable", false) === true
-      checked: root.prop("checked", false) === true
-      enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("diameter", 44))
-      implicitHeight: implicitWidth
-      background: Rectangle {
-        radius: width / 2
-        color: nativeRoundButton.checked
-          ? root.prop("checked_background", root.prop("accent", Color.accent))
-          : root.prop("background", Color.popups.background)
-        border.width: Style.normalBorderWidth
-        border.color: nativeRoundButton.activeFocus ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
-        opacity: nativeRoundButton.down ? 0.75 : (nativeRoundButton.hovered ? 0.9 : 1)
-      }
-      contentItem: Text {
-        text: String(root.prop("icon", "")).length > 0 ? root.iconGlyph(root.prop("icon", "")) : nativeRoundButton.text
-        textFormat: Text.PlainText
-        color: nativeRoundButton.checked ? Color.background : root.prop("foreground", root.foreground)
-        font.family: String(root.prop("font_family", root.fontFamily))
-        font.pixelSize: Number(String(root.prop("icon", "")).length > 0 ? root.prop("icon_size", Style.font.icon) : root.prop("font_size", Style.font.body))
-        font.bold: true
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-      }
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { checked: checked })
-      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked })
-      onPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "press", {})
-      onReleased: root.bridge.sendEvent(root.surfaceName, root.controlId, "release", {})
-      onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
-    }
+    Builtins.RoundButton { renderer: root }
   }
 
   Component {
     id: toolButtonComponent
-    QQC.ToolButton {
-      id: nativeToolButton
-      text: String(root.prop("text", ""))
-      checkable: root.prop("checkable", false) === true
-      checked: root.prop("checked", false) === true
-      enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 40))
-      implicitHeight: Number(root.prop("height", 36))
-      background: Rectangle {
-        radius: Style.cornerRadius
-        color: nativeToolButton.checked
-          ? root.prop("checked_background", root.prop("accent", Color.accent))
-          : root.prop("background", nativeToolButton.hovered ? Color.popups.background : "transparent")
-        border.width: nativeToolButton.activeFocus ? Style.normalBorderWidth : 0
-        border.color: root.prop("accent", Color.accent)
-        opacity: nativeToolButton.down ? 0.72 : 1
-      }
-      contentItem: Text {
-        text: String(root.prop("icon", "")).length > 0 ? root.iconGlyph(root.prop("icon", "")) : nativeToolButton.text
-        textFormat: Text.PlainText
-        color: nativeToolButton.checked ? Color.background : root.prop("foreground", root.foreground)
-        font.family: String(root.prop("font_family", root.fontFamily))
-        font.pixelSize: Number(String(root.prop("icon", "")).length > 0 ? root.prop("icon_size", Style.font.icon) : root.prop("font_size", Style.font.body))
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-      }
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { checked: checked })
-      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked })
-      onPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "press", {})
-      onReleased: root.bridge.sendEvent(root.surfaceName, root.controlId, "release", {})
-      onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
-    }
+    Builtins.ToolButton { renderer: root }
   }
 
   Component {
     id: delayButtonComponent
-    QQC.DelayButton {
-      id: nativeDelayButton
-      text: String(root.prop("text", ""))
-      delay: Number(root.prop("delay", 1000))
-      enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 140))
-      implicitHeight: Number(root.prop("height", 40))
-      background: Rectangle {
-        radius: Style.cornerRadius
-        color: root.prop("background", Color.popups.background)
-        border.width: Style.normalBorderWidth
-        border.color: nativeDelayButton.activeFocus ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
-        Rectangle {
-          width: parent.width * nativeDelayButton.progress
-          height: parent.height
-          radius: parent.radius
-          color: root.prop("progress_background", root.prop("accent", Color.accent))
-          opacity: 0.45
-        }
-      }
-      contentItem: Text {
-        text: nativeDelayButton.text
-        textFormat: Text.PlainText
-        color: root.prop("foreground", root.foreground)
-        font.family: String(root.prop("font_family", root.fontFamily))
-        font.pixelSize: Number(root.prop("font_size", Style.font.body))
-        font.bold: true
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-      }
-      onActivated: root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", {})
-      onProgressChanged: {
-        if (root.subscribed("progress")) root.bridge.sendEvent(root.surfaceName, root.controlId, "progress", { value: progress })
-      }
-      onPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "press", {})
-      onReleased: root.bridge.sendEvent(root.surfaceName, root.controlId, "release", {})
-      onCanceled: root.bridge.sendEvent(root.surfaceName, root.controlId, "cancel", {})
-    }
+    Builtins.DelayButton { renderer: root }
   }
 
   Component {
     id: rowComponent
-
-    Row {
-      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
-
-      Repeater {
-        model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-        delegate: rowChildDelegate
-      }
-    }
+    Builtins.Row { renderer: root }
   }
 
   Component {
     id: columnComponent
-
-    Column {
-      spacing: Number(root.prop("spacing", Style.spacing.panelGap))
-
-      Repeater {
-        model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-        delegate: columnChildDelegate
-      }
-    }
+    Builtins.Column { renderer: root }
   }
 
   Component {
     id: containerComponent
-
-    OmarchyUi.BorderSurface {
-      readonly property int innerPadding: Number(root.prop("padding", 0))
-      implicitWidth: content.implicitWidth + innerPadding * 2
-      implicitHeight: content.implicitHeight + innerPadding * 2
-      color: "transparent"
-      borderSpec: root.prop("bordered", false)
-        ? Border.controlSpec("normal", root.foreground, Color.accent)
-        : Border.none()
-      radius: Style.cornerRadius
-
-      Column {
-        id: content
-        anchors.centerIn: parent
-        spacing: Number(root.prop("spacing", Style.spacing.panelGap))
-
-        Repeater {
-          model: root.node && Array.isArray(root.node.children) ? root.node.children : []
-          delegate: childDelegate
-        }
-      }
-    }
+    Builtins.Container { renderer: root }
   }
 
   Component {
     id: imageComponent
-
-    Image {
-      source: String(root.prop("source", ""))
-      width: Number(root.prop("width", 120))
-      height: Number(root.prop("height", 120))
-      asynchronous: true
-      fillMode: Image.PreserveAspectFit
-    }
+    Builtins.Image { renderer: root }
   }
 
   Component {
     id: vectorImageComponent
-    VectorImage {
-      source: String(root.prop("source", ""))
-      implicitWidth: Number(root.prop("width", 120))
-      implicitHeight: Number(root.prop("height", 120))
-      fillMode: {
-        var mode = String(root.prop("fill_mode", "contain"))
-        if (mode === "cover") return VectorImage.PreserveAspectCrop
-        if (mode === "stretch") return VectorImage.Stretch
-        if (mode === "none") return VectorImage.NoResize
-        return VectorImage.PreserveAspectFit
-      }
-      preferredRendererType: String(root.prop("renderer", "geometry")) === "curve"
-        ? VectorImage.CurveRenderer : VectorImage.GeometryRenderer
-      assumeTrustedSource: root.prop("trusted", false) === true
-      asynchronousShapes: root.prop("asynchronous_shapes", false) === true
-      animations.loops: Number(root.prop("animation_loops", 1))
-      animations.paused: root.prop("animation_paused", false) === true
-      onSourceChanged: {
-        if (root.subscribed("source_change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "source_change", { value: source })
-      }
-    }
+    Builtins.VectorImage { renderer: root }
   }
 
   Component {
     id: fontLoaderComponent
-    Item {
-      implicitWidth: 0
-      implicitHeight: 0
-      FontLoader {
-        source: String(root.prop("source", ""))
-        onStatusChanged: {
-          if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status, name: name })
-          if (status === FontLoader.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { name: name })
-          if (status === FontLoader.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
-        }
-      }
-    }
+    Builtins.FontLoader { renderer: root }
   }
 
   Component {
     id: textMetricsComponent
-    Item {
-      implicitWidth: 0
-      implicitHeight: 0
-      TextMetrics {
-        id: nativeTextMetrics
-        text: String(root.prop("text", ""))
-        font.family: String(root.prop("font_family", root.fontFamily))
-        font.pixelSize: Number(root.prop("font_size", Style.font.body))
-        font.bold: root.prop("bold", false) === true
-        font.italic: root.prop("italic", false) === true
-        font.letterSpacing: Number(root.prop("letter_spacing", 0))
-        font.wordSpacing: Number(root.prop("word_spacing", 0))
-        elide: {
-          var mode = String(root.prop("elide", "none"))
-          if (mode === "left") return Text.ElideLeft
-          if (mode === "middle") return Text.ElideMiddle
-          if (mode === "right") return Text.ElideRight
-          return Text.ElideNone
-        }
-        elideWidth: Number(root.prop("elide_width", 0))
-        onMetricsChanged: {
-          if (!root.subscribed("metrics")) return
-          root.bridge.sendEvent(root.surfaceName, root.controlId, "metrics", {
-            width: width, height: height, advance_width: advanceWidth, elided_text: elidedText,
-            bounding_rect: { x: boundingRect.x, y: boundingRect.y, width: boundingRect.width, height: boundingRect.height },
-            tight_bounding_rect: { x: tightBoundingRect.x, y: tightBoundingRect.y, width: tightBoundingRect.width, height: tightBoundingRect.height }
-          })
-        }
-      }
-    }
+    Builtins.TextMetrics { renderer: root }
   }
 
   Component {
     id: animatedImageComponent
-    AnimatedImage {
-      source: String(root.prop("source", ""))
-      implicitWidth: Number(root.prop("width", sourceSize.width > 0 ? sourceSize.width : 120))
-      implicitHeight: Number(root.prop("height", sourceSize.height > 0 ? sourceSize.height : 120))
-      fillMode: {
-        var mode = String(root.prop("fill_mode", "contain"))
-        if (mode === "cover") return Image.PreserveAspectCrop
-        if (mode === "stretch") return Image.Stretch
-        if (mode === "tile") return Image.Tile
-        if (mode === "tile_horizontal") return Image.TileHorizontally
-        if (mode === "tile_vertical") return Image.TileVertically
-        if (mode === "pad") return Image.Pad
-        return Image.PreserveAspectFit
-      }
-      playing: root.prop("playing", true) !== false
-      paused: root.prop("paused", false) === true
-      speed: Number(root.prop("speed", 1))
-      asynchronous: root.prop("asynchronous", true) !== false
-      cache: root.prop("cache", true) !== false
-      mirror: root.prop("mirror", false) === true
-      smooth: root.prop("smooth", true) !== false
-      onCurrentFrameChanged: {
-        if (root.subscribed("frame")) root.bridge.sendEvent(root.surfaceName, root.controlId, "frame", { value: currentFrame, count: frameCount })
-      }
-      onStatusChanged: {
-        if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
-        if (status === AnimatedImage.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height, frames: frameCount })
-        if (status === AnimatedImage.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
-      }
-    }
+    Builtins.AnimatedImage { renderer: root }
   }
 
   Component {
     id: videoComponent
-    Video {
-      source: String(root.prop("source", ""))
-      implicitWidth: Number(root.prop("width", 640))
-      implicitHeight: Number(root.prop("height", 360))
-      autoPlay: root.prop("auto_play", false) === true
-      loops: Number(root.prop("loops", 1))
-      volume: Math.max(0, Math.min(1, Number(root.prop("volume", 1))))
-      muted: root.prop("muted", false) === true
-      playbackRate: Number(root.prop("playback_rate", 1))
-      orientation: Number(root.prop("orientation", 0))
-      mirrored: root.prop("mirrored", false) === true
-      fillMode: {
-        var mode = String(root.prop("fill_mode", "contain"))
-        if (mode === "cover") return VideoOutput.PreserveAspectCrop
-        if (mode === "stretch") return VideoOutput.Stretch
-        return VideoOutput.PreserveAspectFit
-      }
-      onPlaying: root.bridge.sendEvent(root.surfaceName, root.controlId, "play", {})
-      onPaused: root.bridge.sendEvent(root.surfaceName, root.controlId, "pause", {})
-      onStopped: root.bridge.sendEvent(root.surfaceName, root.controlId, "stop", {})
-      onErrorOccurred: function(error, message) {
-        root.bridge.sendEvent(root.surfaceName, root.controlId, "error", { code: error, message: message })
-      }
-      onPositionChanged: {
-        if (root.subscribed("position")) root.bridge.sendEvent(root.surfaceName, root.controlId, "position", { value: position, duration: duration })
-      }
-      onDurationChanged: {
-        if (root.subscribed("duration")) root.bridge.sendEvent(root.surfaceName, root.controlId, "duration", { value: duration })
-      }
-    }
+    Builtins.Video { renderer: root }
   }
 
   Component {
     id: audioComponent
-    Item {
-      id: audioRoot
-      implicitWidth: 0
-      implicitHeight: 0
-      function syncPlayback() {
-        var requested = String(root.prop("playback", ""))
-        if (requested === "play") audioPlayer.play()
-        else if (requested === "pause") audioPlayer.pause()
-        else if (requested === "stop") audioPlayer.stop()
-      }
-      MediaPlayer {
-        id: audioPlayer
-        source: String(root.prop("source", ""))
-        autoPlay: root.prop("auto_play", false) === true
-        loops: Number(root.prop("loops", 1))
-        playbackRate: Number(root.prop("playback_rate", 1))
-        audioOutput: AudioOutput {
-          volume: Math.max(0, Math.min(1, Number(root.prop("volume", 1))))
-          muted: root.prop("muted", false) === true
-        }
-        onPlaybackStateChanged: function(playbackState) {
-          var eventName = playbackState === MediaPlayer.PlayingState ? "play"
-            : (playbackState === MediaPlayer.PausedState ? "pause" : "stop")
-          root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, {})
-        }
-        onErrorOccurred: function(error, message) {
-          root.bridge.sendEvent(root.surfaceName, root.controlId, "error", { code: error, message: message })
-        }
-        onPositionChanged: {
-          if (root.subscribed("position")) root.bridge.sendEvent(root.surfaceName, root.controlId, "position", { value: position, duration: duration })
-        }
-        onDurationChanged: {
-          if (root.subscribed("duration")) root.bridge.sendEvent(root.surfaceName, root.controlId, "duration", { value: duration })
-        }
-      }
-      Component.onCompleted: syncPlayback()
-      Connections { target: root; function onNodeChanged() { audioRoot.syncPlayback() } }
-    }
+    Builtins.Audio { renderer: root }
   }
 
   Component {
     id: avatarComponent
-    Rectangle {
-      id: avatarRoot
-      implicitWidth: Number(root.prop("size", 48))
-      implicitHeight: implicitWidth
-      radius: Number(root.prop("radius", width / 2))
-      color: root.prop("background", Color.accent)
-      clip: true
-      readonly property string avatarSource: String(root.prop("source", ""))
-      readonly property string displayName: String(root.prop("name", ""))
-      Text {
-        anchors.centerIn: parent
-        visible: avatarImage.status !== Image.Ready
-        text: {
-          var words = avatarRoot.displayName.trim().split(/\s+/)
-          if (words.length === 0 || words[0].length === 0) return "?"
-          return (words[0].charAt(0) + (words.length > 1 ? words[words.length - 1].charAt(0) : "")).toUpperCase()
-        }
-        color: root.prop("foreground", Color.background)
-        font.family: root.fontFamily
-        font.bold: true
-        font.pixelSize: Number(root.prop("font_size", avatarRoot.width * 0.38))
-      }
-      Image {
-        id: avatarImage
-        anchors.fill: parent
-        source: avatarRoot.avatarSource
-        fillMode: Image.PreserveAspectCrop
-        asynchronous: root.prop("asynchronous", true) !== false
-        cache: root.prop("cache", true) !== false
-        visible: status === Image.Ready
-        onStatusChanged: {
-          if (status === Image.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height })
-          if (status === Image.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
-        }
-      }
-      TapHandler { onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {}) }
-    }
+    Builtins.Avatar { renderer: root }
   }
 
   Component {
     id: badgeComponent
-    Rectangle {
-      id: badgeRoot
-      readonly property bool dotMode: root.prop("dot", false) === true
-      readonly property real badgeSize: Number(root.prop("size", dotMode ? 8 : 20))
-      readonly property real horizontalPad: Number(root.prop("padding", 6))
-      readonly property var rawValue: root.prop("value", "")
-      readonly property real maximum: Number(root.prop("maximum", 99))
-      readonly property string displayValue: {
-        if (dotMode) return ""
-        var number = Number(rawValue)
-        return rawValue !== "" && !isNaN(number) && number > maximum ? String(maximum) + "+" : String(rawValue)
-      }
-      implicitWidth: dotMode ? badgeSize : Math.max(Number(root.prop("minimum_width", badgeSize)), badgeText.implicitWidth + horizontalPad * 2)
-      implicitHeight: badgeSize
-      radius: height / 2
-      color: root.prop("background", Color.accent)
-      Text {
-        id: badgeText
-        anchors.centerIn: parent
-        visible: !badgeRoot.dotMode
-        text: badgeRoot.displayValue
-        textFormat: Text.PlainText
-        color: root.prop("foreground", Color.background)
-        font.family: root.fontFamily
-        font.bold: true
-        font.pixelSize: Number(root.prop("font_size", Math.max(9, badgeRoot.height * 0.58)))
-      }
-      TapHandler { onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { value: badgeRoot.rawValue }) }
-    }
+    Builtins.Badge { renderer: root }
   }
 
   Component {
     id: chipComponent
-    Rectangle {
-      id: chipRoot
-      readonly property bool selected: root.prop("selected", false) === true
-      readonly property bool deletable: root.prop("deletable", false) === true
-      readonly property bool interactive: root.prop("enabled", true) !== false
-      implicitWidth: chipRow.implicitWidth + Number(root.prop("horizontal_padding", 12)) * 2
-      implicitHeight: Number(root.prop("height", 30))
-      radius: Number(root.prop("radius", height / 2))
-      color: selected ? root.prop("selected_background", Color.accent) : root.prop("background", Color.popups.background)
-      border.width: Style.normalBorderWidth
-      border.color: selected ? root.prop("accent", Color.accent) : root.foreground
-      opacity: interactive ? 1 : 0.5
-      Row {
-        id: chipRow
-        anchors.centerIn: parent
-        spacing: Number(root.prop("spacing", 7))
-        Text {
-          visible: String(root.prop("icon", "")).length > 0
-          text: root.iconGlyph(root.prop("icon", ""))
-          textFormat: Text.PlainText
-          color: chipRoot.selected ? root.prop("selected_foreground", Color.background) : root.prop("foreground", root.foreground)
-          font.family: root.fontFamily
-          font.pixelSize: Number(root.prop("icon_size", Style.font.icon))
-        }
-        Text {
-          text: String(root.prop("text", ""))
-          textFormat: Text.PlainText
-          color: chipRoot.selected ? root.prop("selected_foreground", Color.background) : root.prop("foreground", root.foreground)
-          font.family: root.fontFamily
-          font.pixelSize: Number(root.prop("font_size", Style.font.body))
-        }
-        Text {
-          visible: chipRoot.deletable
-          text: root.iconGlyph("xmark")
-          textFormat: Text.PlainText
-          color: chipRoot.selected ? root.prop("selected_foreground", Color.background) : root.prop("foreground", root.foreground)
-          font.family: root.fontFamily
-          font.pixelSize: Number(root.prop("icon_size", Style.font.icon))
-          MouseArea {
-            anchors.fill: parent
-            enabled: chipRoot.interactive
-            onClicked: function(mouse) {
-              mouse.accepted = true
-              root.bridge.sendEvent(root.surfaceName, root.controlId, "delete", {})
-            }
-          }
-        }
-      }
-      TapHandler {
-        enabled: chipRoot.interactive
-        onTapped: {
-          root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
-          if (root.subscribed("change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !chipRoot.selected })
-        }
-      }
-    }
+    Builtins.Chip { renderer: root }
   }
 
   Component {
     id: spacerComponent
-
-    Item {
-      implicitWidth: Number(root.prop("width", 0))
-      implicitHeight: Number(root.prop("height", Style.space(8)))
-    }
+    Builtins.Spacer { renderer: root }
   }
 
   Component {
     id: gridComponent
-    Grid {
-      columns: Number(root.prop("columns", 2))
-      rows: Number(root.prop("rows", -1))
-      rowSpacing: Number(root.prop("row_spacing", root.prop("spacing", Style.spacing.controlGap)))
-      columnSpacing: Number(root.prop("column_spacing", root.prop("spacing", Style.spacing.controlGap)))
-      Repeater { model: root.node.children || []; delegate: childDelegate }
-    }
+    Builtins.Grid { renderer: root }
   }
 
   Component {
     id: rowLayoutComponent
-    RowLayout {
-      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
-      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
-    }
+    Builtins.RowLayout { renderer: root }
   }
 
   Component {
     id: columnLayoutComponent
-    ColumnLayout {
-      spacing: Number(root.prop("spacing", Style.spacing.panelGap))
-      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
-    }
+    Builtins.ColumnLayout { renderer: root }
   }
 
   Component {
     id: gridLayoutComponent
-    GridLayout {
-      columns: Number(root.prop("columns", 2))
-      rows: Number(root.prop("rows", -1))
-      rowSpacing: Number(root.prop("row_spacing", root.prop("spacing", Style.spacing.controlGap)))
-      columnSpacing: Number(root.prop("column_spacing", root.prop("spacing", Style.spacing.controlGap)))
-      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
-    }
+    Builtins.GridLayout { renderer: root }
   }
 
   Component {
     id: flowComponent
-    Flow {
-      width: Number(root.prop("width", 420))
-      height: root.prop("height", null) === null ? childrenRect.height : Number(root.prop("height", childrenRect.height))
-      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
-      flow: String(root.prop("orientation", "horizontal")) === "vertical" ? Flow.TopToBottom : Flow.LeftToRight
-      Repeater { model: root.node.children || []; delegate: childDelegate }
-    }
+    Builtins.Flow { renderer: root }
   }
 
   Component {
     id: centerComponent
-    Item {
-      readonly property int pad: Number(root.prop("padding", 0))
-      implicitWidth: centeredContent.implicitWidth + pad * 2
-      implicitHeight: centeredContent.implicitHeight + pad * 2
-      Column {
-        id: centeredContent
-        anchors.centerIn: parent
-        spacing: Number(root.prop("spacing", Style.spacing.panelGap))
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.Center { renderer: root }
   }
 
   Component {
     id: cardComponent
-    OmarchyUi.BorderSurface {
-      readonly property int pad: Number(root.prop("padding", Style.space(16)))
-      implicitWidth: cardContent.implicitWidth + pad * 2
-      implicitHeight: cardContent.implicitHeight + pad * 2
-      color: root.prop("color", Color.popups.background)
-      radius: Number(root.prop("radius", Style.cornerRadius))
-      borderSpec: Border.controlSpec("normal", root.prop("border_color", root.foreground), root.prop("accent", Color.accent))
-      Column {
-        id: cardContent
-        anchors.centerIn: parent
-        spacing: Number(root.prop("spacing", Style.spacing.panelGap))
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.Card { renderer: root }
   }
 
   Component {
     id: aspectRatioComponent
-    Item {
-      readonly property real aspect: Math.max(0.000001, Number(root.prop("ratio", 1)))
-      readonly property var requestedWidth: root.prop("width", null)
-      readonly property var requestedHeight: root.prop("height", null)
-      readonly property real naturalWidth: aspectContent.implicitWidth
-      readonly property real naturalHeight: aspectContent.implicitHeight
-      implicitWidth: requestedWidth !== null
-        ? Number(requestedWidth)
-        : (requestedHeight !== null ? Number(requestedHeight) * aspect : Math.max(naturalWidth, naturalHeight * aspect))
-      implicitHeight: requestedHeight !== null
-        ? Number(requestedHeight)
-        : (requestedWidth !== null ? Number(requestedWidth) / aspect : implicitWidth / aspect)
-      clip: root.prop("clip", false) === true
-      Item {
-        id: aspectContent
-        anchors.centerIn: parent
-        implicitWidth: childrenRect.width
-        implicitHeight: childrenRect.height
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.AspectRatio { renderer: root }
   }
 
   Component {
     id: constrainedBoxComponent
-    Item {
-      function bounded(value, minimum, maximum) {
-        return Math.max(Number(minimum), Math.min(Number(maximum), Number(value)))
-      }
-      readonly property real naturalWidth: constrainedContent.implicitWidth
-      readonly property real naturalHeight: constrainedContent.implicitHeight
-      readonly property real desiredWidth: Number(root.prop("width", naturalWidth))
-      readonly property real desiredHeight: Number(root.prop("height", naturalHeight))
-      implicitWidth: bounded(desiredWidth, root.prop("min_width", 0), root.prop("max_width", Number.MAX_VALUE))
-      implicitHeight: bounded(desiredHeight, root.prop("min_height", 0), root.prop("max_height", Number.MAX_VALUE))
-      clip: root.prop("clip", false) === true
-      Item {
-        id: constrainedContent
-        anchors.centerIn: parent
-        implicitWidth: childrenRect.width
-        implicitHeight: childrenRect.height
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.ConstrainedBox { renderer: root }
   }
 
   Component {
     id: fittedBoxComponent
-    Item {
-      implicitWidth: Number(root.prop("width", fittedContent.implicitWidth))
-      implicitHeight: Number(root.prop("height", fittedContent.implicitHeight))
-      clip: root.prop("clip", true) !== false
-
-      readonly property real sourceWidth: Math.max(0.000001, fittedContent.implicitWidth)
-      readonly property real sourceHeight: Math.max(0.000001, fittedContent.implicitHeight)
-      readonly property real availableXScale: width / sourceWidth
-      readonly property real availableYScale: height / sourceHeight
-      readonly property string fitMode: String(root.prop("fit", "contain"))
-      readonly property real fittedXScale: fitMode === "fill" ? availableXScale
-        : (fitMode === "none" ? 1
-        : (fitMode === "cover" ? Math.max(availableXScale, availableYScale)
-        : (fitMode === "scale_down" ? Math.min(1, Math.min(availableXScale, availableYScale))
-        : Math.min(availableXScale, availableYScale))))
-      readonly property real fittedYScale: fitMode === "fill" ? availableYScale : fittedXScale
-      readonly property string contentAlignment: String(root.prop("alignment", "center"))
-
-      Item {
-        id: fittedContent
-        implicitWidth: childrenRect.width
-        implicitHeight: childrenRect.height
-        x: contentAlignment.indexOf("left") >= 0 || contentAlignment === "start" ? 0
-          : (contentAlignment.indexOf("right") >= 0 || contentAlignment === "end" ? parent.width - implicitWidth * fittedXScale : (parent.width - implicitWidth * fittedXScale) / 2)
-        y: contentAlignment.indexOf("top") >= 0 || contentAlignment === "start" ? 0
-          : (contentAlignment.indexOf("bottom") >= 0 || contentAlignment === "end" ? parent.height - implicitHeight * fittedYScale : (parent.height - implicitHeight * fittedYScale) / 2)
-        transformOrigin: Item.TopLeft
-        transform: Scale { xScale: fittedXScale; yScale: fittedYScale }
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.FittedBox { renderer: root }
   }
 
   Component {
     id: wrapComponent
-    Flow {
-      implicitWidth: Number(root.prop("width", 420))
-      implicitHeight: root.prop("height", null) === null ? childrenRect.height : Number(root.prop("height", childrenRect.height))
-      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
-      flow: String(root.prop("orientation", "horizontal")) === "vertical" ? Flow.TopToBottom : Flow.LeftToRight
-      layoutDirection: String(root.prop("layout_direction", "left_to_right")) === "right_to_left"
-        ? Qt.RightToLeft : Qt.LeftToRight
-      Repeater { model: root.node.children || []; delegate: childDelegate }
-    }
+    Builtins.Wrap { renderer: root }
   }
 
   Component {
     id: splitViewComponent
-    QQC.SplitView {
-      implicitWidth: Number(root.prop("width", 560))
-      implicitHeight: Number(root.prop("height", 320))
-      orientation: String(root.prop("orientation", "horizontal")) === "vertical" ? Qt.Vertical : Qt.Horizontal
-      function currentSizes() {
-        var sizes = []
-        for (var index = 0; index < splitChildren.count; index++) {
-          var child = splitChildren.itemAt(index)
-          sizes.push(orientation === Qt.Horizontal ? child.width : child.height)
-        }
-        return sizes
-      }
-      onResizingChanged: {
-        if (!resizing && root.subscribed("resize"))
-          root.bridge.sendEvent(root.surfaceName, root.controlId, "resize", { sizes: currentSizes() })
-      }
-      Repeater {
-        id: splitChildren
-        model: root.node.children || []
-        delegate: splitChildDelegate
-      }
-    }
+    Builtins.SplitView { renderer: root }
   }
 
   Component {
     id: stackLayoutComponent
-    StackLayout {
-      implicitWidth: Number(root.prop("width", 420))
-      implicitHeight: Number(root.prop("height", 280))
-      currentIndex: Math.max(0, Math.min(count - 1, Number(root.prop("current_index", 0))))
-      onCurrentIndexChanged: {
-        if (root.subscribed("change"))
-          root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: currentIndex })
-      }
-      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
-    }
+    Builtins.StackLayout { renderer: root }
   }
 
   Component {
     id: lazyLoaderComponent
-    Loader {
-      readonly property var childNode: root.node && Array.isArray(root.node.children) && root.node.children.length > 0
-        ? root.node.children[0] : null
-      active: root.prop("active", true) !== false && childNode !== null
-      asynchronous: root.prop("asynchronous", false) === true
-      source: active ? Qt.resolvedUrl("ControlNode.qml") : ""
-      implicitWidth: Number(root.prop("width", item ? item.implicitWidth : 0))
-      implicitHeight: Number(root.prop("height", item ? item.implicitHeight : 0))
-      onLoaded: {
-        item.bridge = root.bridge
-        item.surfaceName = root.surfaceName
-        item.controlId = String(childNode.id)
-        item.foreground = root.foreground
-        item.fontFamily = root.fontFamily
-        if (root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", {})
-      }
-      onStatusChanged: {
-        if (root.subscribed("status"))
-          root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
-      }
-    }
+    Builtins.Loader { renderer: root }
   }
 
   Component {
     id: flickableComponent
-    Flickable {
-      implicitWidth: Number(root.prop("width", 320))
-      implicitHeight: Number(root.prop("height", 240))
-      contentWidth: Number(root.prop("content_width", flickContent.implicitWidth))
-      contentHeight: Number(root.prop("content_height", flickContent.implicitHeight))
-      flickableDirection: {
-        var direction = String(root.prop("direction", "vertical"))
-        if (direction === "horizontal") return Flickable.HorizontalFlick
-        if (direction === "both") return Flickable.HorizontalAndVerticalFlick
-        if (direction === "auto") return Flickable.AutoFlickDirection
-        return Flickable.VerticalFlick
-      }
-      boundsBehavior: String(root.prop("bounds_behavior", "stop")) === "overshoot"
-        ? Flickable.DragAndOvershootBounds : Flickable.StopAtBounds
-      interactive: root.prop("interactive", true) !== false
-      clip: root.prop("clip", true) !== false
-      function positionPayload() { return { x: contentX, y: contentY } }
-      onContentXChanged: {
-        if (root.subscribed("scroll")) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", positionPayload())
-      }
-      onContentYChanged: {
-        if (root.subscribed("scroll")) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", positionPayload())
-      }
-      onMovementStarted: root.bridge.sendEvent(root.surfaceName, root.controlId, "flick_start", positionPayload())
-      onMovementEnded: root.bridge.sendEvent(root.surfaceName, root.controlId, "flick_end", positionPayload())
-      Column {
-        id: flickContent
-        spacing: Style.spacing.panelGap
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.Flickable { renderer: root }
   }
 
   Component {
     id: focusScopeComponent
-    FocusScope {
-      id: nativeFocusScope
-      implicitWidth: Number(root.prop("width", focusContent.implicitWidth))
-      implicitHeight: Number(root.prop("height", focusContent.implicitHeight))
-      focus: root.prop("focus", false) === true
-      function syncRequestedFocus() {
-        if (root.prop("active_focus", false) === true) forceActiveFocus()
-      }
-      onActiveFocusChanged: {
-        root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: activeFocus })
-      }
-      Component.onCompleted: syncRequestedFocus()
-      Connections { target: root; function onNodeChanged() { nativeFocusScope.syncRequestedFocus() } }
-      Item {
-        id: focusContent
-        implicitWidth: childrenRect.width
-        implicitHeight: childrenRect.height
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.FocusScope { renderer: root }
   }
 
   Component {
     id: flipableComponent
-    Flipable {
-      id: nativeFlipable
-      implicitWidth: Number(root.prop("width", Math.max(frontFace.implicitWidth, backFace.implicitWidth)))
-      implicitHeight: Number(root.prop("height", Math.max(frontFace.implicitHeight, backFace.implicitHeight)))
-      readonly property bool flipped: root.prop("flipped", false) === true
-      readonly property bool verticalAxis: String(root.prop("axis", "vertical")) === "vertical"
-      front: Loader {
-        id: frontFace
-        source: root.node && root.node.children && root.node.children.length > 0 ? Qt.resolvedUrl("ControlNode.qml") : ""
-        onLoaded: root.configureFace(item, root.node.children[0])
-      }
-      back: Loader {
-        id: backFace
-        source: root.node && root.node.children && root.node.children.length > 1 ? Qt.resolvedUrl("ControlNode.qml") : ""
-        onLoaded: root.configureFace(item, root.node.children[1])
-      }
-      transform: Rotation {
-        id: flipRotation
-        origin.x: nativeFlipable.width / 2
-        origin.y: nativeFlipable.height / 2
-        axis.x: nativeFlipable.verticalAxis ? 0 : 1
-        axis.y: nativeFlipable.verticalAxis ? 1 : 0
-        axis.z: 0
-        angle: nativeFlipable.flipped ? 180 : 0
-        Behavior on angle {
-          NumberAnimation {
-            duration: Number(root.prop("duration", 300))
-            easing.type: root.easingType(root.prop("easing", "in_out_quad"))
-          }
-        }
-      }
-      TapHandler {
-        enabled: root.prop("interactive", false) === true
-        onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !nativeFlipable.flipped })
-      }
-    }
+    Builtins.Flipable { renderer: root }
   }
 
   Component {
     id: borderImageComponent
-    BorderImage {
-      id: nativeBorderImage
-      source: String(root.prop("source", ""))
-      implicitWidth: Number(root.prop("width", sourceSize.width > 0 ? sourceSize.width : 160))
-      implicitHeight: Number(root.prop("height", sourceSize.height > 0 ? sourceSize.height : 100))
-      border.left: Number(root.prop("border_left", 0))
-      border.top: Number(root.prop("border_top", 0))
-      border.right: Number(root.prop("border_right", 0))
-      border.bottom: Number(root.prop("border_bottom", 0))
-      horizontalTileMode: root.borderImageTileMode(root.prop("horizontal_tile", "stretch"))
-      verticalTileMode: root.borderImageTileMode(root.prop("vertical_tile", "stretch"))
-      asynchronous: root.prop("asynchronous", true) !== false
-      cache: root.prop("cache", true) !== false
-      mirror: root.prop("mirror", false) === true
-      smooth: root.prop("smooth", true) !== false
-      onStatusChanged: {
-        if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
-        if (status === BorderImage.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height })
-        if (status === BorderImage.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
-      }
-      Item {
-        anchors.fill: parent
-        anchors.leftMargin: nativeBorderImage.border.left
-        anchors.topMargin: nativeBorderImage.border.top
-        anchors.rightMargin: nativeBorderImage.border.right
-        anchors.bottomMargin: nativeBorderImage.border.bottom
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.BorderImage { renderer: root }
   }
 
   Component {
     id: borderOverlayComponent
-    OmarchyUi.BorderOverlay {
-      width: Number(root.prop("width", 120))
-      height: Number(root.prop("height", 80))
-      radius: Number(root.prop("radius", Style.cornerRadius))
-      borderSpec: {
-        var colors = root.prop("gradient_colors", [])
-        if (Array.isArray(colors) && colors.length > 1) {
-          return {
-            color: colors[0],
-            widths: Border.flat(colors[0], root.prop("width_spec", Style.normalBorderWidth)).widths,
-            gradient: { colors: colors, angle: Number(root.prop("gradient_angle", 0)), enabled: true }
-          }
-        }
-        return Border.flat(root.prop("color", root.foreground), root.prop("width_spec", Style.normalBorderWidth))
-      }
-    }
+    Builtins.BorderOverlay { renderer: root }
   }
 
   Component {
     id: keyCatcherComponent
-    OmarchyUi.PanelKeyCatcher {
-      blocked: root.prop("blocked", false) === true
-      implicitWidth: keyContent.implicitWidth
-      implicitHeight: keyContent.implicitHeight
-      onMoveRequested: function(dx, dy) { root.bridge.sendEvent(root.surfaceName, root.controlId, "move", { dx: dx, dy: dy }) }
-      onActivateRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", {})
-      onReturnRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "return", {})
-      onCloseRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "close", {})
-      onDeleteRequested: root.bridge.sendEvent(root.surfaceName, root.controlId, "delete", {})
-      onTabRequested: function(direction) { root.bridge.sendEvent(root.surfaceName, root.controlId, "tab", { direction: direction }) }
-      onTextKey: function(text) { root.bridge.sendEvent(root.surfaceName, root.controlId, "text", { text: text }) }
-      Column {
-        id: keyContent
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.KeyCatcher { renderer: root }
   }
 
   Component {
     id: stackComponent
-    Item {
-      implicitWidth: childrenRect.width
-      implicitHeight: childrenRect.height
-      Repeater { model: root.node.children || []; delegate: childDelegate }
-    }
+    Builtins.Stack { renderer: root }
   }
 
   Component {
     id: scrollComponent
-    QQC.ScrollView {
-      implicitWidth: Number(root.prop("width", 320))
-      implicitHeight: Number(root.prop("height", 240))
-      clip: root.prop("clip", true) !== false
-      Column {
-        spacing: Style.spacing.panelGap
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.Scroll { renderer: root }
   }
 
   Component {
     id: rectangleComponent
-    Rectangle {
-      readonly property int pad: Number(root.prop("padding", 0))
-      implicitWidth: Number(root.prop("width", contentColumn.implicitWidth + pad * 2))
-      implicitHeight: Number(root.prop("height", contentColumn.implicitHeight + pad * 2))
-      color: root.prop("color", "transparent")
-      radius: Number(root.prop("radius", 0))
-      border.color: root.prop("border_color", "transparent")
-      border.width: Number(root.prop("border_width", 0))
-      Column {
-        id: contentColumn
-        anchors.centerIn: parent
-        Repeater { model: root.node.children || []; delegate: childDelegate }
-      }
-    }
+    Builtins.Rectangle { renderer: root }
   }
 
   Component {
@@ -1583,970 +689,174 @@ Loader {
 
   Component {
     id: actionButtonComponent
-    OmarchyUi.PanelActionButton {
-      iconText: root.iconGlyph(root.prop("icon", "")); tooltipText: root.escapeAutoText(root.prop("tooltip", ""))
-      bordered: root.prop("bordered", false) === true; focusable: root.prop("focusable", false) === true
-      hasCursor: root.prop("cursor", false) === true
-      size: Number(root.prop("size", 28)); foreground: root.prop("foreground", root.foreground)
-      hoverColor: root.prop("hover_color", foreground); fontFamily: String(root.prop("font_family", root.fontFamily))
-      fontSize: Number(root.prop("font_size", Style.font.icon))
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.ActionButton { renderer: root }
   }
 
   Component {
     id: barIconButtonComponent
-    OmarchyUi.BarIconButton {
-      text: root.iconGlyph(root.prop("icon", ""))
-      tooltipText: root.escapeAutoText(root.prop("tooltip", ""))
-      active: root.prop("active", false) === true
-      foreground: root.prop("foreground", root.foreground)
-      activeColor: root.prop("active_color", Color.accent)
-      slotSize: Number(root.prop("slot_size", Style.bar.iconSlot))
-      opticalSize: Number(root.prop("optical_size", Style.bar.iconCanvas))
-      fontFamily: String(root.prop("font_family", root.fontFamily))
-      fontSize: Number(root.prop("font_size", Style.bar.iconFont))
-      textRotation: Number(root.prop("text_rotation", 0))
-      keepSpace: root.prop("keep_space", false) === true
-      dimmed: root.prop("dimmed", false) === true
-      concealed: root.prop("concealed", false) === true
-      interactive: root.prop("interactive", true) !== false
-      onPressed: function(button) {
-        var eventName = button === Qt.RightButton ? "right_click" : (button === Qt.MiddleButton ? "middle_click" : "click")
-        root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
-      }
-      onWheelMoved: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
-    }
+    Builtins.BarIconButton { renderer: root }
   }
 
   Component {
     id: barIndicatorComponent
-    OmarchyUi.BarIndicator {
-      active: root.prop("active", false) === true
-      activeText: root.iconGlyph(root.prop("active_icon", ""))
-      inactiveText: root.iconGlyph(root.prop("inactive_icon", root.prop("active_icon", "")))
-      activeTooltipText: root.escapeAutoText(root.prop("active_tooltip", ""))
-      inactiveTooltipText: root.escapeAutoText(root.prop("inactive_tooltip", root.prop("active_tooltip", "")))
-      indicatorBlock: String(root.prop("indicator_block", "single"))
-      foreground: root.prop("foreground", root.foreground)
-      activeColor: root.prop("active_color", Color.accent)
-      fontFamily: String(root.prop("font_family", root.fontFamily))
-      fontSize: Number(root.prop("font_size", Style.font.caption))
-      onPressed: function(button) {
-        var eventName = button === Qt.RightButton ? "right_click" : (button === Qt.MiddleButton ? "middle_click" : "click")
-        root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
-      }
-      onWheelMoved: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
-    }
+    Builtins.BarIndicator { renderer: root }
   }
 
   Component {
     id: toggleComponent
-    OmarchyUi.Toggle {
-      label: root.escapeAutoText(root.prop("label", "")); description: root.escapeAutoText(root.prop("description", ""))
-      checked: root.prop("checked", false) === true; hasCursor: root.prop("cursor", false) === true
-      rounded: root.prop("rounded", Style.cornerRadius > 0) === true
-      foreground: root.prop("foreground", root.foreground); accent: root.prop("accent", Color.accent)
-      fontFamily: String(root.prop("font_family", root.fontFamily)); titleSize: Number(root.prop("title_size", Style.font.subtitle))
-      descriptionSize: Number(root.prop("description_size", Style.font.caption))
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !checked })
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.Toggle { renderer: root }
   }
 
   Component {
     id: checkboxComponent
-    QQC.CheckBox {
-      id: checkControl
-      text: root.escapeAutoText(root.prop("label", ""))
-      checked: root.prop("checked", false) === true
-      hoverEnabled: true
-      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
-      leftPadding: 0
-      rightPadding: 0
-      indicator: Rectangle {
-        implicitWidth: Number(root.prop("indicator_size", Style.space(20)))
-        implicitHeight: implicitWidth
-        x: checkControl.leftPadding
-        y: checkControl.topPadding + (checkControl.availableHeight - height) / 2
-        radius: Math.min(Style.cornerRadius, width / 4)
-        color: checkControl.checked ? root.prop("accent", Color.accent) : root.prop("background", "transparent")
-        border.width: Style.normalBorderWidth
-        border.color: checkControl.checked ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
-        Text {
-          anchors.centerIn: parent
-          text: checkControl.checked ? root.iconGlyph("check") : ""
-          textFormat: Text.PlainText
-          color: Color.background
-          font.family: String(root.prop("font_family", root.fontFamily))
-          font.pixelSize: parent.width * 0.7
-        }
-      }
-      contentItem: Text {
-        leftPadding: checkControl.indicator.width + checkControl.spacing
-        text: checkControl.text
-        textFormat: Text.PlainText
-        color: root.prop("foreground", root.foreground)
-        font.family: String(root.prop("font_family", root.fontFamily))
-        font.pixelSize: Number(root.prop("font_size", Style.font.body))
-        verticalAlignment: Text.AlignVCenter
-      }
-      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked })
-      onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
-    }
+    Builtins.Checkbox { renderer: root }
   }
 
   Component {
     id: radioButtonComponent
-    QQC.RadioButton {
-      id: nativeRadioButton
-      text: String(root.prop("label", ""))
-      checked: root.prop("checked", false) === true
-      enabled: root.prop("enabled", true) !== false
-      spacing: Number(root.prop("spacing", 8))
-      indicator: Rectangle {
-        implicitWidth: Number(root.prop("indicator_size", 20))
-        implicitHeight: implicitWidth
-        x: nativeRadioButton.leftPadding
-        y: nativeRadioButton.topPadding + (nativeRadioButton.availableHeight - height) / 2
-        radius: width / 2
-        color: root.prop("background", "transparent")
-        border.width: Style.normalBorderWidth
-        border.color: nativeRadioButton.checked ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
-        Rectangle {
-          anchors.centerIn: parent
-          width: parent.width * 0.5
-          height: width
-          radius: width / 2
-          visible: nativeRadioButton.checked
-          color: root.prop("accent", Color.accent)
-        }
-      }
-      contentItem: Text {
-        leftPadding: nativeRadioButton.indicator.width + nativeRadioButton.spacing
-        text: nativeRadioButton.text
-        textFormat: Text.PlainText
-        color: root.prop("foreground", root.foreground)
-        font.family: String(root.prop("font_family", root.fontFamily))
-        font.pixelSize: Number(root.prop("font_size", Style.font.body))
-        verticalAlignment: Text.AlignVCenter
-      }
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { value: root.prop("value", null) })
-      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked, option: root.prop("value", null) })
-      onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
-    }
+    Builtins.RadioButton { renderer: root }
   }
 
   Component {
     id: radioGroupComponent
-    Grid {
-      id: nativeRadioGroup
-      readonly property bool horizontal: String(root.prop("orientation", "vertical")) === "horizontal"
-      columns: horizontal ? Math.max(1, radioOptions.count) : 1
-      rows: horizontal ? 1 : Math.max(1, radioOptions.count)
-      spacing: Number(root.prop("spacing", 10))
-      QQC.ButtonGroup { id: exclusiveRadioGroup }
-      Repeater {
-        id: radioOptions
-        model: root.prop("options", [])
-        delegate: QQC.RadioButton {
-          id: groupedRadioButton
-          required property var modelData
-          readonly property var optionValue: root.optionValue(modelData)
-          text: String(root.optionLabel(modelData))
-          checked: String(optionValue) === String(root.prop("value", ""))
-          enabled: root.prop("enabled", true) !== false
-          spacing: Number(root.prop("item_spacing", 8))
-          QQC.ButtonGroup.group: exclusiveRadioGroup
-          indicator: Rectangle {
-            implicitWidth: Number(root.prop("indicator_size", 20))
-            implicitHeight: implicitWidth
-            radius: width / 2
-            color: root.prop("background", "transparent")
-            border.width: Style.normalBorderWidth
-            border.color: groupedRadioButton.checked ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
-            Rectangle {
-              anchors.centerIn: parent
-              width: parent.width * 0.5
-              height: width
-              radius: width / 2
-              visible: groupedRadioButton.checked
-              color: root.prop("accent", Color.accent)
-            }
-          }
-          contentItem: Text {
-            leftPadding: groupedRadioButton.indicator.width + groupedRadioButton.spacing
-            text: groupedRadioButton.text
-            textFormat: Text.PlainText
-            color: root.prop("foreground", root.foreground)
-            font.family: String(root.prop("font_family", root.fontFamily))
-            font.pixelSize: Number(root.prop("font_size", Style.font.body))
-            verticalAlignment: Text.AlignVCenter
-          }
-          onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: optionValue, index: index })
-          onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: optionValue, index: index, hovered: hovered })
-        }
-      }
-    }
+    Builtins.RadioGroup { renderer: root }
   }
 
   Component {
     id: lineChartComponent
-    Item {
-      implicitWidth: Number(root.prop("width", 420))
-      implicitHeight: Number(root.prop("height", 220))
-
-      Canvas {
-        id: lineCanvas
-        anchors.fill: parent
-        antialiasing: true
-        onPaint: {
-          var ctx = getContext("2d")
-          ctx.clearRect(0, 0, width, height)
-          var raw = root.prop("values", [])
-          if (!Array.isArray(raw) || raw.length === 0) return
-          var values = raw.map(function(value) { return Number(value) })
-          var pad = Math.max(8, Number(root.prop("point_size", 5)) + 3)
-          var chartWidth = Math.max(1, width - pad * 2)
-          var chartHeight = Math.max(1, height - pad * 2)
-          var low = root.prop("minimum", null)
-          var high = root.prop("maximum", null)
-          if (low === null) low = Math.min.apply(Math, values)
-          if (high === null) high = Math.max.apply(Math, values)
-          low = Number(low); high = Number(high)
-          if (high === low) { high += 1; low -= 1 }
-
-          if (root.prop("show_grid", true) !== false) {
-            ctx.strokeStyle = root.prop("grid_color", Color.muted)
-            ctx.lineWidth = 1
-            for (var grid = 0; grid <= 4; grid++) {
-              var gy = pad + chartHeight * grid / 4
-              ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(width - pad, gy); ctx.stroke()
-            }
-          }
-
-          var points = []
-          for (var index = 0; index < values.length; index++) {
-            var x = pad + (values.length === 1 ? chartWidth / 2 : chartWidth * index / (values.length - 1))
-            var y = pad + chartHeight * (1 - (values[index] - low) / (high - low))
-            points.push({ x: x, y: y })
-          }
-          var fill = String(root.prop("fill_color", ""))
-          if (fill.length > 0 && points.length > 1) {
-            ctx.beginPath(); ctx.moveTo(points[0].x, height - pad)
-            for (var fillIndex = 0; fillIndex < points.length; fillIndex++) ctx.lineTo(points[fillIndex].x, points[fillIndex].y)
-            ctx.lineTo(points[points.length - 1].x, height - pad); ctx.closePath()
-            ctx.fillStyle = fill; ctx.fill()
-          }
-          ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y)
-          for (var lineIndex = 1; lineIndex < points.length; lineIndex++) ctx.lineTo(points[lineIndex].x, points[lineIndex].y)
-          ctx.strokeStyle = root.prop("color", Color.accent)
-          ctx.lineWidth = Number(root.prop("line_width", 2)); ctx.stroke()
-          if (root.prop("show_points", true) !== false) {
-            ctx.fillStyle = root.prop("color", Color.accent)
-            var pointSize = Number(root.prop("point_size", 5))
-            for (var pointIndex = 0; pointIndex < points.length; pointIndex++) {
-              ctx.beginPath(); ctx.arc(points[pointIndex].x, points[pointIndex].y, pointSize, 0, Math.PI * 2); ctx.fill()
-            }
-          }
-        }
-      }
-
-      Connections {
-        target: root
-        function onNodeChanged() { lineCanvas.requestPaint() }
-      }
-      MouseArea {
-        anchors.fill: parent
-        hoverEnabled: root.subscribed("hover")
-        function payload(mouse) {
-          var values = root.prop("values", [])
-          if (!Array.isArray(values) || values.length === 0) return ({ index: -1 })
-          var index = Math.max(0, Math.min(values.length - 1, Math.round(mouse.x / Math.max(1, width) * (values.length - 1))))
-          var labels = root.prop("labels", [])
-          return { index: index, value: values[index], label: Array.isArray(labels) ? labels[index] : null }
-        }
-        onClicked: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "select", payload(mouse)) }
-        onPositionChanged: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", payload(mouse)) }
-      }
-    }
+    Builtins.LineChart { renderer: root }
   }
 
   Component {
     id: areaChartComponent
-    Item {
-      implicitWidth: Number(root.prop("width", 420))
-      implicitHeight: Number(root.prop("height", 220))
-      Canvas {
-        id: areaCanvas
-        anchors.fill: parent
-        antialiasing: true
-        onPaint: {
-          var ctx = getContext("2d")
-          ctx.clearRect(0, 0, width, height)
-          var raw = root.prop("values", [])
-          if (!Array.isArray(raw) || raw.length === 0) return
-          var values = raw.map(function(value) { return Number(value) })
-          var low = root.prop("minimum", null)
-          var high = root.prop("maximum", null)
-          if (low === null) low = Math.min.apply(Math, values)
-          if (high === null) high = Math.max.apply(Math, values)
-          low = Number(low); high = Number(high)
-          if (high === low) { high += 1; low -= 1 }
-          var pad = 10
-          var chartWidth = Math.max(1, width - pad * 2)
-          var chartHeight = Math.max(1, height - pad * 2)
-          if (root.prop("show_grid", true) !== false) {
-            ctx.strokeStyle = root.prop("grid_color", Color.muted); ctx.lineWidth = 1
-            for (var grid = 0; grid <= 4; grid++) {
-              var gy = pad + chartHeight * grid / 4
-              ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(width - pad, gy); ctx.stroke()
-            }
-          }
-          var points = []
-          for (var index = 0; index < values.length; index++) {
-            points.push({
-              x: pad + (values.length === 1 ? chartWidth / 2 : chartWidth * index / (values.length - 1)),
-              y: pad + chartHeight * (1 - (values[index] - low) / (high - low))
-            })
-          }
-          ctx.beginPath(); ctx.moveTo(points[0].x, height - pad)
-          for (var fillIndex = 0; fillIndex < points.length; fillIndex++) ctx.lineTo(points[fillIndex].x, points[fillIndex].y)
-          ctx.lineTo(points[points.length - 1].x, height - pad); ctx.closePath()
-          ctx.fillStyle = root.prop("fill_color", root.prop("color", Color.accent)); ctx.fill()
-          ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y)
-          for (var lineIndex = 1; lineIndex < points.length; lineIndex++) ctx.lineTo(points[lineIndex].x, points[lineIndex].y)
-          ctx.strokeStyle = root.prop("color", Color.accent)
-          ctx.lineWidth = Number(root.prop("line_width", 2)); ctx.stroke()
-        }
-      }
-      Connections { target: root; function onNodeChanged() { areaCanvas.requestPaint() } }
-      MouseArea {
-        anchors.fill: parent
-        hoverEnabled: root.subscribed("hover")
-        function payload(mouse) {
-          var values = root.prop("values", [])
-          if (!Array.isArray(values) || values.length === 0) return ({ index: -1 })
-          var index = Math.max(0, Math.min(values.length - 1, Math.round(mouse.x / Math.max(1, width) * (values.length - 1))))
-          var labels = root.prop("labels", [])
-          return { index: index, value: values[index], label: Array.isArray(labels) ? labels[index] : null }
-        }
-        onClicked: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "select", payload(mouse)) }
-        onPositionChanged: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", payload(mouse)) }
-      }
-    }
+    Builtins.AreaChart { renderer: root }
   }
 
   Component {
     id: barChartComponent
-    Item {
-      implicitWidth: Number(root.prop("width", 420))
-      implicitHeight: Number(root.prop("height", 220))
-      Canvas {
-        id: barCanvas
-        anchors.fill: parent
-        antialiasing: true
-        onPaint: {
-          var ctx = getContext("2d")
-          ctx.clearRect(0, 0, width, height)
-          var raw = root.prop("values", [])
-          if (!Array.isArray(raw) || raw.length === 0) return
-          var values = raw.map(function(value) { return Number(value) })
-          var low = root.prop("minimum", null)
-          var high = root.prop("maximum", null)
-          if (low === null) low = Math.min(0, Math.min.apply(Math, values))
-          if (high === null) high = Math.max(0, Math.max.apply(Math, values))
-          low = Number(low); high = Number(high)
-          if (high === low) high = low + 1
-          var pad = 10
-          var chartWidth = Math.max(1, width - pad * 2)
-          var chartHeight = Math.max(1, height - pad * 2)
-          if (root.prop("show_grid", true) !== false) {
-            ctx.strokeStyle = root.prop("grid_color", Color.muted); ctx.lineWidth = 1
-            for (var grid = 0; grid <= 4; grid++) {
-              var gy = pad + chartHeight * grid / 4
-              ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(width - pad, gy); ctx.stroke()
-            }
-          }
-          var slot = chartWidth / values.length
-          var gap = Math.max(0, Number(root.prop("bar_spacing", 6)))
-          var colors = root.prop("colors", [Color.accent])
-          var zeroY = pad + chartHeight * (1 - (0 - low) / (high - low))
-          for (var index = 0; index < values.length; index++) {
-            var valueY = pad + chartHeight * (1 - (values[index] - low) / (high - low))
-            var left = pad + slot * index + gap / 2
-            var top = Math.min(zeroY, valueY)
-            var barHeight = Math.max(1, Math.abs(valueY - zeroY))
-            ctx.fillStyle = Array.isArray(colors) && colors.length > 0 ? colors[index % colors.length] : Color.accent
-            ctx.fillRect(left, top, Math.max(1, slot - gap), barHeight)
-          }
-        }
-      }
-      Connections { target: root; function onNodeChanged() { barCanvas.requestPaint() } }
-      MouseArea {
-        anchors.fill: parent
-        hoverEnabled: root.subscribed("hover")
-        function payload(mouse) {
-          var values = root.prop("values", [])
-          if (!Array.isArray(values) || values.length === 0) return ({ index: -1 })
-          var index = Math.max(0, Math.min(values.length - 1, Math.floor(mouse.x / Math.max(1, width) * values.length)))
-          var labels = root.prop("labels", [])
-          return { index: index, value: values[index], label: Array.isArray(labels) ? labels[index] : null }
-        }
-        onClicked: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "select", payload(mouse)) }
-        onPositionChanged: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", payload(mouse)) }
-      }
-    }
+    Builtins.BarChart { renderer: root }
   }
 
   Component {
     id: toggleSwitchComponent
-    OmarchyUi.ToggleSwitch {
-      checked: root.prop("checked", false) === true; busy: root.prop("busy", false) === true
-      interactive: root.prop("interactive", root.prop("enabled", true)) !== false
-      hasCursor: root.prop("cursor", false) === true; cursorRing: root.prop("cursor_ring", true) !== false
-      cursorPad: Number(root.prop("cursor_pad", Style.space(6))); rounded: root.prop("rounded", Style.cornerRadius > 0) === true
-      foreground: root.prop("foreground", root.foreground); accent: root.prop("accent", Color.accent)
-      trackHeight: Number(root.prop("track_height", Math.max(22, Math.round(Style.spacing.controlHeight * 0.55))))
-      trackWidth: Number(root.prop("track_width", Math.round(trackHeight * 1.9)))
-      knobSize: Number(root.prop("knob_size", Math.max(6, Math.round(trackHeight * 0.72))))
-      knobInset: Number(root.prop("knob_inset", Math.max(1, Math.round((trackHeight - knobSize) / 2))))
-      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !checked })
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.ToggleSwitch { renderer: root }
   }
 
   Component {
     id: textFieldComponent
-    OmarchyUi.TextField {
-      text: String(root.prop("text", "")); placeholderText: String(root.prop("placeholder", ""))
-      password: root.prop("password", false) === true
-      implicitWidth: Number(root.prop("width", 240)); foreground: root.prop("foreground", root.foreground)
-      accent: root.prop("accent", Color.accent); selectionTint: root.prop("selection_tint", Style.selectionFillFor(foreground, accent))
-      horizontalPadding: Number(root.prop("horizontal_padding", Style.spacing.controlPaddingX))
-      verticalPadding: Number(root.prop("vertical_padding", Style.spacing.inputPaddingY)); hasCursor: root.prop("cursor", false) === true
-      onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
-      onEditingFinished: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
-      onAccepted: root.bridge.sendEvent(root.surfaceName, root.controlId, "submit", { value: text })
-      onActiveFocusChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
-    }
+    Builtins.TextField { renderer: root }
   }
 
   Component {
     id: numberFieldComponent
-    OmarchyUi.NumberField {
-      label: root.escapeAutoText(root.prop("label", "")); value: Number(root.prop("value", 0))
-      from: Number(root.prop("from", 0)); to: Number(root.prop("to", 100)); stepSize: Number(root.prop("step", 1))
-      foreground: root.prop("foreground", root.foreground); accent: root.prop("accent", Color.accent)
-      fontFamily: String(root.prop("font_family", root.fontFamily)); fontSize: Number(root.prop("font_size", Style.font.body))
-      fieldWidth: Number(root.prop("field_width", Style.spacing.numberFieldWidth)); hasCursor: root.prop("cursor", false) === true
-      onModified: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.NumberField { renderer: root }
   }
 
   Component {
     id: textAreaComponent
-    QQC.ScrollView {
-      implicitWidth: Number(root.prop("width", 320))
-      implicitHeight: Number(root.prop("height", 140))
-      clip: true
-      QQC.TextArea {
-        id: nativeTextArea
-        text: String(root.prop("text", ""))
-        placeholderText: String(root.prop("placeholder", ""))
-        readOnly: root.prop("read_only", false) === true
-        maximumLength: Number(root.prop("maximum_length", 32767))
-        wrapMode: String(root.prop("wrap", "word")) === "none" ? TextEdit.NoWrap
-          : (String(root.prop("wrap", "word")) === "anywhere" ? TextEdit.WrapAnywhere : TextEdit.Wrap)
-        color: root.prop("foreground", root.foreground)
-        selectionColor: root.prop("selection_tint", root.prop("accent", Color.accent))
-        selectedTextColor: Color.background
-        placeholderTextColor: Color.muted
-        font.family: String(root.prop("font_family", root.fontFamily))
-        font.pixelSize: Number(root.prop("font_size", Style.font.body))
-        padding: Number(root.prop("padding", Style.spacing.inputPaddingY))
-        background: Rectangle {
-          color: root.prop("background", Color.popups.background)
-          radius: Style.cornerRadius
-          border.width: Style.normalBorderWidth
-          border.color: nativeTextArea.activeFocus ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
-        }
-        onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
-        onActiveFocusChanged: {
-          root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
-          if (!activeFocus && root.subscribed("change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
-        }
-        onSelectionChanged: {
-          if (root.subscribed("selection")) root.bridge.sendEvent(root.surfaceName, root.controlId, "selection", { start: selectionStart, end: selectionEnd, text: selectedText })
-        }
-      }
-    }
+    Builtins.TextArea { renderer: root }
   }
 
   Component {
     id: searchFieldComponent
-    QQC.SearchField {
-      id: nativeSearchField
-      text: String(root.prop("text", ""))
-      suggestionModel: root.prop("suggestions", [])
-      textRole: String(root.prop("text_role", ""))
-      live: root.prop("live", false) === true
-      currentIndex: Number(root.prop("current_index", -1))
-      enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 260))
-      font.family: String(root.prop("font_family", root.fontFamily))
-      font.pixelSize: Number(root.prop("font_size", Style.font.body))
-      palette.text: root.prop("foreground", root.foreground)
-      palette.buttonText: root.prop("foreground", root.foreground)
-      palette.button: root.prop("background", Color.popups.background)
-      palette.highlight: root.prop("accent", Color.accent)
-      palette.highlightedText: Color.background
-      onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
-      onSearchTriggered: root.bridge.sendEvent(root.surfaceName, root.controlId, "search", { value: text })
-      onAccepted: root.bridge.sendEvent(root.surfaceName, root.controlId, "submit", { value: text })
-      onActivated: function(index) { root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", { index: index, value: text }) }
-      onHighlighted: function(index) { root.bridge.sendEvent(root.surfaceName, root.controlId, "highlight", { index: index }) }
-      onClearButtonPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "clear", {})
-      onActiveFocusChanged: {
-        root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
-        if (!activeFocus && root.subscribed("change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
-      }
-    }
+    Builtins.SearchField { renderer: root }
   }
 
   Component {
     id: passwordFieldComponent
-    Item {
-      id: passwordRoot
-      property bool revealState: root.prop("revealed", false) === true
-      readonly property bool canReveal: root.prop("revealable", true) !== false
-      implicitWidth: Number(root.prop("width", 260))
-      implicitHeight: passwordInput.implicitHeight
-      OmarchyUi.TextField {
-        id: passwordInput
-        width: passwordRoot.width - (passwordRoot.canReveal ? passwordRoot.height : 0)
-        anchors.left: parent.left
-        text: String(root.prop("text", ""))
-        placeholderText: String(root.prop("placeholder", ""))
-        password: !passwordRoot.revealState
-        foreground: root.prop("foreground", root.foreground)
-        accent: root.prop("accent", Color.accent)
-        selectionTint: root.prop("selection_tint", Style.selectionFillFor(foreground, accent))
-        horizontalPadding: Number(root.prop("horizontal_padding", Style.spacing.controlPaddingX))
-        verticalPadding: Number(root.prop("vertical_padding", Style.spacing.inputPaddingY))
-        onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
-        onEditingFinished: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
-        onAccepted: root.bridge.sendEvent(root.surfaceName, root.controlId, "submit", { value: text })
-        onActiveFocusChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
-      }
-      Rectangle {
-        visible: passwordRoot.canReveal
-        anchors.right: parent.right
-        width: parent.height
-        height: parent.height
-        color: "transparent"
-        Text {
-          anchors.centerIn: parent
-          text: root.iconGlyph(passwordRoot.revealState ? "eye_slash" : "eye")
-          textFormat: Text.PlainText
-          color: root.foreground
-          font.family: root.fontFamily
-          font.pixelSize: Style.font.icon
-        }
-        TapHandler {
-          onTapped: {
-            passwordRoot.revealState = !passwordRoot.revealState
-            root.bridge.sendEvent(root.surfaceName, root.controlId, "reveal", { value: passwordRoot.revealState })
-          }
-        }
-      }
-      Connections {
-        target: root
-        function onNodeChanged() { passwordRoot.revealState = root.prop("revealed", passwordRoot.revealState) === true }
-      }
-    }
+    Builtins.PasswordField { renderer: root }
   }
 
   Component {
     id: sliderComponent
-    OmarchyUi.PanelSlider {
-      value: Number(root.prop("value", 0)); minimum: Number(root.prop("minimum", 0)); maximum: Number(root.prop("maximum", 1))
-      step: Number(root.prop("step", 0.05)); integer: root.prop("integer", false) === true; tickCount: Number(root.prop("ticks", 0))
-      implicitWidth: Number(root.prop("width", 200)); trackColor: root.prop("track_color", "#333")
-      fillColor: root.prop("fill_color", root.foreground); knobColor: root.prop("knob_color", root.foreground)
-      trackHeight: Number(root.prop("track_height", Math.max(4, Math.round(Style.spacing.controlHeight * 0.11))))
-      knobSize: Number(root.prop("knob_size", Math.max(14, Math.round(Style.spacing.controlHeight * 0.38))))
-      tickColor: root.prop("tick_color", Color.background)
-      onReleased: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
-      onMoved: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: value }) }
-      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
-    }
+    Builtins.Slider { renderer: root }
   }
 
   Component {
     id: rangeSliderComponent
-    QQC.RangeSlider {
-      id: nativeRangeSlider
-      from: Number(root.prop("minimum", 0))
-      to: Number(root.prop("maximum", 1))
-      stepSize: Number(root.prop("step", 0))
-      first.value: Number(root.prop("lower", from))
-      second.value: Number(root.prop("upper", to))
-      orientation: String(root.prop("orientation", "horizontal")) === "vertical" ? Qt.Vertical : Qt.Horizontal
-      snapMode: {
-        var mode = String(root.prop("snap", "none"))
-        if (mode === "always") return QQC.RangeSlider.SnapAlways
-        if (mode === "release") return QQC.RangeSlider.SnapOnRelease
-        return QQC.RangeSlider.NoSnap
-      }
-      live: root.prop("live", true) !== false
-      implicitWidth: Number(root.prop("width", orientation === Qt.Horizontal ? 240 : 40))
-      implicitHeight: Number(root.prop("height", orientation === Qt.Horizontal ? 40 : 240))
-      palette.windowText: root.prop("foreground", root.foreground)
-      palette.button: root.prop("background", Color.popups.background)
-      palette.highlight: root.prop("accent", Color.accent)
-      function payload() { return { lower: first.value, upper: second.value } }
-      first.onMoved: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", payload())
-      second.onMoved: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", payload())
-      first.onPressedChanged: {
-        if (!first.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", payload())
-      }
-      second.onPressedChanged: {
-        if (!second.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", payload())
-      }
-    }
+    Builtins.RangeSlider { renderer: root }
   }
 
   Component {
     id: dialComponent
-    QQC.Dial {
-      id: nativeDial
-      from: Number(root.prop("minimum", 0))
-      to: Number(root.prop("maximum", 1))
-      value: Number(root.prop("value", from))
-      stepSize: Number(root.prop("step", 0))
-      startAngle: Number(root.prop("start_angle", -140))
-      endAngle: Number(root.prop("end_angle", 140))
-      snapMode: {
-        var mode = String(root.prop("snap", "none"))
-        if (mode === "always") return QQC.Dial.SnapAlways
-        if (mode === "release") return QQC.Dial.SnapOnRelease
-        return QQC.Dial.NoSnap
-      }
-      wrap: root.prop("wrap", false) === true
-      live: root.prop("live", true) !== false
-      inputMode: {
-        var mode = String(root.prop("input_mode", "circular"))
-        if (mode === "horizontal") return QQC.Dial.Horizontal
-        if (mode === "vertical") return QQC.Dial.Vertical
-        return QQC.Dial.Circular
-      }
-      implicitWidth: Number(root.prop("size", 100))
-      implicitHeight: implicitWidth
-      palette.windowText: root.prop("foreground", root.foreground)
-      palette.button: root.prop("background", Color.popups.background)
-      palette.highlight: root.prop("accent", Color.accent)
-      onMoved: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: value, angle: angle })
-      onPressedChanged: {
-        root.bridge.sendEvent(root.surfaceName, root.controlId, pressed ? "press" : "release", { value: value })
-        if (!pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value })
-      }
-    }
+    Builtins.Dial { renderer: root }
   }
 
   Component {
     id: spinBoxComponent
-    QQC.SpinBox {
-      id: nativeSpinBox
-      from: Number(root.prop("minimum", 0))
-      to: Number(root.prop("maximum", 100))
-      value: Number(root.prop("value", from))
-      stepSize: Number(root.prop("step", 1))
-      editable: root.prop("editable", true) !== false
-      wrap: root.prop("wrap", false) === true
-      enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 140))
-      font.family: String(root.prop("font_family", root.fontFamily))
-      font.pixelSize: Number(root.prop("font_size", Style.font.body))
-      palette.text: root.prop("foreground", root.foreground)
-      palette.buttonText: root.prop("foreground", root.foreground)
-      palette.button: root.prop("background", Color.popups.background)
-      palette.highlight: root.prop("accent", Color.accent)
-      textFromValue: function(value, locale) {
-        return String(root.prop("prefix", "")) + Number(value).toLocaleString(locale, "f", 0) + String(root.prop("suffix", ""))
-      }
-      valueFromText: function(text, locale) {
-        var prefix = String(root.prop("prefix", ""))
-        var suffix = String(root.prop("suffix", ""))
-        var numeric = String(text)
-        if (prefix.length > 0 && numeric.indexOf(prefix) === 0) numeric = numeric.slice(prefix.length)
-        if (suffix.length > 0 && numeric.lastIndexOf(suffix) === numeric.length - suffix.length) numeric = numeric.slice(0, -suffix.length)
-        return Number.fromLocaleString(locale, numeric)
-      }
-      onValueModified: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value })
-      up.onPressedChanged: {
-        if (up.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "increase", { value: value })
-      }
-      down.onPressedChanged: {
-        if (down.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "decrease", { value: value })
-      }
-    }
+    Builtins.SpinBox { renderer: root }
   }
 
   Component {
     id: doubleSpinBoxComponent
-    QQC.DoubleSpinBox {
-      id: nativeDoubleSpinBox
-      from: Number(root.prop("minimum", 0))
-      to: Number(root.prop("maximum", 100))
-      value: Number(root.prop("value", from))
-      stepSize: Number(root.prop("step", 0.1))
-      decimals: Number(root.prop("decimals", 2))
-      editable: root.prop("editable", true) !== false
-      wrap: root.prop("wrap", false) === true
-      enabled: root.prop("enabled", true) !== false
-      implicitWidth: Number(root.prop("width", 160))
-      font.family: String(root.prop("font_family", root.fontFamily))
-      font.pixelSize: Number(root.prop("font_size", Style.font.body))
-      palette.text: root.prop("foreground", root.foreground)
-      palette.buttonText: root.prop("foreground", root.foreground)
-      palette.button: root.prop("background", Color.popups.background)
-      palette.highlight: root.prop("accent", Color.accent)
-      textFromValue: function(value, locale) {
-        return String(root.prop("prefix", "")) + Number(value).toLocaleString(locale, "f", decimals) + String(root.prop("suffix", ""))
-      }
-      valueFromText: function(text, locale) {
-        var prefix = String(root.prop("prefix", ""))
-        var suffix = String(root.prop("suffix", ""))
-        var numeric = String(text)
-        if (prefix.length > 0 && numeric.indexOf(prefix) === 0) numeric = numeric.slice(prefix.length)
-        if (suffix.length > 0 && numeric.lastIndexOf(suffix) === numeric.length - suffix.length) numeric = numeric.slice(0, -suffix.length)
-        return Number.fromLocaleString(locale, numeric)
-      }
-      onValueModified: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value })
-      up.onPressedChanged: {
-        if (up.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "increase", { value: value })
-      }
-      down.onPressedChanged: {
-        if (down.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "decrease", { value: value })
-      }
-    }
+    Builtins.DoubleSpinBox { renderer: root }
   }
 
   Component {
     id: dropdownComponent
-    OmarchyUi.Dropdown {
-      label: root.escapeAutoText(root.prop("label", "")); value: String(root.prop("value", "")); options: root.prop("options", [])
-      implicitWidth: Number(root.prop("width", 240)); foreground: root.prop("foreground", root.foreground)
-      background: root.prop("background", Color.popups.background); popupBorder: root.prop("popup_border", Color.popups.border)
-      accent: root.prop("accent", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
-      rowHeight: Number(root.prop("row_height", Style.spacing.controlHeight)); popupRowHeight: Number(root.prop("popup_row_height", Style.spacing.popupRowHeight))
-      showLabel: root.prop("show_label", true) !== false; hasCursor: root.prop("cursor", false) === true
-      onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.Dropdown { renderer: root }
   }
 
   Component {
     id: multiSelectComponent
-    OmarchyUi.MultiSelect {
-      label: root.escapeAutoText(root.prop("label", "")); values: root.prop("values", []); options: root.prop("options", [])
-      placeholderText: String(root.prop("placeholder", "Search...")); enabled: root.prop("enabled", true) !== false
-      optionsCommand: root.prop("options_command", []); optionsCommandCwd: String(root.prop("options_command_cwd", ""))
-      emptyText: String(root.prop("empty_text", "No options")); noSelectionText: String(root.prop("no_selection_text", "None selected"))
-      triggerLabel: String(root.prop("trigger_label", "")); showLabel: root.prop("show_label", true) !== false
-      implicitWidth: Number(root.prop("width", 240)); foreground: root.prop("foreground", root.foreground)
-      background: root.prop("background", Color.popups.background); popupBorder: root.prop("popup_border", Color.popups.border)
-      accent: root.prop("accent", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
-      rowHeight: Number(root.prop("row_height", Style.spacing.controlHeight)); popupRowHeight: Number(root.prop("popup_row_height", Style.spacing.popupRowHeight))
-      popupMinHeight: Number(root.prop("popup_min_height", Style.spacing.searchablePopupMinHeight)); hasCursor: root.prop("cursor", false) === true
-      onChanged: function(values) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: values }) }
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.MultiSelect { renderer: root }
   }
 
   Component {
     id: buttonGroupComponent
-    OmarchyUi.ButtonGroup {
-      value: String(root.prop("value", "")); options: root.prop("options", [])
-      foreground: root.prop("foreground", root.foreground); background: root.prop("background", Color.background)
-      accent: root.prop("accent", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
-      fontSize: Number(root.prop("font_size", Style.font.body)); focusable: root.prop("focusable", true) !== false
-      cursorIndex: Number(root.prop("cursor_index", -1))
-      onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
-      onHovered: function(index, value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { index: index, value: value }) }
-    }
+    Builtins.ButtonGroup { renderer: root }
   }
 
   Component {
     id: progressComponent
-    Rectangle {
-      property real minimum: Number(root.prop("minimum", 0)); property real maximum: Number(root.prop("maximum", 1))
-      implicitWidth: Number(root.prop("width", 200)); implicitHeight: Number(root.prop("height", 6)); radius: height / 2
-      color: Qt.rgba(root.foreground.r, root.foreground.g, root.foreground.b, 0.18)
-      Rectangle { width: parent.width * Math.max(0, Math.min(1, (Number(root.prop("value", 0)) - parent.minimum) / Math.max(0.000001, parent.maximum - parent.minimum))); height: parent.height; radius: parent.radius; color: root.prop("color", root.foreground) }
-    }
+    Builtins.Progress { renderer: root }
   }
 
-  Component { id: separatorComponent; OmarchyUi.PanelSeparator { foreground: root.foreground; strength: Number(root.prop("strength", 0.12)) } }
+  Component {
+    id: separatorComponent
+    Builtins.Separator { renderer: root }
+  }
   Component {
     id: dividerComponent
-    Item {
-      readonly property bool vertical: String(root.prop("orientation", "horizontal")) === "vertical"
-      readonly property real lineLength: Number(root.prop("length", 240))
-      readonly property real lineThickness: Number(root.prop("thickness", Style.normalBorderWidth))
-      readonly property real leadingIndent: Number(root.prop("indent", 0))
-      readonly property real trailingIndent: Number(root.prop("end_indent", 0))
-      implicitWidth: vertical ? lineThickness : lineLength
-      implicitHeight: vertical ? lineLength : lineThickness
-      Rectangle {
-        x: parent.vertical ? 0 : parent.leadingIndent
-        y: parent.vertical ? parent.leadingIndent : 0
-        width: parent.vertical ? parent.lineThickness : Math.max(0, parent.width - parent.leadingIndent - parent.trailingIndent)
-        height: parent.vertical ? Math.max(0, parent.height - parent.leadingIndent - parent.trailingIndent) : parent.lineThickness
-        color: root.prop("color", root.foreground)
-        opacity: Number(root.prop("opacity", 0.2))
-      }
-    }
+    Builtins.Divider { renderer: root }
   }
-  Component { id: sectionHeaderComponent; OmarchyUi.PanelSectionHeader { text: root.escapeAutoText(root.prop("text", "")); foreground: root.foreground; fontFamily: root.fontFamily } }
+  Component {
+    id: sectionHeaderComponent
+    Builtins.SectionHeader { renderer: root }
+  }
 
   Component {
     id: searchableDropdownComponent
-    OmarchyUi.SearchableDropdown {
-      label: root.escapeAutoText(root.prop("label", "")); value: String(root.prop("value", "")); options: root.prop("options", [])
-      placeholderText: String(root.prop("placeholder", "Search...")); emptyText: String(root.prop("empty_text", "No matches"))
-      triggerLabel: String(root.prop("trigger_label", "")); implicitWidth: Number(root.prop("width", 240))
-      foreground: root.prop("foreground", root.foreground); background: root.prop("background", Color.popups.background)
-      popupBorder: root.prop("popup_border", Color.popups.border); accent: root.prop("accent", Color.accent)
-      fontFamily: String(root.prop("font_family", root.fontFamily)); rowHeight: Number(root.prop("row_height", Style.spacing.controlHeight))
-      popupRowHeight: Number(root.prop("popup_row_height", Style.spacing.popupRowHeight)); popupMinHeight: Number(root.prop("popup_min_height", Style.spacing.searchablePopupMinHeight))
-      showLabel: root.prop("show_label", true) !== false; hasCursor: root.prop("cursor", false) === true
-      onChanged: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
-      onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
-    }
+    Builtins.SearchableDropdown { renderer: root }
   }
 
   Component {
     id: confirmDialogComponent
-    OmarchyUi.ConfirmDialog {
-      opened: root.prop("opened", false) === true; message: String(root.prop("message", ""))
-      cancelText: String(root.prop("cancel_text", "Cancel")); confirmText: String(root.prop("confirm_text", "Confirm"))
-      selectedIndex: Number(root.prop("selected_index", 1)); visible: root.prop("visible", true) !== false
-      background: root.prop("background", Color.background); foreground: root.prop("foreground", root.foreground)
-      scrim: root.prop("scrim", Util.alpha(Color.background, 0.7)); selectedBackground: root.prop("selected_background", Util.alpha(root.foreground, 0.08))
-      selectedText: root.prop("selected_text", Color.accent); fontFamily: String(root.prop("font_family", root.fontFamily))
-      cornerRadius: Number(root.prop("corner_radius", Style.cornerRadius))
-      onCanceled: root.bridge.sendEvent(root.surfaceName, root.controlId, "cancel", {})
-      onConfirmed: root.bridge.sendEvent(root.surfaceName, root.controlId, "confirm", {})
-    }
+    Builtins.ConfirmDialog { renderer: root }
   }
 
   Component {
     id: panelHeroComponent
-    OmarchyUi.PanelHero {
-      title: root.escapeAutoText(root.prop("title", "")); meta: root.escapeAutoText(root.prop("meta", "")); detail: root.escapeAutoText(root.prop("detail", ""))
-      iconSize: Number(root.prop("icon_size", Style.font.display)); iconOpacity: Number(root.prop("icon_opacity", 1))
-      metaOpacity: Number(root.prop("meta_opacity", 1)); foreground: root.prop("foreground", root.foreground)
-      fontFamily: String(root.prop("font_family", root.fontFamily))
-    }
+    Builtins.PanelHero { renderer: root }
   }
 
-  Component { id: opticalGlyphComponent; OmarchyUi.OpticalGlyph { text: root.iconGlyph(root.prop("text", "")); fontSize: Number(root.prop("size", Style.font.body)); color: root.prop("color", root.foreground); debugBounds: root.prop("debug_bounds", false) === true; fontFamily: root.fontFamily } }
+  Component {
+    id: opticalGlyphComponent
+    Builtins.OpticalGlyph { renderer: root }
+  }
 
   Component {
     id: cursorSurfaceComponent
-    OmarchyUi.CursorSurface {
-      implicitWidth: Number(root.prop("width", contentItem.implicitWidth)); implicitHeight: Number(root.prop("height", contentItem.implicitHeight))
-      current: root.prop("current", false) === true; outline: root.prop("outline", false) === true; bordered: root.prop("bordered", false) === true
-      hasCursor: root.prop("cursor", false) === true; foreground: root.prop("foreground", root.foreground)
-      accent: root.prop("accent", Color.accent); fill: root.prop("fill", Style.hoverFillFor(foreground, accent))
-      currentFill: root.prop("current_fill", Style.selectedFillFor(foreground, accent))
-      Column { id: contentItem; anchors.centerIn: parent; Repeater { model: root.node.children || []; delegate: childDelegate } }
-      MouseArea { anchors.fill: parent; onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {}) }
-    }
+    Builtins.CursorSurface { renderer: root }
   }
 
   Component {
     id: widgetButtonComponent
-    OmarchyUi.WidgetButton {
-      text: root.escapeAutoText(root.prop("text", "")); tooltipText: root.escapeAutoText(root.prop("tooltip", "")); active: root.prop("active", false) === true
-      dimmed: root.prop("dimmed", false) === true; concealed: root.prop("concealed", false) === true
-      interactive: root.prop("interactive", true) !== false; pressable: root.prop("pressable", true) !== false
-      fontFamily: String(root.prop("font_family", root.fontFamily)); fontSize: Number(root.prop("font_size", Style.font.body))
-      foreground: root.prop("foreground", root.foreground); activeColor: root.prop("active_color", Color.urgent)
-      horizontalMargin: Number(root.prop("horizontal_margin", 8.5)); verticalPadding: Number(root.prop("vertical_padding", 6))
-      fixedWidth: Number(root.prop("fixed_width", -1)); fixedHeight: Number(root.prop("fixed_height", -1)); textRotation: Number(root.prop("text_rotation", 0))
-      keepSpace: root.prop("keep_space", false) === true; useActiveColor: root.prop("use_active_color", true) !== false
-      maintainIndicatorReveal: root.prop("maintain_indicator_reveal", false) === true
-      labelVisible: root.prop("label_visible", true) !== false; hasVisualContent: root.prop("has_visual_content", text !== "") === true
-      onPressed: function(button) {
-        var eventName = button === Qt.RightButton ? "right_click" : (button === Qt.MiddleButton ? "middle_click" : "click")
-        root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
-      }
-      onWheelMoved: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
-    }
+    Builtins.WidgetButton { renderer: root }
   }
 
   Component {
     id: listViewComponent
-    ListView {
-      id: listControl
-      readonly property var sourceItems: root.prop("items", [])
-      readonly property string keyField: String(root.prop("key_field", "id"))
-      readonly property string labelField: String(root.prop("label_field", "label"))
-      readonly property string descriptionField: String(root.prop("description_field", "description"))
-      readonly property string iconField: String(root.prop("icon_field", "icon"))
-      implicitWidth: Number(root.prop("width", 280)); implicitHeight: Number(root.prop("height", 240))
-      orientation: String(root.prop("orientation", "vertical")) === "horizontal" ? ListView.Horizontal : ListView.Vertical
-      spacing: Number(root.prop("spacing", Style.spacing.labelGap)); clip: true; model: sourceItems
-      currentIndex: {
-        var selected = root.prop("selected", null)
-        for (var i = 0; i < sourceItems.length; i++) {
-          var item = sourceItems[i]
-          var key = typeof item === "object" ? item[keyField] : item
-          if (key === selected) return i
-        }
-        return -1
-      }
-      onContentXChanged: if (moving) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", { x: contentX, y: contentY })
-      onContentYChanged: if (moving) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", { x: contentX, y: contentY })
-
-      delegate: OmarchyUi.CursorSurface {
-        required property var modelData
-        required property int index
-        readonly property var value: typeof modelData === "object" ? modelData[listControl.keyField] : modelData
-        width: listControl.orientation === ListView.Vertical ? listControl.width : implicitWidth
-        implicitWidth: rowContent.implicitWidth + Style.spacing.rowPaddingX * 2
-        implicitHeight: Math.max(Style.spacing.controlHeight, rowContent.implicitHeight + Style.spacing.controlPaddingY * 2)
-        current: index === listControl.currentIndex
-        foreground: root.foreground
-        Row {
-          id: rowContent
-          anchors.centerIn: parent
-          spacing: Style.spacing.controlGap
-          Text { visible: text !== ""; text: root.iconGlyph(typeof modelData === "object" ? modelData[listControl.iconField] : ""); textFormat: Text.PlainText; color: root.foreground; font.family: root.fontFamily }
-          Column {
-            Text { text: String(typeof modelData === "object" ? (modelData[listControl.labelField] ?? value) : modelData); textFormat: Text.PlainText; color: root.foreground; font.family: root.fontFamily }
-            Text { visible: text !== ""; text: String(typeof modelData === "object" ? (modelData[listControl.descriptionField] || "") : ""); textFormat: Text.PlainText; color: Qt.darker(root.foreground, 1.4); font.family: root.fontFamily; font.pixelSize: Style.font.caption }
-          }
-        }
-        MouseArea {
-          anchors.fill: parent
-          onClicked: {
-            listControl.currentIndex = index
-            root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: parent.value, index: index, item: modelData })
-            root.bridge.sendEvent(root.surfaceName, root.controlId, "activate", { value: parent.value, index: index, item: modelData })
-          }
-        }
-      }
-
-      Text {
-        anchors.centerIn: parent; visible: listControl.count === 0
-        text: String(root.prop("empty_text", "No items")); textFormat: Text.PlainText; color: Qt.darker(root.foreground, 1.4); font.family: root.fontFamily
-      }
-    }
+    Builtins.ListView { renderer: root }
   }
 }

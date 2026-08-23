@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.metadata["release_status"] = "experimental"
   spec.metadata["rubygems_mfa_required"] = "true"
   spec.required_ruby_version = ">= 3.1"
-  spec.files = Dir["bin/*", "lib/**/*.rb", "*.qml", "Components/**/*", "vendor/runtime/**/*", "manifest.json", "README.md", "LICENSE"]
+  spec.files = Dir["bin/*", "lib/**/*.rb", "*.qml", "Components/**/*", "vendor/runtime/**/*", "README.md", "LICENSE"]
   spec.require_paths = ["lib"]
   spec.bindir = "bin"
   spec.executables = ["omarchy_ui"]
