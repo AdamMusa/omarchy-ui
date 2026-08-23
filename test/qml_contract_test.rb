@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 124, renderer_names.length
+    assert_equal 125, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1273,5 +1273,24 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'reportDismiss("close_policy")'
     assert_includes renderer, "delegate: childDelegate"
     assert_includes renderer, 'property: modalSheetRoot.horizontalEdge ? "y" : "x"'
+  end
+
+  def test_snackbar_has_a_specific_timed_action_popup_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "snackbar"'
+    assert_includes renderer, "id: snackbarComponent"
+    assert_includes renderer, "id: snackbarRoot"
+    assert_includes renderer, 'root.prop("position", "bottom_center")'
+    assert_includes renderer, 'root.prop("duration", 4000)'
+    assert_includes renderer, 'root.prop("persistent", false)'
+    assert_includes renderer, "function pauseTimeout()"
+    assert_includes renderer, "function resumeTimeout()"
+    assert_includes renderer, "HoverHandler {"
+    assert_includes renderer, "id: dismissTimer"
+    assert_includes renderer, '"action", {}'
+    assert_includes renderer, '"timeout", {}'
+    assert_includes renderer, 'snackbarRoot.dismiss("action")'
+    assert_includes renderer, 'snackbarRoot.dismiss("timeout")'
   end
 end

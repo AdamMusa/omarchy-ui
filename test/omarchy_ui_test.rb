@@ -2468,6 +2468,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_snackbar_is_a_typed_timed_feedback_control
+    application = OmarchyUI::Application.new do
+      app do
+        snackbar "Changes saved", id: :saved_notice, opened: true,
+                 action_text: "Undo", duration: 6500,
+                 position: :top_right, pause_on_hover: true,
+                 close_on_action: false
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "snackbar", node.fetch("type")
+    assert_equal "saved_notice", node.fetch("id")
+    assert_equal "Changes saved", node.dig("props", "message")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal "Undo", node.dig("props", "action_text")
+    assert_equal 6500, node.dig("props", "duration")
+    assert_equal "top_right", node.dig("props", "position")
+    assert_equal true, node.dig("props", "pause_on_hover")
+    assert_equal false, node.dig("props", "close_on_action")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

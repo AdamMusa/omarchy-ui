@@ -228,6 +228,11 @@ window edge. Its responsive dimensions, edge, header, close affordance, styling,
 opening state are reactive. Escape, outside-click, and close-button dismissal are configurable;
 Ruby receives both lifecycle events and a reason-bearing `dismiss` event.
 
+`snackbar(message, ...)` displays short-lived feedback in a native popup with optional action text.
+Placement, timeout, persistent mode, hover pausing, action-close behavior, responsive width,
+styling, and transitions are reactive. Ruby receives separate `action`, `timeout`, `dismiss`,
+open/close, visibility, and hover events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
