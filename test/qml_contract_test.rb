@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 109, renderer_names.length
+    assert_equal 110, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -997,5 +997,23 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"next"'
     assert_includes renderer, '"select", payload'
     assert_includes renderer, '"change", payload'
+  end
+
+  def test_expansion_panel_has_a_specific_native_reveal_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "expansion_panel"'
+    assert_includes renderer, "id: expansionPanelComponent"
+    assert_includes renderer, "QQC.Control {"
+    assert_includes renderer, "QQC.ToolButton {"
+    assert_includes renderer, 'root.prop("expanded", false) === true'
+    assert_includes renderer, 'root.prop("title", "")'
+    assert_includes renderer, 'root.prop("subtitle", "")'
+    assert_includes renderer, "Behavior on height"
+    assert_includes renderer, 'root.easingType(root.prop("easing", "in_out_quad"))'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, '"toggle", payload'
+    assert_includes renderer, '"change", payload'
+    assert_includes renderer, 'expanded ? "expand" : "collapse"'
   end
 end

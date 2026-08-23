@@ -148,6 +148,11 @@ It clamps selection to the available count, renders a sibling window with ellips
 sets, and optionally exposes previous/next and first/last controls. Labels, spacing, geometry,
 typography, colors, and visibility are reactive; navigation emits directional and selection events.
 
+`expansion_panel(title, expanded: ...) { ... }` provides a native clickable header and a Ruby child
+content region. Title/subtitle typography, expanded state, reveal animation duration/easing,
+spacing, padding, dimensions, colors, border, radius, enabled state, and visibility are reactive.
+User activation emits `toggle`/`change` plus the directional `expand` or `collapse` event.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

@@ -6,7 +6,7 @@ module OmarchyUI
     CONTAINERS = %i[
       row column container grid row_layout column_layout grid_layout flow center card
       stack scroll rectangle aspect_ratio constrained_box fitted_box wrap split_view stack_layout loader flickable focus_scope flipable border_image key_catcher
-      page pane frame group_box tabs stack_view swipe_view drawer
+      page pane frame group_box tabs stack_view swipe_view drawer expansion_panel
     ].freeze
     VALUE_INPUTS = {
       text_field: :text,
@@ -162,6 +162,9 @@ module OmarchyUI
     end
     def pagination(count, id: nil, **props)
       component(:pagination, id:, count:, **props)
+    end
+    def expansion_panel(title = "", id: nil, **props, &block)
+      component(:expansion_panel, id:, title: title.to_s, **props, &block)
     end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s

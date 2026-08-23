@@ -2044,6 +2044,32 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_expansion_panel_is_a_typed_native_reveal_container
+    application = OmarchyUI::Application.new do
+      app do
+        expansion_panel "Advanced", id: :advanced_panel, subtitle: "Optional settings",
+                        expanded: true, duration: 180, easing: :out_cubic do
+          text "Advanced content"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "expansion_panel", node.fetch("type")
+    assert_equal "advanced_panel", node.fetch("id")
+    assert_equal "Advanced", node.dig("props", "title")
+    assert_equal "Optional settings", node.dig("props", "subtitle")
+    assert_equal true, node.dig("props", "expanded")
+    assert_equal 180, node.dig("props", "duration")
+    assert_equal "out_cubic", node.dig("props", "easing")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
