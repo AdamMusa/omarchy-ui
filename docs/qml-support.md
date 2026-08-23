@@ -180,6 +180,10 @@ Enabled/checkable/checked/highlighted state, icon, keyboard shortcut, geometry, 
 border, radius, and visibility are reactive. Trigger, toggle/change, pointer, hover, highlight, and
 focus events include the Ruby value and current checked state.
 
+`menu_separator(...)` is the native Qt Controls menu-specific separator. Its line thickness,
+available width/height, padding, color, opacity, enabled state, and visibility are reactive, and
+visibility transitions emit `show` or `hide` when subscribed.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

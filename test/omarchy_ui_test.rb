@@ -2205,6 +2205,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_menu_separator_is_a_typed_native_menu_control
+    application = OmarchyUI::Application.new do
+      app do
+        menu_separator id: :file_group_separator, thickness: 2,
+                       width: 260, padding: 10, color: "#89b482", opacity: 0.5
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "menu_separator", node.fetch("type")
+    assert_equal "file_group_separator", node.fetch("id")
+    assert_equal 2, node.dig("props", "thickness")
+    assert_equal 260, node.dig("props", "width")
+    assert_equal 10, node.dig("props", "padding")
+    assert_equal "#89b482", node.dig("props", "color")
+    assert_equal 0.5, node.dig("props", "opacity")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
