@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 118, renderer_names.length
+    assert_equal 119, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1158,5 +1158,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"toggle", contextRoot.entryPayload'
     assert_includes renderer, '"open", {}'
     assert_includes renderer, '"close", {}'
+  end
+
+  def test_popup_has_a_specific_native_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "popup"'
+    assert_includes renderer, "id: popupComponent"
+    assert_includes renderer, "QQC.Popup {"
+    assert_includes renderer, 'root.prop("opened", false) === true'
+    assert_includes renderer, 'modal: root.prop("modal", false) === true'
+    assert_includes renderer, 'dim: root.prop("dim", modal) !== false'
+    assert_includes renderer, 'focus: root.prop("focus", true) !== false'
+    assert_includes renderer, 'closePolicyValue(root.prop("close_policy", "escape_and_outside"))'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, "enter: Transition {"
+    assert_includes renderer, "exit: Transition {"
+    assert_includes renderer, 'root.easingType(root.prop("easing", "out_cubic"))'
+    assert_includes renderer, '"open", {}'
+    assert_includes renderer, '"close", {}'
+    assert_includes renderer, '"position_change", { x: x, y: y }'
   end
 end

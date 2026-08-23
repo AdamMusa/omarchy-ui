@@ -196,6 +196,11 @@ programmatic opening and the complete `menu` item schema, position, close policy
 `request` reports the pointer coordinates before opening; trigger/toggle/highlight and popup
 lifecycle events retain the selected item data.
 
+`popup(opened: ...) { ... }` exposes native Qt Controls `Popup` ownership for arbitrary Ruby child
+controls. Position, size, modal/dim/focus behavior, escape/outside close policy, row/column/stack
+layout, spacing, padding, styling, and enter/exit animation are reactive. Ruby receives open/close,
+about-to-show/hide, visibility, focus, and position events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

@@ -2296,6 +2296,36 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_popup_is_a_typed_native_content_container
+    application = OmarchyUI::Application.new do
+      app do
+        popup id: :details_popup, opened: true, x: 24, y: 36,
+              modal: true, dim: true, layout: :column, spacing: 10,
+              animated: true, duration: 180, easing: :out_cubic do
+          text "Popup content"
+          button "Done"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "popup", node.fetch("type")
+    assert_equal "details_popup", node.fetch("id")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal 24, node.dig("props", "x")
+    assert_equal 36, node.dig("props", "y")
+    assert_equal true, node.dig("props", "modal")
+    assert_equal "column", node.dig("props", "layout")
+    assert_equal 180, node.dig("props", "duration")
+    assert_equal "out_cubic", node.dig("props", "easing")
+    assert_equal %w[text button], node.fetch("children").map { |child| child.fetch("type") }
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
