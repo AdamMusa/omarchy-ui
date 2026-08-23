@@ -157,6 +157,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"flick_end", positionPayload()'
   end
 
+  def test_focus_scope_has_a_specific_native_focus_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "focus_scope"'
+    assert_includes renderer, "id: focusScopeComponent"
+    assert_includes renderer, "FocusScope {"
+    assert_includes renderer, "forceActiveFocus()"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

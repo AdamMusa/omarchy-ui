@@ -5,7 +5,7 @@ module OmarchyUI
     UNSET = Object.new.freeze
     CONTAINERS = %i[
       row column container grid row_layout column_layout grid_layout flow center card
-      stack scroll rectangle aspect_ratio constrained_box fitted_box wrap split_view stack_layout loader flickable key_catcher
+      stack scroll rectangle aspect_ratio constrained_box fitted_box wrap split_view stack_layout loader flickable focus_scope key_catcher
     ].freeze
     VALUE_INPUTS = {
       text_field: :text,

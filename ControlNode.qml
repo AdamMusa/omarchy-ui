@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -201,6 +201,7 @@ Loader {
     if (node.type === "stack_layout") return stackLayoutComponent
     if (node.type === "loader") return lazyLoaderComponent
     if (node.type === "flickable") return flickableComponent
+    if (node.type === "focus_scope") return focusScopeComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -709,6 +710,30 @@ Loader {
       Column {
         id: flickContent
         spacing: Style.spacing.panelGap
+        Repeater { model: root.node.children || []; delegate: childDelegate }
+      }
+    }
+  }
+
+  Component {
+    id: focusScopeComponent
+    FocusScope {
+      id: nativeFocusScope
+      implicitWidth: Number(root.prop("width", focusContent.implicitWidth))
+      implicitHeight: Number(root.prop("height", focusContent.implicitHeight))
+      focus: root.prop("focus", false) === true
+      function syncRequestedFocus() {
+        if (root.prop("active_focus", false) === true) forceActiveFocus()
+      }
+      onActiveFocusChanged: {
+        root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: activeFocus })
+      }
+      Component.onCompleted: syncRequestedFocus()
+      Connections { target: root; function onNodeChanged() { nativeFocusScope.syncRequestedFocus() } }
+      Item {
+        id: focusContent
+        implicitWidth: childrenRect.width
+        implicitHeight: childrenRect.height
         Repeater { model: root.node.children || []; delegate: childDelegate }
       }
     }

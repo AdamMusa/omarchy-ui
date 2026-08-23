@@ -176,6 +176,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `stack_layout` | `current_index` and dimensions; displays one child page at a time | `click`, `change` | yes |
 | `loader` | `active`, `asynchronous`, optional dimensions; lazily creates its first child | `click`, `loaded`, `status` | yes |
 | `flickable` | viewport/content dimensions, direction, bounds behavior, interaction and clipping | `click`, `scroll`, `flick_start`, `flick_end` | yes |
+| `focus_scope` | `focus`, `active_focus`, optional dimensions; establishes a keyboard-focus boundary | `click`, `focus`, `blur` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |

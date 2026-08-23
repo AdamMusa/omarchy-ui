@@ -217,6 +217,25 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_focus_scope_is_a_typed_focus_container
+    application = OmarchyUI::Application.new do
+      app do
+        focus_scope active_focus: true do
+          text_field "ready"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "focus_scope", node.fetch("type")
+    assert_equal true, node.dig("props", "active_focus")
+    assert_equal "text_field", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do
