@@ -243,6 +243,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "animations.paused"
   end
 
+  def test_font_loader_has_a_specific_native_resource_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "font_loader"'
+    assert_includes renderer, "id: fontLoaderComponent"
+    assert_includes renderer, "FontLoader {"
+    assert_includes renderer, '"loaded", { name: name }'
+  end
+
   def test_video_has_a_specific_native_multimedia_renderer
     renderer = source("ControlNode.qml")
 

@@ -188,6 +188,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
 | `image` | `source`, `fill_mode` | — | no |
 | `vector_image` | source, dimensions/fill, geometry/curve renderer, trust policy, async shapes and animation controls | `source_change` | no |
+| `font_loader` | local or remote font source | `loaded`, `error`, `status` with resolved family name | no |
 | `animated_image` | source, dimensions/fill, playback, pause, speed, async/cache/mirror/smoothing | `frame`, `loaded`, `error`, `status` | no |
 | `video` | source, dimensions/fill, autoplay, loops, volume/mute, rate, orientation and mirroring | `play`, `pause`, `stop`, `error`, `position`, `duration` | no |
 | `audio` | source, autoplay/reactive playback command, loops, volume/mute and playback rate | `play`, `pause`, `stop`, `error`, `position`, `duration` | no |

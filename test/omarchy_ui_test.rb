@@ -389,6 +389,20 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_font_loader_is_a_typed_native_font_resource
+    application = OmarchyUI::Application.new do
+      app { font_loader "fonts/Inter.woff2" }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "font_loader", node.fetch("type")
+    assert_equal "fonts/Inter.woff2", node.dig("props", "source")
+  ensure
+    application&.stop
+  end
+
   def test_video_is_a_typed_native_multimedia_component
     application = OmarchyUI::Application.new do
       app { video "intro.mp4", auto_play: true, volume: 0.7, fill_mode: :cover }

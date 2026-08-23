@@ -20,7 +20,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "vector_image", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "vector_image", "font_loader", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
@@ -207,6 +207,7 @@ Loader {
     if (node.type === "container") return containerComponent
     if (node.type === "image") return imageComponent
     if (node.type === "vector_image") return vectorImageComponent
+    if (node.type === "font_loader") return fontLoaderComponent
     if (node.type === "animated_image") return animatedImageComponent
     if (node.type === "video") return videoComponent
     if (node.type === "audio") return audioComponent
@@ -583,6 +584,22 @@ Loader {
       animations.paused: root.prop("animation_paused", false) === true
       onSourceChanged: {
         if (root.subscribed("source_change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "source_change", { value: source })
+      }
+    }
+  }
+
+  Component {
+    id: fontLoaderComponent
+    Item {
+      implicitWidth: 0
+      implicitHeight: 0
+      FontLoader {
+        source: String(root.prop("source", ""))
+        onStatusChanged: {
+          if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status, name: name })
+          if (status === FontLoader.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { name: name })
+          if (status === FontLoader.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
+        }
       }
     }
   }
