@@ -142,7 +142,7 @@ static mrb_value native_spawn(mrb_state *mrb, mrb_value self) {
 }
 
 void mrb_omarchy_ui_runtime_gem_init(mrb_state *mrb) {
-  struct RClass *module = mrb_define_module(mrb, "OmarchyUI");
+  struct RClass *module = mrb_define_module(mrb, "Zui");
   mrb_define_module_function(mrb, module, "native_command", native_command, MRB_ARGS_ARG(1, 2));
   mrb_define_module_function(mrb, module, "spawn_detached", native_spawn, MRB_ARGS_REQ(2));
 }
