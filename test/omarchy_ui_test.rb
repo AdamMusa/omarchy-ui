@@ -1519,6 +1519,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_time_picker_is_a_typed_native_time_input
+    application = OmarchyUI::Application.new do
+      app do
+        time_picker "14:35:20", label: "Reminder", use_24_hour: false,
+                    show_seconds: true, minute_step: 5, second_step: 10
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "time_picker", node.fetch("type")
+    assert_equal "14:35:20", node.dig("props", "time")
+    assert_equal "Reminder", node.dig("props", "label")
+    assert_equal false, node.dig("props", "use_24_hour")
+    assert_equal true, node.dig("props", "show_seconds")
+    assert_equal 5, node.dig("props", "minute_step")
+    assert_equal 10, node.dig("props", "second_step")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

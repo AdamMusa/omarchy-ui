@@ -42,6 +42,11 @@ the stable `YYYY-MM-DD` form while the visible text can use any `Qt.formatDate` 
 maximum dates, popup state and sizing, close-on-select behavior, and styling are reactive. Selection
 emits `input` and `change`; popup lifecycle and month navigation emit `open`, `close`, and `navigate`.
 
+`time_picker(time, ...)` uses Qt spin controls in a confirmation popup. It accepts `HH:MM` or
+`HH:MM:SS`, supports 12- and 24-hour display, optional seconds, configurable minute/second steps,
+reactive popup state and styling, and customizable action labels. Partial edits emit `input`; the
+actions emit `change` plus `accept`, or `reject`, followed by the popup lifecycle event.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

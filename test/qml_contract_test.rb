@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 88, renderer_names.length
+    assert_equal 89, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -664,5 +664,20 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"input", { value: value }'
     assert_includes renderer, '"change", { value: value }'
     assert_includes renderer, '"navigate", {'
+  end
+
+  def test_time_picker_has_a_specific_native_spin_control_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "time_picker"'
+    assert_includes renderer, "id: timePickerComponent"
+    assert_includes renderer, "QQC.SpinBox {"
+    assert_includes renderer, 'root.prop("use_24_hour", true)'
+    assert_includes renderer, 'root.prop("show_seconds", false)'
+    assert_includes renderer, '"input", { value: value }'
+    assert_includes renderer, '"change", { value: value }'
+    assert_includes renderer, '"accept", { value: value }'
+    assert_includes renderer, '"reject", {'
+    assert_includes renderer, "value: picker.formattedTime()"
   end
 end
