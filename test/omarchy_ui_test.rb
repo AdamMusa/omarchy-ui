@@ -373,6 +373,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_vector_image_is_a_typed_native_svg_component
+    application = OmarchyUI::Application.new do
+      app { vector_image "logo.svg", renderer: :curve, fill_mode: :contain, animation_loops: 3 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "vector_image", node.fetch("type")
+    assert_equal "logo.svg", node.dig("props", "source")
+    assert_equal "curve", node.dig("props", "renderer")
+    assert_equal 3, node.dig("props", "animation_loops")
+  ensure
+    application&.stop
+  end
+
   def test_video_is_a_typed_native_multimedia_component
     application = OmarchyUI::Application.new do
       app { video "intro.mp4", auto_play: true, volume: 0.7, fill_mode: :cover }

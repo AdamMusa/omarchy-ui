@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import QtMultimedia
+import QtQuick.VectorImage
 import qs.Commons
 import qs.Ui as OmarchyUi
 
@@ -19,7 +20,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "vector_image", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
@@ -205,6 +206,7 @@ Loader {
     if (node.type === "column") return columnComponent
     if (node.type === "container") return containerComponent
     if (node.type === "image") return imageComponent
+    if (node.type === "vector_image") return vectorImageComponent
     if (node.type === "animated_image") return animatedImageComponent
     if (node.type === "video") return videoComponent
     if (node.type === "audio") return audioComponent
@@ -557,6 +559,31 @@ Loader {
       height: Number(root.prop("height", 120))
       asynchronous: true
       fillMode: Image.PreserveAspectFit
+    }
+  }
+
+  Component {
+    id: vectorImageComponent
+    VectorImage {
+      source: String(root.prop("source", ""))
+      implicitWidth: Number(root.prop("width", 120))
+      implicitHeight: Number(root.prop("height", 120))
+      fillMode: {
+        var mode = String(root.prop("fill_mode", "contain"))
+        if (mode === "cover") return VectorImage.PreserveAspectCrop
+        if (mode === "stretch") return VectorImage.Stretch
+        if (mode === "none") return VectorImage.NoResize
+        return VectorImage.PreserveAspectFit
+      }
+      preferredRendererType: String(root.prop("renderer", "geometry")) === "curve"
+        ? VectorImage.CurveRenderer : VectorImage.GeometryRenderer
+      assumeTrustedSource: root.prop("trusted", false) === true
+      asynchronousShapes: root.prop("asynchronous_shapes", false) === true
+      animations.loops: Number(root.prop("animation_loops", 1))
+      animations.paused: root.prop("animation_paused", false) === true
+      onSourceChanged: {
+        if (root.subscribed("source_change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "source_change", { value: source })
+      }
     }
   }
 

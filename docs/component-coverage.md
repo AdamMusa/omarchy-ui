@@ -69,7 +69,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] divider
 - [x] markdown
 - [ ] web_view
-- [ ] vector_image
+- [x] vector_image
 - [ ] font_loader
 - [ ] text_metrics
 

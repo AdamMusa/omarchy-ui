@@ -233,6 +233,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"frame", { value: currentFrame, count: frameCount }'
   end
 
+  def test_vector_image_has_a_specific_native_svg_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, "import QtQuick.VectorImage"
+    assert_includes renderer, 'node.type === "vector_image"'
+    assert_includes renderer, "id: vectorImageComponent"
+    assert_includes renderer, "VectorImage.CurveRenderer"
+    assert_includes renderer, "animations.paused"
+  end
+
   def test_video_has_a_specific_native_multimedia_renderer
     renderer = source("ControlNode.qml")
 

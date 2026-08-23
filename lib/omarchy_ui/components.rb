@@ -43,6 +43,7 @@ module OmarchyUI
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],
     image: [%i[source width height fill_mode visible], [], false],
+    vector_image: [%i[source width height fill_mode renderer trusted asynchronous_shapes animation_loops animation_paused visible], %i[source_change], false],
     animated_image: [%i[source width height fill_mode playing paused speed asynchronous cache mirror smooth visible], %i[frame loaded error status], false],
     video: [%i[source width height auto_play loops volume muted playback_rate fill_mode orientation mirrored visible], %i[play pause stop error position duration], false],
     audio: [%i[source auto_play playback loops volume muted playback_rate visible], %i[play pause stop error position duration], false],
