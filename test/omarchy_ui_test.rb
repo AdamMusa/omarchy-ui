@@ -1863,6 +1863,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_page_indicator_is_a_typed_native_paging_control
+    application = OmarchyUI::Application.new do
+      app do
+        page_indicator 5, id: :carousel_position, current_index: 2,
+                          interactive: true, dot_size: 10, spacing: 6
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "page_indicator", node.fetch("type")
+    assert_equal "carousel_position", node.fetch("id")
+    assert_equal 5, node.dig("props", "count")
+    assert_equal 2, node.dig("props", "current_index")
+    assert_equal true, node.dig("props", "interactive")
+    assert_equal 10, node.dig("props", "dot_size")
+    assert_equal 6, node.dig("props", "spacing")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

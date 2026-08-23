@@ -114,6 +114,10 @@ typography, direction, visibility, and focus are independently configurable.
 enabled state, auto-exclusivity, icon/shortcut, geometry, typography, colors, border, radius, and
 visibility are reactive. Ruby receives click, checked-state, press/release, hover, and focus events.
 
+`page_indicator(count, current_index: ..., interactive: ...)` maps directly to native Qt Controls
+`PageIndicator`. Count, selection, interactivity, dot sizing/spacing, geometry, colors, radius,
+enabled state, and visibility are reactive; user selection emits `input` and `change`.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

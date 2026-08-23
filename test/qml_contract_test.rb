@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 102, renderer_names.length
+    assert_equal 103, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -877,5 +877,20 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"toggle", payload'
     assert_includes renderer, '"change", payload'
     assert_includes renderer, '"hover", { value: hovered }'
+  end
+
+  def test_page_indicator_has_a_specific_native_paging_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "page_indicator"'
+    assert_includes renderer, "id: pageIndicatorComponent"
+    assert_includes renderer, "QQC.PageIndicator {"
+    assert_includes renderer, 'count: Math.max(0, Number(root.prop("count", 0)))'
+    assert_includes renderer, 'root.prop("current_index", 0)'
+    assert_includes renderer, 'interactive: root.prop("interactive", false) === true'
+    assert_includes renderer, 'root.prop("dot_size", 8)'
+    assert_includes renderer, 'index === indicatorRoot.currentIndex'
+    assert_includes renderer, '"input", { value: currentIndex }'
+    assert_includes renderer, '"change", { value: currentIndex }'
   end
 end
