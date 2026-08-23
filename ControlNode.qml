@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -196,6 +196,7 @@ Loader {
     if (node.type === "aspect_ratio") return aspectRatioComponent
     if (node.type === "constrained_box") return constrainedBoxComponent
     if (node.type === "fitted_box") return fittedBoxComponent
+    if (node.type === "wrap") return wrapComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -593,6 +594,19 @@ Loader {
         transform: Scale { xScale: fittedXScale; yScale: fittedYScale }
         Repeater { model: root.node.children || []; delegate: childDelegate }
       }
+    }
+  }
+
+  Component {
+    id: wrapComponent
+    Flow {
+      implicitWidth: Number(root.prop("width", 420))
+      implicitHeight: root.prop("height", null) === null ? childrenRect.height : Number(root.prop("height", childrenRect.height))
+      spacing: Number(root.prop("spacing", Style.spacing.controlGap))
+      flow: String(root.prop("orientation", "horizontal")) === "vertical" ? Flow.TopToBottom : Flow.LeftToRight
+      layoutDirection: String(root.prop("layout_direction", "left_to_right")) === "right_to_left"
+        ? Qt.RightToLeft : Qt.LeftToRight
+      Repeater { model: root.node.children || []; delegate: childDelegate }
     }
   }
 

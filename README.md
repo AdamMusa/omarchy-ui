@@ -171,6 +171,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `aspect_ratio` | `ratio`, optional `width`/`height`, `clip` | `click` | yes |
 | `constrained_box` | dimensions plus `min_width`, `min_height`, `max_width`, `max_height`, `clip` | `click` | yes |
 | `fitted_box` | dimensions, `fit` (`contain`, `cover`, `fill`, `none`, `scale_down`), `alignment`, `clip` | `click` | yes |
+| `wrap` | dimensions, `spacing`, horizontal/vertical `orientation`, `layout_direction` | `click` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |

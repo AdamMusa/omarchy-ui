@@ -111,6 +111,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "Scale { xScale: fittedXScale; yScale: fittedYScale }"
   end
 
+  def test_wrap_has_a_specific_responsive_flow_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "wrap"'
+    assert_includes renderer, "id: wrapComponent"
+    assert_includes renderer, 'root.prop("layout_direction", "left_to_right")'
+    assert_includes renderer, "Flow.TopToBottom : Flow.LeftToRight"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'
