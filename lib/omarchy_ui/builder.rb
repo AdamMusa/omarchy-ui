@@ -172,6 +172,9 @@ module OmarchyUI
     def tool_bar(id: nil, **props, &block)
       component(:tool_bar, id:, **props, &block)
     end
+    def tool_separator(id: nil, **props)
+      component(:tool_separator, id:, **props)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

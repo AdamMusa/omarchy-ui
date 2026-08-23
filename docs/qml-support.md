@@ -164,6 +164,10 @@ supports header/footer position, row or column child layout, spacing, padding, g
 border, radius, layout direction, enabled state, and visibility. Click, position, visibility, and
 focus changes are available as Ruby events.
 
+`tool_separator(...)` maps to native Qt Controls `ToolSeparator`, independently of the generic
+`divider`. Orientation, line thickness/length, control padding, color, opacity, enabled state, and
+visibility are reactive; visibility transitions emit `show` and `hide` when subscribed.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

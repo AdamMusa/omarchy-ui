@@ -2125,6 +2125,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_tool_separator_is_a_typed_native_toolbar_control
+    application = OmarchyUI::Application.new do
+      app do
+        tool_separator id: :action_separator, orientation: :horizontal,
+                       thickness: 2, length: 48, padding: 6, color: "#89b482"
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "tool_separator", node.fetch("type")
+    assert_equal "action_separator", node.fetch("id")
+    assert_equal "horizontal", node.dig("props", "orientation")
+    assert_equal 2, node.dig("props", "thickness")
+    assert_equal 48, node.dig("props", "length")
+    assert_equal 6, node.dig("props", "padding")
+    assert_equal "#89b482", node.dig("props", "color")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

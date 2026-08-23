@@ -133,7 +133,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] expansion_panel
 - [x] accordion
 - [x] tool_bar
-- [ ] tool_separator
+- [x] tool_separator
 
 ## Menus, dialogs, and feedback
 

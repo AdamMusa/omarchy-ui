@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 112, renderer_names.length
+    assert_equal 113, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1048,5 +1048,20 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"position_change",'
     assert_includes renderer, '"footer" : "header"'
     assert_includes renderer, '"click", {}'
+  end
+
+  def test_tool_separator_has_a_specific_native_separator_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "tool_separator"'
+    assert_includes renderer, "id: toolSeparatorComponent"
+    assert_includes renderer, "QQC.ToolSeparator {"
+    assert_includes renderer, 'root.prop("orientation", "vertical")'
+    assert_includes renderer, 'orientation: String(root.prop("orientation", "vertical")) === "vertical"'
+    assert_includes renderer, 'root.prop("thickness", 1)'
+    assert_includes renderer, 'root.prop("length", 32)'
+    assert_includes renderer, 'root.prop("padding", 8)'
+    assert_includes renderer, 'root.prop("color", root.foreground)'
+    assert_includes renderer, 'visible ? "show" : "hide"'
   end
 end
