@@ -322,6 +322,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `switch_delegate` | native switch row with secondary text, animated track/thumb, selection styling and value-bearing state events | `activate`, `click`, `change`, `toggle`, pointer/focus/visibility |
 | `swipe_delegate` | native swipeable collection row with configurable left/right action lanes, programmatic opening and position/completion lifecycle | `left_action`, `right_action`, swipe lifecycle, activation/pointer/focus |
 | `grid_view` | native virtualized grid for Ruby arrays with field mapping, selection, keyboard navigation, flow/RTL, snapping, highlight and empty state | `activate`, `change`, current/count/highlight/scroll/movement lifecycle |
+| `table_view` | arbitrary-column native virtualized table backed by a dynamic Qt TableModel, with headers, selection, editing and navigation | cell/selection/edit/count/scroll/movement lifecycle |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

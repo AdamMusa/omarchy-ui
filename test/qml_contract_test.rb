@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 136, renderer_names.length
+    assert_equal 137, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1505,5 +1505,32 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"count_change", { value: count }'
     assert_includes renderer, '"movement_start", { x: contentX, y: contentY }'
     assert_includes renderer, '"movement_end", { x: contentX, y: contentY }'
+  end
+
+  def test_table_view_has_a_specific_dynamic_native_table_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "table_view"'
+    assert_includes renderer, "id: tableViewComponent"
+    assert_includes renderer, "id: tableControl"
+    assert_includes renderer, "TableView {"
+    assert_includes renderer, 'root.prop("rows", [])'
+    assert_includes renderer, 'root.prop("columns", [])'
+    assert_includes renderer, 'Qt.createQmlObject(modelSource(), tableRoot, "OmarchyUiDynamicTableModel")'
+    assert_includes renderer, 'TableModelColumn { display:'
+    assert_includes renderer, "created.rows = normalizedRows()"
+    assert_includes renderer, "ItemSelectionModel {"
+    assert_includes renderer, "TableView.SelectRows"
+    assert_includes renderer, "TableView.ExtendedSelection"
+    assert_includes renderer, "TableView.DoubleTapped"
+    assert_includes renderer, "delegate: QQC.TableViewDelegate {"
+    assert_includes renderer, "TableView.editDelegate: FocusScope {"
+    assert_includes renderer, "tableRoot.tableModel.setData(index, editor.text, Qt.EditRole)"
+    assert_includes renderer, '"cell_click", tableRoot.cellPayload'
+    assert_includes renderer, '"cell_double_click", payload'
+    assert_includes renderer, '"selection_change", payload'
+    assert_includes renderer, '"edit",'
+    assert_includes renderer, '"row_count_change", { value: rows }'
+    assert_includes renderer, '"column_count_change", { value: columns }'
   end
 end

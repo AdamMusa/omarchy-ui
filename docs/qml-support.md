@@ -292,6 +292,14 @@ padding, flow, RTL direction, snapping, bounds behavior, keyboard wrapping, high
 styling, and empty state are reactive. Ruby receives item activation/selection, current/count and
 highlight changes, scroll/movement lifecycle, focus, and visibility events.
 
+`table_view(rows, columns: ...) { |event| ... }` builds an arbitrary-width native QML `TableView`
+and a real `Qt.labs.qmlmodels.TableModel` from Ruby array or object rows. Columns may be names or
+metadata hashes with keys, labels, widths, alignment, and editability; omitted columns are inferred.
+Headers, dimensions, spacing, row/cell/column selection, editing triggers, alternating rows,
+virtualized item reuse, animation, keyboard/pointer navigation, styling, accessibility, and empty
+state are reactive. Ruby receives cell click/activation, selection/current/edit, row/column count,
+scroll/movement, focus, and visibility events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

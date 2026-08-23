@@ -282,6 +282,11 @@ module OmarchyUI
       @application.register_handler(node.id, :activate, handler) if handler
       node
     end
+    def table_view(rows = [], id: nil, columns: [], **props, &handler)
+      node = component(:table_view, id:, rows: Array(rows), columns: Array(columns), **props)
+      @application.register_handler(node.id, :activate, handler) if handler
+      node
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

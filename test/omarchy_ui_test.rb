@@ -2829,6 +2829,49 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_table_view_is_a_typed_arbitrary_column_native_table
+    rows = [
+      { name: "Ada", role: "Engineer", active: true },
+      { name: "Grace", role: "Scientist", active: false }
+    ]
+    columns = [
+      { key: :name, label: "Name", width: 180, editable: true },
+      { key: :role, label: "Role", width: 220 },
+      { key: :active, label: "Active", width: 100, alignment: :center, editable: false }
+    ]
+    application = OmarchyUI::Application.new do
+      app do
+        table_view rows, id: :people_table, columns: columns,
+                         selected_row: 1, selected_column: 0,
+                         selection_behavior: :rows, selection_mode: :extended,
+                         editable: true, edit_triggers: %i[double_tap edit_key],
+                         alternating_rows: true, row_height: 46
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "table_view", node.fetch("type")
+    assert_equal "people_table", node.fetch("id")
+    assert_equal 2, node.dig("props", "rows").length
+    assert_equal 3, node.dig("props", "columns").length
+    assert_equal "name", node.dig("props", "columns", 0, "key")
+    assert_equal "Name", node.dig("props", "columns", 0, "label")
+    assert_equal 180, node.dig("props", "columns", 0, "width")
+    assert_equal 1, node.dig("props", "selected_row")
+    assert_equal 0, node.dig("props", "selected_column")
+    assert_equal "rows", node.dig("props", "selection_behavior")
+    assert_equal "extended", node.dig("props", "selection_mode")
+    assert_equal true, node.dig("props", "editable")
+    assert_equal %w[double_tap edit_key], node.dig("props", "edit_triggers")
+    assert_equal true, node.dig("props", "alternating_rows")
+    assert_equal 46, node.dig("props", "row_height")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
