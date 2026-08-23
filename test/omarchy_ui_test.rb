@@ -2020,6 +2020,30 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_pagination_is_a_typed_native_bounded_page_control
+    application = OmarchyUI::Application.new do
+      app do
+        pagination 24, id: :result_pages, page: 7, sibling_count: 2,
+                       show_first_last: true, previous_text: "Back", next_text: "More"
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "pagination", node.fetch("type")
+    assert_equal "result_pages", node.fetch("id")
+    assert_equal 24, node.dig("props", "count")
+    assert_equal 7, node.dig("props", "page")
+    assert_equal 2, node.dig("props", "sibling_count")
+    assert_equal true, node.dig("props", "show_first_last")
+    assert_equal "Back", node.dig("props", "previous_text")
+    assert_equal "More", node.dig("props", "next_text")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

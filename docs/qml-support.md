@@ -143,6 +143,11 @@ with `label`, `value`, `icon`, `icon_source`, and `enabled`; the separator, curr
 spacing, geometry, typography, colors, and visibility are reactive. Segment activation emits
 `input`, `change`, and `select` with index, label, and value.
 
+`pagination(count, page: ...)` provides one-based page navigation built from native Qt Controls.
+It clamps selection to the available count, renders a sibling window with ellipses for large data
+sets, and optionally exposes previous/next and first/last controls. Labels, spacing, geometry,
+typography, colors, and visibility are reactive; navigation emits directional and selection events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

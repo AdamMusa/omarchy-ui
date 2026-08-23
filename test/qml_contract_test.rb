@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 108, renderer_names.length
+    assert_equal 109, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -977,6 +977,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("separator", "chevron_right")'
     assert_includes renderer, '"select", breadcrumbRoot.itemPayload(index)'
     assert_includes renderer, '"input", payload'
+    assert_includes renderer, '"change", payload'
+  end
+
+  def test_pagination_has_a_specific_native_bounded_page_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "pagination"'
+    assert_includes renderer, "id: paginationComponent"
+    assert_includes renderer, "QQC.Pane {"
+    assert_includes renderer, "QQC.ToolButton {"
+    assert_includes renderer, 'root.prop("count", 0)'
+    assert_includes renderer, 'root.prop("page", 1)'
+    assert_includes renderer, 'root.prop("sibling_count", 1)'
+    assert_includes renderer, "result.push(0)"
+    assert_includes renderer, 'root.prop("show_previous_next", true)'
+    assert_includes renderer, 'root.prop("show_first_last", false)'
+    assert_includes renderer, '"previous"'
+    assert_includes renderer, '"next"'
+    assert_includes renderer, '"select", payload'
     assert_includes renderer, '"change", payload'
   end
 end
