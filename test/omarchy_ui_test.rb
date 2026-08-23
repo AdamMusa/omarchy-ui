@@ -2729,6 +2729,36 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_switch_delegate_is_a_typed_native_toggle_collection_row
+    application = OmarchyUI::Application.new do
+      app do
+        switch_delegate "Automatic updates", id: :automatic_updates,
+                        value: :automatic_updates, checked: true,
+                        description: "Install security updates automatically",
+                        indicator_width: 48, indicator_height: 26,
+                        thumb_size: 20, animated: true, duration: 180
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "switch_delegate", node.fetch("type")
+    assert_equal "automatic_updates", node.fetch("id")
+    assert_equal "Automatic updates", node.dig("props", "text")
+    assert_equal "automatic_updates", node.dig("props", "value")
+    assert_equal true, node.dig("props", "checked")
+    assert_equal "Install security updates automatically", node.dig("props", "description")
+    assert_equal 48, node.dig("props", "indicator_width")
+    assert_equal 26, node.dig("props", "indicator_height")
+    assert_equal 20, node.dig("props", "thumb_size")
+    assert_equal true, node.dig("props", "animated")
+    assert_equal 180, node.dig("props", "duration")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

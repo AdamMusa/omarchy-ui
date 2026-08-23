@@ -274,6 +274,12 @@ selection/highlight, secondary text, indicator geometry/colors, accessibility, a
 state. Ruby receives value-bearing selection, activation, change/toggle, pointer, focus, and
 visibility events.
 
+`switch_delegate(text, checked: ..., value: ...) { |event| ... }` maps to the native Qt Quick
+`SwitchDelegate`. It combines primary/secondary row content with an animated track/thumb indicator,
+reactive checked and selection/highlight state, fully configurable colors/geometry, accessibility,
+and keyboard/pointer semantics. Ruby receives value-bearing activation, toggle/change, pointer,
+focus, and visibility events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
