@@ -148,6 +148,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.subscribed("loaded")'
   end
 
+  def test_flickable_has_a_specific_native_kinetic_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "flickable"'
+    assert_includes renderer, "id: flickableComponent"
+    assert_includes renderer, "Flickable.HorizontalAndVerticalFlick"
+    assert_includes renderer, '"flick_end", positionPayload()'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

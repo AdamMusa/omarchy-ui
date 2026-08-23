@@ -197,6 +197,26 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_flickable_is_a_typed_kinetic_scroll_container
+    application = OmarchyUI::Application.new do
+      app do
+        flickable width: 400, height: 260, direction: :both, bounds_behavior: :overshoot do
+          column { text "Scrollable" }
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "flickable", node.fetch("type")
+    assert_equal "both", node.dig("props", "direction")
+    assert_equal "overshoot", node.dig("props", "bounds_behavior")
+    assert_equal "column", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do

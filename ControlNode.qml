@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -200,6 +200,7 @@ Loader {
     if (node.type === "split_view") return splitViewComponent
     if (node.type === "stack_layout") return stackLayoutComponent
     if (node.type === "loader") return lazyLoaderComponent
+    if (node.type === "flickable") return flickableComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -674,6 +675,41 @@ Loader {
       onStatusChanged: {
         if (root.subscribed("status"))
           root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
+      }
+    }
+  }
+
+  Component {
+    id: flickableComponent
+    Flickable {
+      implicitWidth: Number(root.prop("width", 320))
+      implicitHeight: Number(root.prop("height", 240))
+      contentWidth: Number(root.prop("content_width", flickContent.implicitWidth))
+      contentHeight: Number(root.prop("content_height", flickContent.implicitHeight))
+      flickableDirection: {
+        var direction = String(root.prop("direction", "vertical"))
+        if (direction === "horizontal") return Flickable.HorizontalFlick
+        if (direction === "both") return Flickable.HorizontalAndVerticalFlick
+        if (direction === "auto") return Flickable.AutoFlickDirection
+        return Flickable.VerticalFlick
+      }
+      boundsBehavior: String(root.prop("bounds_behavior", "stop")) === "overshoot"
+        ? Flickable.DragAndOvershootBounds : Flickable.StopAtBounds
+      interactive: root.prop("interactive", true) !== false
+      clip: root.prop("clip", true) !== false
+      function positionPayload() { return { x: contentX, y: contentY } }
+      onContentXChanged: {
+        if (root.subscribed("scroll")) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", positionPayload())
+      }
+      onContentYChanged: {
+        if (root.subscribed("scroll")) root.bridge.sendEvent(root.surfaceName, root.controlId, "scroll", positionPayload())
+      }
+      onMovementStarted: root.bridge.sendEvent(root.surfaceName, root.controlId, "flick_start", positionPayload())
+      onMovementEnded: root.bridge.sendEvent(root.surfaceName, root.controlId, "flick_end", positionPayload())
+      Column {
+        id: flickContent
+        spacing: Style.spacing.panelGap
+        Repeater { model: root.node.children || []; delegate: childDelegate }
       }
     }
   }

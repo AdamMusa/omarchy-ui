@@ -175,6 +175,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `split_view` | dimensions and horizontal/vertical `orientation`; children accept preferred/min/fill sizing | `click`, `resize` | yes |
 | `stack_layout` | `current_index` and dimensions; displays one child page at a time | `click`, `change` | yes |
 | `loader` | `active`, `asynchronous`, optional dimensions; lazily creates its first child | `click`, `loaded`, `status` | yes |
+| `flickable` | viewport/content dimensions, direction, bounds behavior, interaction and clipping | `click`, `scroll`, `flick_start`, `flick_end` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
