@@ -280,6 +280,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `font_picker` | family, point/pixel size, weight, italic/underline/strikeout state, dialog state, native preference and styling | `input`, `change`, `accept`, `reject`, `open`, `close` |
 | `dialog_button_box` | standard button names, custom label/role buttons, orientation, alignment, header/footer position, spacing and styling | `click`, `accept`, `reject`, `help` |
 | `action` | text, icon name/source/color/size, enabled/checkable/checked state, keyboard shortcut and visibility | `trigger`, `toggle`, `change` |
+| `action_group` | action nodes/IDs, exclusive and enabled state, checked action and visibility | `trigger`, `change`, `actions_change` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

@@ -72,6 +72,11 @@ checked state, shortcut, and visibility are reactive. A Ruby block handles `trig
 `trigger`, `toggle`, and `change` handlers receive the current text and checked state. The returned
 node can be referenced by action-aware components such as `action_group`.
 
+`action_group([save_action, cancel_action], ...)` accepts the nodes returned by `action` (or their
+IDs), resolves their native actions after rendering, and owns a native Qt `ActionGroup`. Exclusive
+selection, enabled state, checked action, membership, and visibility are reactive. `trigger` and
+`change` return the originating action ID; `actions_change` reports the resolved membership list.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

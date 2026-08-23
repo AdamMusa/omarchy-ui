@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 94, renderer_names.length
+    assert_equal 95, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -750,5 +750,21 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"trigger", actionRoot.payload()'
     assert_includes renderer, '"toggle", actionRoot.payload()'
     assert_includes renderer, '"change", actionRoot.payload()'
+  end
+
+  def test_action_group_resolves_ruby_action_nodes_into_a_native_group
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "action_group"'
+    assert_includes renderer, "id: actionGroupComponent"
+    assert_includes renderer, "QQC.ActionGroup {"
+    assert_includes renderer, 'root.prop("action_ids", [])'
+    assert_includes renderer, "root.findRenderedItem(actionId)"
+    assert_includes renderer, "nativeGroup.addAction(rendered.nativeAction)"
+    assert_includes renderer, "nativeGroup.removeAction(attached[index].action)"
+    assert_includes renderer, '"trigger", groupRoot.actionPayload(action)'
+    assert_includes renderer, '"change", groupRoot.actionPayload(checkedAction)'
+    assert_includes renderer, '"actions_change", {'
+    assert_includes renderer, "values: attachedIds()"
   end
 end

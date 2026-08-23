@@ -6,6 +6,7 @@ Item {
 
   required property var renderer
   property alias nativeAction: nativeAction
+  readonly property string actionId: renderer.controlId
 
   function payload() {
     return {

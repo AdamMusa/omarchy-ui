@@ -86,6 +86,7 @@ module OmarchyUI
     font_picker: [%i[family label placeholder title point_size pixel_size weight italic underline strikeout opened native_dialog width height enabled foreground muted background border_color accent radius font_family font_size visible], %i[input change accept reject open close], false],
     dialog_button_box: [%i[buttons custom_buttons orientation alignment position centered spacing width height enabled foreground background accent font_family font_size visible], %i[click accept reject help], false],
     action: [%i[text icon icon_source icon_color icon_width icon_height enabled checkable checked shortcut visible], %i[trigger toggle change], false],
+    action_group: [%i[action_ids exclusive enabled checked_action visible], %i[trigger change actions_change], false],
     dropdown: [%i[label value options foreground background popup_border accent font_family row_height popup_row_height show_label cursor], %i[change hover], false],
     searchable_dropdown: [%i[label value options placeholder empty_text trigger_label foreground background popup_border accent font_family row_height popup_row_height popup_min_height show_label cursor], %i[change hover], false],
     multi_select: [%i[label values options options_command options_command_cwd placeholder empty_text no_selection_text trigger_label show_label foreground background popup_border accent font_family row_height popup_row_height popup_min_height cursor], %i[change hover], false],

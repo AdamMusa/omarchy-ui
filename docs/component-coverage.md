@@ -110,7 +110,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] double_spin_box
 - [x] dialog_button_box
 - [x] action
-- [ ] action_group
+- [x] action_group
 
 ## Navigation and structure
 

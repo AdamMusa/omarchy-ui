@@ -138,6 +138,11 @@ module OmarchyUI
       @application.register_handler(node.id, :trigger, handler) if handler
       node
     end
+    def action_group(actions, id: nil, checked: nil, **props)
+      action_ids = Array(actions).map { |action_node| action_node.is_a?(Node) ? action_node.id : action_node.to_s }
+      checked_id = checked.is_a?(Node) ? checked.id : checked&.to_s
+      component(:action_group, id:, action_ids:, checked_action: checked_id, **props)
+    end
 
     def button(label, id: nil, **props, &handler)
       action_component(:button, :text, label, id:, props:, handler:)

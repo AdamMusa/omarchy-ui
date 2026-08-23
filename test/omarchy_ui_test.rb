@@ -1655,6 +1655,28 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_action_group_serializes_action_node_references
+    application = OmarchyUI::Application.new do
+      app do
+        first = action "First", id: :first_action, checkable: true
+        second = action "Second", id: :second_action, checkable: true
+        action_group [first, second], id: :choices, checked: second, exclusive: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    children = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children")
+    node = children.find { |child| child["type"] == "action_group" }
+
+    assert_equal "choices", node.fetch("id")
+    assert_equal %w[first_action second_action], node.dig("props", "action_ids")
+    assert_equal "second_action", node.dig("props", "checked_action")
+    assert_equal true, node.dig("props", "exclusive")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
