@@ -206,6 +206,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'ctx.fillRect(left, top, Math.max(1, slot - gap), barHeight)'
   end
 
+  def test_area_chart_has_a_specific_canvas_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "area_chart"'
+    assert_includes renderer, "id: areaChartComponent"
+    assert_includes renderer, 'ctx.fillStyle = root.prop("fill_color", root.prop("color", Color.accent))'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

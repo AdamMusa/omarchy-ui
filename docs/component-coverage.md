@@ -185,7 +185,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 ## Charts and visualization
 
 - [x] line_chart
-- [ ] area_chart
+- [x] area_chart
 - [x] bar_chart
 - [ ] stacked_bar_chart
 - [ ] pie_chart

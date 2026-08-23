@@ -130,6 +130,10 @@ module OmarchyUI
       component(:line_chart, id:, values:, **props)
     end
 
+    def area_chart(values, id: nil, **props)
+      component(:area_chart, id:, values:, **props)
+    end
+
     def bar_chart(values, id: nil, **props)
       component(:bar_chart, id:, values:, **props)
     end

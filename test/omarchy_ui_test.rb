@@ -209,6 +209,21 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_area_chart_is_a_specific_data_component
+    application = OmarchyUI::Application.new do
+      app { area_chart [3, 7, 5], labels: %w[Jan Feb Mar], fill_color: "#447aa2f7" }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "area_chart", node.fetch("type")
+    assert_equal [3, 7, 5], node.dig("props", "values")
+    assert_equal "#447aa2f7", node.dig("props", "fill_color")
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0
