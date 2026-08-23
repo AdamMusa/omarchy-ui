@@ -214,6 +214,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"selection", {'
   end
 
+  def test_animated_image_has_a_specific_native_playback_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "animated_image"'
+    assert_includes renderer, "id: animatedImageComponent"
+    assert_includes renderer, "AnimatedImage {"
+    assert_includes renderer, 'root.prop("speed", 1)'
+    assert_includes renderer, '"frame", { value: currentFrame, count: frameCount }'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

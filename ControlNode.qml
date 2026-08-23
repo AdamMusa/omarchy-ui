@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
@@ -203,6 +203,7 @@ Loader {
     if (node.type === "column") return columnComponent
     if (node.type === "container") return containerComponent
     if (node.type === "image") return imageComponent
+    if (node.type === "animated_image") return animatedImageComponent
     if (node.type === "spacer") return spacerComponent
     if (node.type === "grid") return gridComponent
     if (node.type === "row_layout") return rowLayoutComponent
@@ -530,6 +531,40 @@ Loader {
       height: Number(root.prop("height", 120))
       asynchronous: true
       fillMode: Image.PreserveAspectFit
+    }
+  }
+
+  Component {
+    id: animatedImageComponent
+    AnimatedImage {
+      source: String(root.prop("source", ""))
+      implicitWidth: Number(root.prop("width", sourceSize.width > 0 ? sourceSize.width : 120))
+      implicitHeight: Number(root.prop("height", sourceSize.height > 0 ? sourceSize.height : 120))
+      fillMode: {
+        var mode = String(root.prop("fill_mode", "contain"))
+        if (mode === "cover") return Image.PreserveAspectCrop
+        if (mode === "stretch") return Image.Stretch
+        if (mode === "tile") return Image.Tile
+        if (mode === "tile_horizontal") return Image.TileHorizontally
+        if (mode === "tile_vertical") return Image.TileVertically
+        if (mode === "pad") return Image.Pad
+        return Image.PreserveAspectFit
+      }
+      playing: root.prop("playing", true) !== false
+      paused: root.prop("paused", false) === true
+      speed: Number(root.prop("speed", 1))
+      asynchronous: root.prop("asynchronous", true) !== false
+      cache: root.prop("cache", true) !== false
+      mirror: root.prop("mirror", false) === true
+      smooth: root.prop("smooth", true) !== false
+      onCurrentFrameChanged: {
+        if (root.subscribed("frame")) root.bridge.sendEvent(root.surfaceName, root.controlId, "frame", { value: currentFrame, count: frameCount })
+      }
+      onStatusChanged: {
+        if (root.subscribed("status")) root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
+        if (status === AnimatedImage.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height, frames: frameCount })
+        if (status === AnimatedImage.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
+      }
     }
   }
 

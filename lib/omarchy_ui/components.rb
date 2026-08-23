@@ -42,6 +42,7 @@ module OmarchyUI
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],
     image: [%i[source width height fill_mode visible], [], false],
+    animated_image: [%i[source width height fill_mode playing paused speed asynchronous cache mirror smooth visible], %i[frame loaded error status], false],
     spacer: [%i[width height visible], [], false],
     button: [%i[text icon tooltip selected active cursor focusable bordered foreground background accent font_family font_size icon_size icon_rotation icon_spinning horizontal_padding vertical_padding left_align tooltip_background tooltip_foreground tooltip_border], %i[click right_click hover], false],
     action_button: [%i[icon tooltip foreground hover_color font_family font_size size focusable cursor bordered], %i[click hover], false],

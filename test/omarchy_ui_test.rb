@@ -342,6 +342,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_animated_image_is_a_typed_native_playback_component
+    application = OmarchyUI::Application.new do
+      app { animated_image "spinner.gif", playing: true, speed: 1.5, fill_mode: :cover }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "animated_image", node.fetch("type")
+    assert_equal "spinner.gif", node.dig("props", "source")
+    assert_equal 1.5, node.dig("props", "speed")
+    assert_equal "cover", node.dig("props", "fill_mode")
+  ensure
+    application&.stop
+  end
+
   def test_bar_icon_button_registers_click_handler_and_optical_properties
     application = OmarchyUI::Application.new do
       bar_widget do

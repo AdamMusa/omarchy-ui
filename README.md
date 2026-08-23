@@ -186,6 +186,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
 | `image` | `source`, `fill_mode` | — | no |
+| `animated_image` | source, dimensions/fill, playback, pause, speed, async/cache/mirror/smoothing | `frame`, `loaded`, `error`, `status` | no |
 | `spacer` | — | — | no |
 | `progress` | `value`, `minimum`, `maximum`, `color` | — | no |
 | `line_chart` | `values`, `labels`, dimensions, line/fill/grid colors, bounds, point and grid options | `select`, `hover` | no |
