@@ -97,6 +97,7 @@ module OmarchyUI
     page_indicator: [%i[count current_index interactive spacing dot_size width height enabled background foreground accent radius visible], %i[input change show hide focus blur], false],
     stack_view: [%i[current_index animated width height enabled background border_color radius clip visible], %i[change push pop depth_change busy_change show hide focus blur], true],
     swipe_view: [%i[current_index orientation interactive width height enabled background border_color radius clip layout_direction visible], %i[input change count_change show hide focus blur], true],
+    drawer: [%i[opened edge modal dim interactive drag_margin close_policy layout spacing padding width height enabled background foreground border_color radius visible], %i[open close about_to_show about_to_hide position_change show hide focus blur], true],
     dropdown: [%i[label value options foreground background popup_border accent font_family row_height popup_row_height show_label cursor], %i[change hover], false],
     searchable_dropdown: [%i[label value options placeholder empty_text trigger_label foreground background popup_border accent font_family row_height popup_row_height popup_min_height show_label cursor], %i[change hover], false],
     multi_select: [%i[label values options options_command options_command_cwd placeholder empty_text no_selection_text trigger_label show_label foreground background popup_border accent font_family row_height popup_row_height popup_min_height cursor], %i[change hover], false],

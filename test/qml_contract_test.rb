@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 105, renderer_names.length
+    assert_equal 106, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -925,5 +925,24 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"input", { value: currentIndex }'
     assert_includes renderer, '"change", { value: currentIndex }'
     assert_includes renderer, '"count_change", { value: count }'
+  end
+
+  def test_drawer_has_a_specific_native_edge_popup_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "drawer"'
+    assert_includes renderer, "id: drawerComponent"
+    assert_includes renderer, "QQC.Drawer {"
+    assert_includes renderer, 'root.prop("opened", false) === true'
+    assert_includes renderer, 'edgeValue(root.prop("edge", "left"))'
+    assert_includes renderer, 'modal: root.prop("modal", true) !== false'
+    assert_includes renderer, 'interactive: root.prop("interactive", true) !== false'
+    assert_includes renderer, 'closePolicyValue(root.prop("close_policy", "escape_and_outside"))'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, '"open",'
+    assert_includes renderer, '"close",'
+    assert_includes renderer, '"about_to_show", {}'
+    assert_includes renderer, '"about_to_hide", {}'
+    assert_includes renderer, '"position_change", { value: position }'
   end
 end

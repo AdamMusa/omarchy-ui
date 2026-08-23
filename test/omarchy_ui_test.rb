@@ -1940,6 +1940,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_drawer_is_a_typed_native_edge_popup_container
+    application = OmarchyUI::Application.new do
+      app do
+        drawer id: :navigation_drawer, opened: true, edge: :right, modal: false,
+               dim: false, close_policy: %i[escape outside], width: 320 do
+          text "Navigation"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "drawer", node.fetch("type")
+    assert_equal "navigation_drawer", node.fetch("id")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal "right", node.dig("props", "edge")
+    assert_equal false, node.dig("props", "modal")
+    assert_equal false, node.dig("props", "dim")
+    assert_equal %w[escape outside], node.dig("props", "close_policy")
+    assert_equal 320, node.dig("props", "width")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

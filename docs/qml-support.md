@@ -128,6 +128,11 @@ deterministic. Ruby receives `change`, `push`, `pop`, depth, busy, visibility, a
 sync; interaction, geometry, clipping, direction, styling, and visibility are reactive. Selection
 emits `input` and `change`, and structural updates emit `count_change`.
 
+`drawer(opened: ...) { ... }` creates a native Qt Controls `Drawer` on the requested screen edge.
+Opening, modal/dim behavior, edge dragging, drag margin, outside/escape close policy, child layout,
+geometry, padding, and styling are reactive. Ruby receives open/close, about-to-show/hide,
+position, visibility, and focus lifecycle events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

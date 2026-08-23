@@ -6,7 +6,7 @@ module OmarchyUI
     CONTAINERS = %i[
       row column container grid row_layout column_layout grid_layout flow center card
       stack scroll rectangle aspect_ratio constrained_box fitted_box wrap split_view stack_layout loader flickable focus_scope flipable border_image key_catcher
-      page pane frame group_box tabs stack_view swipe_view
+      page pane frame group_box tabs stack_view swipe_view drawer
     ].freeze
     VALUE_INPUTS = {
       text_field: :text,
@@ -150,6 +150,9 @@ module OmarchyUI
     end
     def swipe_view(id: nil, **props, &block)
       component(:swipe_view, id:, **props, &block)
+    end
+    def drawer(id: nil, **props, &block)
+      component(:drawer, id:, **props, &block)
     end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
