@@ -2266,6 +2266,36 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_context_menu_is_a_typed_native_targeted_popup
+    application = OmarchyUI::Application.new do
+      app do
+        target = button "Document", id: :document
+        context_menu [
+          { label: "Copy", value: :copy, icon: "copy" },
+          { separator: true },
+          { label: "Delete", value: :delete, enabled: false }
+        ], id: :document_menu, target: target, opened: false,
+           activation_width: 240, activation_height: 80
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 1)
+
+    assert_equal "context_menu", node.fetch("type")
+    assert_equal "document_menu", node.fetch("id")
+    assert_equal "document", node.dig("props", "target")
+    assert_equal false, node.dig("props", "opened")
+    assert_equal 240, node.dig("props", "activation_width")
+    assert_equal 80, node.dig("props", "activation_height")
+    assert_equal "copy", node.dig("props", "items", 0, "value")
+    assert_equal true, node.dig("props", "items", 1, "separator")
+    assert_equal false, node.dig("props", "items", 2, "enabled")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 117, renderer_names.length
+    assert_equal 118, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1138,5 +1138,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"toggle", menuBarRoot.itemPayload'
     assert_includes renderer, '"menu_open",'
     assert_includes renderer, '"menu_close",'
+  end
+
+  def test_context_menu_has_a_specific_native_targeted_popup_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "context_menu"'
+    assert_includes renderer, "id: contextMenuComponent"
+    assert_includes renderer, "QQC.Menu {"
+    assert_includes renderer, "QQC.MenuItem {"
+    assert_includes renderer, "QQC.MenuSeparator {"
+    assert_includes renderer, 'root.findRenderedItem(targetId)'
+    assert_includes renderer, "acceptedButtons: Qt.RightButton"
+    assert_includes renderer, "host.mapToItem(contextRoot, eventPoint.position)"
+    assert_includes renderer, "nativeMenu.popup(localPoint)"
+    assert_includes renderer, 'root.prop("opened", false) === true'
+    assert_includes renderer, '"request",'
+    assert_includes renderer, '"trigger", contextRoot.entryPayload'
+    assert_includes renderer, '"toggle", contextRoot.entryPayload'
+    assert_includes renderer, '"open", {}'
+    assert_includes renderer, '"close", {}'
   end
 end

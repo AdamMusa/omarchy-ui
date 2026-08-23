@@ -190,6 +190,12 @@ instantiated with native ownership, and trigger/toggle/highlight payloads includ
 indices. Dimensions, spacing, padding, typography, colors, enabled state, visibility, and per-menu
 open/close lifecycle are reactive.
 
+`context_menu(items, target: ...)` attaches a native right-click `TapHandler` to a Ruby node/ID, or
+uses its own configurable activation area when no target is supplied. It also supports reactive
+programmatic opening and the complete `menu` item schema, position, close policy, and styling.
+`request` reports the pointer coordinates before opening; trigger/toggle/highlight and popup
+lifecycle events retain the selected item data.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

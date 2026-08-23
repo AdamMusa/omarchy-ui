@@ -191,6 +191,12 @@ module OmarchyUI
     def menu_bar(menus = [], id: nil, **props)
       component(:menu_bar, id:, menus: Array(menus), **props)
     end
+    def context_menu(items = [], id: nil, target: nil, **props)
+      target_id = target.is_a?(Node) ? target.id : target
+      menu_props = props.merge(items: Array(items))
+      menu_props[:target] = target_id.to_s unless target_id.nil?
+      component(:context_menu, id:, **menu_props)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?
