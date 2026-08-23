@@ -138,6 +138,11 @@ from native Qt Controls. String destinations and hashes with `label`, `icon`, `i
 `enabled` are supported. Compact/extended presentation, alignment, spacing, dimensions, colors,
 typography, and selection are reactive; activation emits `input`, `change`, and `select`.
 
+`breadcrumb(items, current_index: ...)` renders a native button trail. Items may be labels or hashes
+with `label`, `value`, `icon`, `icon_source`, and `enabled`; the separator, current destination,
+spacing, geometry, typography, colors, and visibility are reactive. Segment activation emits
+`input`, `change`, and `select` with index, label, and value.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

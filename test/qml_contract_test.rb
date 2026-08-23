@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 107, renderer_names.length
+    assert_equal 108, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -961,5 +961,22 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"select",'
     assert_includes renderer, '"input", { value: currentIndex }'
     assert_includes renderer, '"change", { value: currentIndex }'
+  end
+
+  def test_breadcrumb_has_a_specific_native_trail_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "breadcrumb"'
+    assert_includes renderer, "id: breadcrumbComponent"
+    assert_includes renderer, "QQC.Pane {"
+    assert_includes renderer, "QQC.ToolButton {"
+    assert_includes renderer, 'root.prop("items", [])'
+    assert_includes renderer, 'root.prop("current_index",'
+    assert_includes renderer, 'itemValue(index, "value", itemLabel(index))'
+    assert_includes renderer, 'itemValue(index, "enabled", true)'
+    assert_includes renderer, 'root.prop("separator", "chevron_right")'
+    assert_includes renderer, '"select", breadcrumbRoot.itemPayload(index)'
+    assert_includes renderer, '"input", payload'
+    assert_includes renderer, '"change", payload'
   end
 end

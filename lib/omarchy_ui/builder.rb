@@ -157,6 +157,9 @@ module OmarchyUI
     def navigation_rail(items = [], id: nil, **props)
       component(:navigation_rail, id:, items: Array(items), **props)
     end
+    def breadcrumb(items = [], id: nil, **props)
+      component(:breadcrumb, id:, items: Array(items), **props)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

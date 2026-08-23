@@ -1994,6 +1994,32 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_breadcrumb_is_a_typed_native_navigation_trail
+    application = OmarchyUI::Application.new do
+      app do
+        breadcrumb ["Home", { label: "Projects", value: 42, icon: "folder" }, "Current"],
+                   id: :location, current_index: 2, separator: :chevron_right,
+                   spacing: 6
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "breadcrumb", node.fetch("type")
+    assert_equal "location", node.fetch("id")
+    assert_equal "Home", node.dig("props", "items", 0)
+    assert_equal "Projects", node.dig("props", "items", 1, "label")
+    assert_equal 42, node.dig("props", "items", 1, "value")
+    assert_equal "folder", node.dig("props", "items", 1, "icon")
+    assert_equal 2, node.dig("props", "current_index")
+    assert_equal "chevron_right", node.dig("props", "separator")
+    assert_equal 6, node.dig("props", "spacing")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
