@@ -243,6 +243,10 @@ Corner/edge placement, timeout, persistent mode, hover pausing, click dismissal,
 colors, typography, and transitions are reactive. Timeout, dismissal, click, hover, visibility, and
 popup lifecycle are exposed as Ruby events.
 
+`busy_indicator(running = true, ...)` maps directly to Qt Quick Controls’ native indeterminate busy
+indicator. Running state, dimensions, palette color, opacity, enabled/visible state, and accessible
+name are reactive; Ruby can observe running and visibility changes.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

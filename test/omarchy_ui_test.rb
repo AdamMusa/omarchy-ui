@@ -2550,6 +2550,31 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_busy_indicator_is_a_typed_native_activity_control
+    application = OmarchyUI::Application.new do
+      app do
+        busy_indicator false, id: :sync_spinner, width: 36, height: 36,
+                              color: "#8ec07c", opacity: 0.8,
+                              accessible_name: "Synchronizing account"
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "busy_indicator", node.fetch("type")
+    assert_equal "sync_spinner", node.fetch("id")
+    assert_equal false, node.dig("props", "running")
+    assert_equal 36, node.dig("props", "width")
+    assert_equal 36, node.dig("props", "height")
+    assert_equal "#8ec07c", node.dig("props", "color")
+    assert_equal 0.8, node.dig("props", "opacity")
+    assert_equal "Synchronizing account", node.dig("props", "accessible_name")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

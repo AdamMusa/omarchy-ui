@@ -224,6 +224,9 @@ module OmarchyUI
     def toast(message = "", id: nil, **props)
       component(:toast, id:, message: message.to_s, **props)
     end
+    def busy_indicator(running = true, id: nil, **props)
+      component(:busy_indicator, id:, running: running, **props)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

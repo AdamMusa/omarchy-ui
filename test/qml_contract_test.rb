@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 127, renderer_names.length
+    assert_equal 128, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1332,5 +1332,19 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"timeout", {}'
     assert_includes renderer, 'toastRoot.dismiss("click")'
     assert_includes renderer, 'toastRoot.dismiss("timeout")'
+  end
+
+  def test_busy_indicator_has_a_specific_native_activity_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "busy_indicator"'
+    assert_includes renderer, "id: busyIndicatorComponent"
+    assert_includes renderer, "QQC.BusyIndicator {"
+    assert_includes renderer, 'root.prop("running", true)'
+    assert_includes renderer, 'root.prop("width", 48)'
+    assert_includes renderer, 'root.prop("height", 48)'
+    assert_includes renderer, 'palette.highlight: root.prop("color", Color.accent)'
+    assert_includes renderer, 'Accessible.name: String(root.prop("accessible_name", "Loading"))'
+    assert_includes renderer, '"running_change", { value: running }'
   end
 end
