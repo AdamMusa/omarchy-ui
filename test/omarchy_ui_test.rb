@@ -95,6 +95,26 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_fitted_box_is_a_typed_container
+    application = OmarchyUI::Application.new do
+      app do
+        fitted_box width: 300, height: 180, fit: :cover, alignment: :top_left do
+          image "hero.png", width: 640, height: 480
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "fitted_box", node.fetch("type")
+    assert_equal "cover", node.dig("props", "fit")
+    assert_equal "top_left", node.dig("props", "alignment")
+    assert_equal "image", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do

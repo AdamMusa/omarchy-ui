@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -195,6 +195,7 @@ Loader {
     if (node.type === "border_overlay") return borderOverlayComponent
     if (node.type === "aspect_ratio") return aspectRatioComponent
     if (node.type === "constrained_box") return constrainedBoxComponent
+    if (node.type === "fitted_box") return fittedBoxComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -555,6 +556,41 @@ Loader {
         anchors.centerIn: parent
         implicitWidth: childrenRect.width
         implicitHeight: childrenRect.height
+        Repeater { model: root.node.children || []; delegate: childDelegate }
+      }
+    }
+  }
+
+  Component {
+    id: fittedBoxComponent
+    Item {
+      implicitWidth: Number(root.prop("width", fittedContent.implicitWidth))
+      implicitHeight: Number(root.prop("height", fittedContent.implicitHeight))
+      clip: root.prop("clip", true) !== false
+
+      readonly property real sourceWidth: Math.max(0.000001, fittedContent.implicitWidth)
+      readonly property real sourceHeight: Math.max(0.000001, fittedContent.implicitHeight)
+      readonly property real availableXScale: width / sourceWidth
+      readonly property real availableYScale: height / sourceHeight
+      readonly property string fitMode: String(root.prop("fit", "contain"))
+      readonly property real fittedXScale: fitMode === "fill" ? availableXScale
+        : (fitMode === "none" ? 1
+        : (fitMode === "cover" ? Math.max(availableXScale, availableYScale)
+        : (fitMode === "scale_down" ? Math.min(1, Math.min(availableXScale, availableYScale))
+        : Math.min(availableXScale, availableYScale))))
+      readonly property real fittedYScale: fitMode === "fill" ? availableYScale : fittedXScale
+      readonly property string contentAlignment: String(root.prop("alignment", "center"))
+
+      Item {
+        id: fittedContent
+        implicitWidth: childrenRect.width
+        implicitHeight: childrenRect.height
+        x: contentAlignment.indexOf("left") >= 0 || contentAlignment === "start" ? 0
+          : (contentAlignment.indexOf("right") >= 0 || contentAlignment === "end" ? parent.width - implicitWidth * fittedXScale : (parent.width - implicitWidth * fittedXScale) / 2)
+        y: contentAlignment.indexOf("top") >= 0 || contentAlignment === "start" ? 0
+          : (contentAlignment.indexOf("bottom") >= 0 || contentAlignment === "end" ? parent.height - implicitHeight * fittedYScale : (parent.height - implicitHeight * fittedYScale) / 2)
+        transformOrigin: Item.TopLeft
+        transform: Scale { xScale: fittedXScale; yScale: fittedYScale }
         Repeater { model: root.node.children || []; delegate: childDelegate }
       }
     }

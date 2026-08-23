@@ -33,7 +33,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] border_overlay
 - [x] aspect_ratio
 - [x] constrained_box
-- [ ] fitted_box
+- [x] fitted_box
 - [ ] wrap
 - [ ] split_view
 - [ ] stack_layout

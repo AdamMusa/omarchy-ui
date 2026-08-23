@@ -26,6 +26,7 @@ module OmarchyUI
     border_overlay: [%i[color width_spec gradient_colors gradient_angle radius visible], [], false],
     aspect_ratio: [%i[ratio width height clip visible], %i[click], true],
     constrained_box: [%i[width height min_width min_height max_width max_height clip visible], %i[click], true],
+    fitted_box: [%i[width height fit alignment clip visible], %i[click], true],
     text: [%i[text style size bold color wrap width visible], [], false],
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],

@@ -102,6 +102,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("max_height", Number.MAX_VALUE)'
   end
 
+  def test_fitted_box_has_a_specific_scaling_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "fitted_box"'
+    assert_includes renderer, "id: fittedBoxComponent"
+    assert_includes renderer, 'fitMode === "cover"'
+    assert_includes renderer, "Scale { xScale: fittedXScale; yScale: fittedYScale }"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'
