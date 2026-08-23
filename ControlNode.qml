@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -197,6 +197,7 @@ Loader {
     if (node.type === "constrained_box") return constrainedBoxComponent
     if (node.type === "fitted_box") return fittedBoxComponent
     if (node.type === "wrap") return wrapComponent
+    if (node.type === "split_view") return splitViewComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -611,6 +612,32 @@ Loader {
   }
 
   Component {
+    id: splitViewComponent
+    QQC.SplitView {
+      implicitWidth: Number(root.prop("width", 560))
+      implicitHeight: Number(root.prop("height", 320))
+      orientation: String(root.prop("orientation", "horizontal")) === "vertical" ? Qt.Vertical : Qt.Horizontal
+      function currentSizes() {
+        var sizes = []
+        for (var index = 0; index < splitChildren.count; index++) {
+          var child = splitChildren.itemAt(index)
+          sizes.push(orientation === Qt.Horizontal ? child.width : child.height)
+        }
+        return sizes
+      }
+      onResizingChanged: {
+        if (!resizing && root.subscribed("resize"))
+          root.bridge.sendEvent(root.surfaceName, root.controlId, "resize", { sizes: currentSizes() })
+      }
+      Repeater {
+        id: splitChildren
+        model: root.node.children || []
+        delegate: splitChildDelegate
+      }
+    }
+  }
+
+  Component {
     id: borderOverlayComponent
     OmarchyUi.BorderOverlay {
       width: Number(root.prop("width", 120))
@@ -686,6 +713,27 @@ Loader {
         id: contentColumn
         anchors.centerIn: parent
         Repeater { model: root.node.children || []; delegate: childDelegate }
+      }
+    }
+  }
+
+  Component {
+    id: splitChildDelegate
+    Loader {
+      required property var modelData
+      QQC.SplitView.minimumWidth: Number(modelData.props && modelData.props.minimum_width !== undefined ? modelData.props.minimum_width : 0)
+      QQC.SplitView.minimumHeight: Number(modelData.props && modelData.props.minimum_height !== undefined ? modelData.props.minimum_height : 0)
+      QQC.SplitView.preferredWidth: Number(modelData.props && modelData.props.preferred_width !== undefined ? modelData.props.preferred_width : implicitWidth)
+      QQC.SplitView.preferredHeight: Number(modelData.props && modelData.props.preferred_height !== undefined ? modelData.props.preferred_height : implicitHeight)
+      QQC.SplitView.fillWidth: modelData.props && modelData.props.fill_width === true
+      QQC.SplitView.fillHeight: modelData.props && modelData.props.fill_height === true
+      source: Qt.resolvedUrl("ControlNode.qml")
+      onLoaded: {
+        item.bridge = root.bridge
+        item.surfaceName = root.surfaceName
+        item.controlId = String(modelData.id)
+        item.foreground = root.foreground
+        item.fontFamily = root.fontFamily
       }
     }
   }

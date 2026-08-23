@@ -28,6 +28,7 @@ module OmarchyUI
     constrained_box: [%i[width height min_width min_height max_width max_height clip visible], %i[click], true],
     fitted_box: [%i[width height fit alignment clip visible], %i[click], true],
     wrap: [%i[width height spacing orientation layout_direction visible], %i[click], true],
+    split_view: [%i[width height orientation visible], %i[click resize], true],
     text: [%i[text style size bold color wrap width visible], [], false],
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],

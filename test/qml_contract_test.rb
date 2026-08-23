@@ -120,6 +120,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "Flow.TopToBottom : Flow.LeftToRight"
   end
 
+  def test_split_view_has_a_specific_native_resizable_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "split_view"'
+    assert_includes renderer, "id: splitViewComponent"
+    assert_includes renderer, "QQC.SplitView {"
+    assert_includes renderer, '"resize", { sizes: currentSizes() }'
+    assert_includes renderer, "QQC.SplitView.preferredWidth"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

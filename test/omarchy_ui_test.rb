@@ -136,6 +136,27 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_split_view_is_a_typed_resizable_container
+    application = OmarchyUI::Application.new do
+      app do
+        split_view width: 640, height: 360, orientation: :horizontal do
+          rectangle preferred_width: 220
+          rectangle fill_width: true
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "split_view", node.fetch("type")
+    assert_equal "horizontal", node.dig("props", "orientation")
+    assert_equal 220, node.dig("children", 0, "props", "preferred_width")
+    assert_equal true, node.dig("children", 1, "props", "fill_width")
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do
