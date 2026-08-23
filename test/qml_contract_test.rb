@@ -507,4 +507,13 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "function escapeAutoText(value)"
     assert_includes renderer, 'tooltipText: root.escapeAutoText(root.prop("tooltip", ""))'
   end
+
+  def test_text_area_has_a_specific_native_multiline_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "text_area"'
+    assert_includes renderer, "id: textAreaComponent"
+    assert_includes renderer, "QQC.TextArea {"
+    assert_includes renderer, '"selection", { start: selectionStart'
+  end
 end

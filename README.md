@@ -260,6 +260,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `radio_group` | selected value, string or label/value options, orientation, spacing, enabled state, colors and typography | `change`, `hover` |
 | `toggle_switch` | `checked`, `busy`, `interactive`, `cursor`, `cursor_ring`, `cursor_pad`, `rounded`, colors, track/knob geometry | `change`, `hover` |
 | `text_field` | `text`, `placeholder`, `password`, colors, selection tint, padding, `cursor` | `input`, `change`, `submit`, `focus`, `blur` |
+| `text_area` | multiline text, placeholder, dimensions, wrapping, read-only/length limits, colors, typography and padding | `input`, `change`, `focus`, `blur`, `selection` |
 | `number_field` | `label`, `value`, `from`, `to`, `step`, colors, font/field width, `cursor` | `change`, `hover` |
 | `slider` | `value`, `minimum`, `maximum`, `step`, `integer`, track/fill/knob colors and sizes, `ticks`, `tick_color` | `input`, `change`, `right_click` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |

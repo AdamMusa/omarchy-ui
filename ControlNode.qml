@@ -23,7 +23,7 @@ Loader {
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
-    "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
+    "number_field", "text_area", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -259,6 +259,7 @@ Loader {
     if (node.type === "toggle_switch") return toggleSwitchComponent
     if (node.type === "text_field") return textFieldComponent
     if (node.type === "number_field") return numberFieldComponent
+    if (node.type === "text_area") return textAreaComponent
     if (node.type === "slider") return sliderComponent
     if (node.type === "dropdown") return dropdownComponent
     if (node.type === "multi_select") return multiSelectComponent
@@ -2036,6 +2037,45 @@ Loader {
       fieldWidth: Number(root.prop("field_width", Style.spacing.numberFieldWidth)); hasCursor: root.prop("cursor", false) === true
       onModified: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
       onHovered: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: value }) }
+    }
+  }
+
+  Component {
+    id: textAreaComponent
+    QQC.ScrollView {
+      implicitWidth: Number(root.prop("width", 320))
+      implicitHeight: Number(root.prop("height", 140))
+      clip: true
+      QQC.TextArea {
+        id: nativeTextArea
+        text: String(root.prop("text", ""))
+        placeholderText: String(root.prop("placeholder", ""))
+        readOnly: root.prop("read_only", false) === true
+        maximumLength: Number(root.prop("maximum_length", 32767))
+        wrapMode: String(root.prop("wrap", "word")) === "none" ? TextEdit.NoWrap
+          : (String(root.prop("wrap", "word")) === "anywhere" ? TextEdit.WrapAnywhere : TextEdit.Wrap)
+        color: root.prop("foreground", root.foreground)
+        selectionColor: root.prop("selection_tint", root.prop("accent", Color.accent))
+        selectedTextColor: Color.background
+        placeholderTextColor: Color.muted
+        font.family: String(root.prop("font_family", root.fontFamily))
+        font.pixelSize: Number(root.prop("font_size", Style.font.body))
+        padding: Number(root.prop("padding", Style.spacing.inputPaddingY))
+        background: Rectangle {
+          color: root.prop("background", Color.popups.background)
+          radius: Style.cornerRadius
+          border.width: Style.normalBorderWidth
+          border.color: nativeTextArea.activeFocus ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
+        }
+        onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
+        onActiveFocusChanged: {
+          root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
+          if (!activeFocus && root.subscribed("change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
+        }
+        onSelectionChanged: {
+          if (root.subscribed("selection")) root.bridge.sendEvent(root.surfaceName, root.controlId, "selection", { start: selectionStart, end: selectionEnd, text: selectedText })
+        }
+      }
     }
   }
 

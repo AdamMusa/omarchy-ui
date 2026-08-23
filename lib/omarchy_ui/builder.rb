@@ -9,6 +9,7 @@ module OmarchyUI
     ].freeze
     VALUE_INPUTS = {
       text_field: :text,
+      text_area: :text,
       number_field: :value,
       slider: :value,
       dropdown: :value,

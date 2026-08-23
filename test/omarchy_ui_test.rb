@@ -1286,6 +1286,22 @@ class OmarchyUITest < Minitest::Test
     assert_equal [0.25, 1.2], patch.fetch("tracks").map { |track| track.fetch("to") }
   end
 
+  def test_text_area_is_a_typed_multiline_value_input
+    application = OmarchyUI::Application.new do
+      app { text_area "First line\nSecond line", width: 360, height: 160, wrap: :word }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "text_area", node.fetch("type")
+    assert_includes node.dig("props", "text"), "Second line"
+    assert_equal 360, node.dig("props", "width")
+    assert_equal "word", node.dig("props", "wrap")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
