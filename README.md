@@ -174,6 +174,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `wrap` | dimensions, `spacing`, horizontal/vertical `orientation`, `layout_direction` | `click` | yes |
 | `split_view` | dimensions and horizontal/vertical `orientation`; children accept preferred/min/fill sizing | `click`, `resize` | yes |
 | `stack_layout` | `current_index` and dimensions; displays one child page at a time | `click`, `change` | yes |
+| `layout_item_proxy` | target control ID or node, dimensions, fill/preferred/min/max sizing, alignment and margins | `target_change` | no |
 | `loader` | `active`, `asynchronous`, optional dimensions; lazily creates its first child | `click`, `loaded`, `status` | yes |
 | `flickable` | viewport/content dimensions, direction, bounds behavior, interaction and clipping | `click`, `scroll`, `flick_start`, `flick_end` | yes |
 | `focus_scope` | `focus`, `active_focus`, optional dimensions; establishes a keyboard-focus boundary | `click`, `focus`, `blur` | yes |

@@ -30,7 +30,7 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "layout_item_proxy", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
     "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dial", "spin_box", "double_spin_box", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
@@ -98,6 +98,24 @@ Loader {
     if (value === "top_center") return Qt.AlignTop | Qt.AlignHCenter
     if (value === "bottom_center") return Qt.AlignBottom | Qt.AlignHCenter
     return Qt.AlignCenter
+  }
+
+  function findRenderedItem(targetId) {
+    var ancestor = root
+    while (ancestor.parent) ancestor = ancestor.parent
+    return findRenderedItemBelow(ancestor, String(targetId || ""))
+  }
+
+  function findRenderedItemBelow(object, targetId) {
+    if (!object || targetId === "") return null
+    if (object !== root && object.controlId !== undefined && String(object.controlId) === targetId)
+      return object.item || object
+    var descendants = object.children || []
+    for (var index = 0; index < descendants.length; index++) {
+      var result = findRenderedItemBelow(descendants[index], targetId)
+      if (result) return result
+    }
+    return null
   }
 
   function subscribed(eventName) {
@@ -250,6 +268,7 @@ Loader {
     if (node.type === "wrap") return wrapComponent
     if (node.type === "split_view") return splitViewComponent
     if (node.type === "stack_layout") return stackLayoutComponent
+    if (node.type === "layout_item_proxy") return layoutItemProxyComponent
     if (node.type === "loader") return lazyLoaderComponent
     if (node.type === "flickable") return flickableComponent
     if (node.type === "focus_scope") return focusScopeComponent
@@ -536,6 +555,11 @@ Loader {
   Component {
     id: stackLayoutComponent
     Builtins.StackLayout { renderer: root }
+  }
+
+  Component {
+    id: layoutItemProxyComponent
+    Builtins.LayoutItemProxy { renderer: root }
   }
 
   Component {

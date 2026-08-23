@@ -30,6 +30,7 @@ module OmarchyUI
     wrap: [%i[width height spacing orientation layout_direction visible], %i[click], true],
     split_view: [%i[width height orientation visible], %i[click resize], true],
     stack_layout: [%i[current_index width height visible], %i[click change], true],
+    layout_item_proxy: [%i[target width height fill_width fill_height preferred_width preferred_height minimum_width minimum_height maximum_width maximum_height alignment margins left_margin top_margin right_margin bottom_margin visible], %i[target_change], false],
     loader: [%i[active asynchronous width height visible], %i[click loaded status], true],
     flickable: [%i[width height content_width content_height direction bounds_behavior interactive clip visible], %i[click scroll flick_start flick_end], true],
     focus_scope: [%i[focus active_focus width height visible], %i[click focus blur], true],

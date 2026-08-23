@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 83, renderer_names.length
+    assert_equal 84, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -193,6 +193,17 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "id: stackLayoutComponent"
     assert_includes renderer, "StackLayout {"
     assert_includes renderer, 'root.prop("current_index", 0)'
+  end
+
+  def test_layout_item_proxy_has_a_specific_native_layout_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "layout_item_proxy"'
+    assert_includes renderer, "id: layoutItemProxyComponent"
+    assert_includes renderer, "LayoutItemProxy {"
+    assert_includes renderer, "root.findRenderedItem(targetId)"
+    assert_includes renderer, "Layout.preferredWidth"
+    assert_includes renderer, '"target_change", {'
   end
 
   def test_loader_has_a_specific_lazy_native_renderer

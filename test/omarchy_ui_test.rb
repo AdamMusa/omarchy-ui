@@ -177,6 +177,36 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_layout_item_proxy_accepts_a_node_as_its_typed_target
+    application = OmarchyUI::Application.new do
+      app do
+        target = card(id: :shared_card) { text "Shared" }
+        row_layout do
+          layout_item_proxy target, preferred_width: 240, fill_height: true, margins: 8
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    children = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children")
+    proxy = children.fetch(1).fetch("children").fetch(0)
+
+    assert_equal "layout_item_proxy", proxy.fetch("type")
+    assert_equal "shared_card", proxy.dig("props", "target")
+    assert_equal 240, proxy.dig("props", "preferred_width")
+    assert_equal true, proxy.dig("props", "fill_height")
+    assert_equal 8, proxy.dig("props", "margins")
+  ensure
+    application&.stop
+  end
+
+  def test_layout_item_proxy_rejects_an_empty_target
+    error = assert_raises(ArgumentError) do
+      OmarchyUI::Application.new { app { layout_item_proxy "" } }
+    end
+    assert_equal "layout_item_proxy target cannot be empty", error.message
+  end
+
   def test_loader_is_a_typed_lazy_container
     application = OmarchyUI::Application.new do
       app do

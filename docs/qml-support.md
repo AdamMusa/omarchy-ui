@@ -13,6 +13,14 @@ QML root object, declared signals are forwarded to Ruby, mapped names support Ru
 and every declared property can participate in bindings and animations. A native container can
 expose an `Item` property named `contentHost`; framework children are parented there automatically.
 
+## Qt Quick Layouts
+
+`layout_item_proxy(target, ...)` is backed by the native `LayoutItemProxy`. It accepts either a
+Ruby node returned by another component method or that node's ID, resolves the rendered QML item,
+and mirrors it into another Qt Quick Layout. Fill, preferred, minimum, maximum, alignment, and
+per-edge margin properties remain reactive. The `target_change` event reports whether the target
+is currently resolved.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

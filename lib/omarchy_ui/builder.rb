@@ -108,6 +108,11 @@ module OmarchyUI
       action_component(:chip, :text, label, id:, props:, handler:)
     end
     def border_image(source, id: nil, **props, &block) = component(:border_image, id:, source: source.to_s, **props, &block)
+    def layout_item_proxy(target, id: nil, **props)
+      target_id = target.is_a?(Node) ? target.id : target.to_s
+      raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?
+      component(:layout_item_proxy, id:, target: target_id, **props)
+    end
     def border_overlay(id: nil, **props) = component(:border_overlay, id:, **props)
     def spacer(id: nil, **props) = component(:spacer, id:, **props)
     def separator(id: nil, **props) = component(:separator, id:, **props)
