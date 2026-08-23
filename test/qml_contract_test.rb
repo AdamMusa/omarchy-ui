@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 97, renderer_names.length
+    assert_equal 98, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -793,6 +793,21 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("right_padding", padding)'
     assert_includes renderer, 'root.prop("top_padding", padding)'
     assert_includes renderer, 'root.prop("bottom_padding", padding)'
+    assert_includes renderer, 'root.prop("layout_direction", "left_to_right")'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, 'visible ? "show" : "hide"'
+    assert_includes renderer, 'activeFocus ? "focus" : "blur"'
+  end
+
+  def test_frame_has_a_specific_native_bordered_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "frame"'
+    assert_includes renderer, "id: frameComponent"
+    assert_includes renderer, "QQC.Frame {"
+    assert_includes renderer, 'root.prop("border_width", Style.normalBorderWidth)'
+    assert_includes renderer, 'root.prop("border_color", Color.border)'
+    assert_includes renderer, 'root.prop("left_padding", padding)'
     assert_includes renderer, 'root.prop("layout_direction", "left_to_right")'
     assert_includes renderer, "delegate: childDelegate"
     assert_includes renderer, 'visible ? "show" : "hide"'

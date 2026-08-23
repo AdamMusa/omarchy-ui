@@ -1731,6 +1731,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_frame_is_a_typed_native_bordered_container
+    application = OmarchyUI::Application.new do
+      app do
+        frame id: :details_frame, layout: :column, spacing: 8, padding: 14,
+              border_color: "#89b482", border_width: 2, radius: 6 do
+          text "Details"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "frame", node.fetch("type")
+    assert_equal "details_frame", node.fetch("id")
+    assert_equal "column", node.dig("props", "layout")
+    assert_equal 8, node.dig("props", "spacing")
+    assert_equal 14, node.dig("props", "padding")
+    assert_equal "#89b482", node.dig("props", "border_color")
+    assert_equal 2, node.dig("props", "border_width")
+    assert_equal 6, node.dig("props", "radius")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
