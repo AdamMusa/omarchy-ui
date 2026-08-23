@@ -147,6 +147,9 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "OmarchyUi.BarIconButton"
     assert_includes renderer, 'slotSize: Number(root.prop("slot_size", Style.bar.iconSlot))'
     assert_includes renderer, '"middle_click"'
+    assert_includes renderer, "onWheelMoved: function(delta)"
+    assert_includes renderer, "onPressed: function(button)"
+    refute_match(/OmarchyUi\.(?:BarIconButton|BarIndicator)\s*\{[^}]*on(?:Wheel|Clicked|RightClicked|MiddleClicked):/m, renderer)
   end
 
   def test_bar_indicator_uses_native_active_inactive_control

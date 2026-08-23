@@ -697,10 +697,11 @@ Loader {
       dimmed: root.prop("dimmed", false) === true
       concealed: root.prop("concealed", false) === true
       interactive: root.prop("interactive", true) !== false
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
-      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
-      onMiddleClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "middle_click", {})
-      onWheel: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
+      onPressed: function(button) {
+        var eventName = button === Qt.RightButton ? "right_click" : (button === Qt.MiddleButton ? "middle_click" : "click")
+        root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
+      }
+      onWheelMoved: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
     }
   }
 
@@ -717,10 +718,11 @@ Loader {
       activeColor: root.prop("active_color", Color.accent)
       fontFamily: String(root.prop("font_family", root.fontFamily))
       fontSize: Number(root.prop("font_size", Style.font.caption))
-      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
-      onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
-      onMiddleClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "middle_click", {})
-      onWheel: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
+      onPressed: function(button) {
+        var eventName = button === Qt.RightButton ? "right_click" : (button === Qt.MiddleButton ? "middle_click" : "click")
+        root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, { button: button })
+      }
+      onWheelMoved: function(delta) { root.bridge.sendEvent(root.surfaceName, root.controlId, "wheel", { delta: delta }) }
     }
   }
 
