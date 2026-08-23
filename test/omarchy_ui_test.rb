@@ -2495,6 +2495,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_banner_is_a_typed_severity_feedback_control
+    application = OmarchyUI::Application.new do
+      app do
+        banner "A newer version is available.", id: :update_banner,
+               title: "Update ready", severity: :success,
+               action_text: "Install", dismissible: true,
+               width: 720, icon: :download
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "banner", node.fetch("type")
+    assert_equal "update_banner", node.fetch("id")
+    assert_equal "A newer version is available.", node.dig("props", "message")
+    assert_equal "Update ready", node.dig("props", "title")
+    assert_equal "success", node.dig("props", "severity")
+    assert_equal "Install", node.dig("props", "action_text")
+    assert_equal true, node.dig("props", "dismissible")
+    assert_equal 720, node.dig("props", "width")
+    assert_equal "download", node.dig("props", "icon")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 125, renderer_names.length
+    assert_equal 126, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1292,5 +1292,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"timeout", {}'
     assert_includes renderer, 'snackbarRoot.dismiss("action")'
     assert_includes renderer, 'snackbarRoot.dismiss("timeout")'
+  end
+
+  def test_banner_has_a_specific_severity_notice_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "banner"'
+    assert_includes renderer, "id: bannerComponent"
+    assert_includes renderer, "id: bannerRoot"
+    assert_includes renderer, "QQC.Pane {"
+    assert_includes renderer, 'root.prop("severity", "info")'
+    assert_includes renderer, 'return "circle_check"'
+    assert_includes renderer, 'return "warning"'
+    assert_includes renderer, 'return "circle_xmark"'
+    assert_includes renderer, 'root.prop("title", "")'
+    assert_includes renderer, 'root.prop("message", "")'
+    assert_includes renderer, 'root.prop("action_text", "")'
+    assert_includes renderer, 'root.prop("dismissible", true)'
+    assert_includes renderer, '"action", {}'
+    assert_includes renderer, '"dismiss", {}'
+    assert_includes renderer, 'visible ? "show" : "hide"'
   end
 end

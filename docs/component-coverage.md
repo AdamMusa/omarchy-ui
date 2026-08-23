@@ -151,7 +151,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] bottom_sheet
 - [x] modal_sheet
 - [x] snackbar
-- [ ] banner
+- [x] banner
 - [ ] toast
 - [ ] busy_indicator
 - [ ] progress_ring

@@ -233,6 +233,11 @@ Placement, timeout, persistent mode, hover pausing, action-close behavior, respo
 styling, and transitions are reactive. Ruby receives separate `action`, `timeout`, `dismiss`,
 open/close, visibility, and hover events.
 
+`banner(message, ...)` is an in-layout notice with optional title, severity-derived icon and accent,
+action button, and dismiss control. Its content, explicit icon/color overrides, typography, sizing,
+and styling react to Ruby state. It emits action, dismissal, click, hover, focus, and visibility
+events without creating a window or popup.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
