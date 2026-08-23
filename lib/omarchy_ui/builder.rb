@@ -270,6 +270,13 @@ module OmarchyUI
       @application.register_handler(node.id, :change, handler) if handler
       node
     end
+    def swipe_delegate(text = "", id: nil, value: nil, **props, &handler)
+      item_props = props.merge(text: text.to_s)
+      item_props[:value] = value unless value.nil?
+      node = component(:swipe_delegate, id:, **item_props)
+      @application.register_handler(node.id, :activate, handler) if handler
+      node
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

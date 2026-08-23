@@ -280,6 +280,12 @@ reactive checked and selection/highlight state, fully configurable colors/geomet
 and keyboard/pointer semantics. Ruby receives value-bearing activation, toggle/change, pointer,
 focus, and visibility events.
 
+`swipe_delegate(text, value: ...) { |event| ... }` maps to Qt Quick Controls’ native
+`SwipeDelegate`. It supports optional leading content, secondary text, independently configured
+left/right action lanes, programmatic side opening, animated native swipe transitions, optional
+close-after-action, and accessibility. Ruby receives activation, side-action, swipe
+position/completion/open/close, pointer, focus, and visibility events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

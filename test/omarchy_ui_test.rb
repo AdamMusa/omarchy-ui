@@ -2759,6 +2759,40 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_swipe_delegate_is_a_typed_native_action_row
+    application = OmarchyUI::Application.new do
+      app do
+        swipe_delegate "Quarterly report", id: :quarterly_report, value: 42,
+                       description: "Edited 2 hours ago", icon: :file,
+                       left_action: "Archive", left_value: :archive,
+                       left_icon: :folder, left_color: "#458588",
+                       right_action: "Delete", right_value: :delete,
+                       right_icon: :trash, right_color: "#cc241d",
+                       opened_side: :left, action_width: 110,
+                       close_on_action: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "swipe_delegate", node.fetch("type")
+    assert_equal "quarterly_report", node.fetch("id")
+    assert_equal "Quarterly report", node.dig("props", "text")
+    assert_equal 42, node.dig("props", "value")
+    assert_equal "Edited 2 hours ago", node.dig("props", "description")
+    assert_equal "Archive", node.dig("props", "left_action")
+    assert_equal "archive", node.dig("props", "left_value")
+    assert_equal "Delete", node.dig("props", "right_action")
+    assert_equal "delete", node.dig("props", "right_value")
+    assert_equal "left", node.dig("props", "opened_side")
+    assert_equal 110, node.dig("props", "action_width")
+    assert_equal true, node.dig("props", "close_on_action")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

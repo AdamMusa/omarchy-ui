@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 134, renderer_names.length
+    assert_equal 135, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1461,5 +1461,26 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"activate", payload'
     assert_includes renderer, '"toggle", payload'
     assert_includes renderer, '"change", payload'
+  end
+
+  def test_swipe_delegate_has_a_specific_native_action_lane_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "swipe_delegate"'
+    assert_includes renderer, "id: swipeDelegateComponent"
+    assert_includes renderer, "QQC.SwipeDelegate {"
+    assert_includes renderer, 'root.prop("left_action", "")'
+    assert_includes renderer, 'root.prop("right_action", "")'
+    assert_includes renderer, 'root.prop("opened_side", "none")'
+    assert_includes renderer, "swipe.open(QQC.SwipeDelegate.Left)"
+    assert_includes renderer, "swipe.open(QQC.SwipeDelegate.Right)"
+    assert_includes renderer, "swipe.left: hasLeftAction ? leftActionComponent : null"
+    assert_includes renderer, "swipe.right: hasRightAction ? rightActionComponent : null"
+    assert_includes renderer, 'QQC.SwipeDelegate.onClicked: swipeRoot.triggerAction("left")'
+    assert_includes renderer, 'QQC.SwipeDelegate.onClicked: swipeRoot.triggerAction("right")'
+    assert_includes renderer, '"swipe_position", {'
+    assert_includes renderer, '"swipe_complete", {'
+    assert_includes renderer, '"swipe_open", {'
+    assert_includes renderer, '"swipe_close", {}'
   end
 end
