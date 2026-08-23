@@ -133,6 +133,11 @@ module OmarchyUI
     def dialog_button_box(buttons = [], id: nil, **props)
       component(:dialog_button_box, id:, buttons: Array(buttons), **props)
     end
+    def action(label, id: nil, **props, &handler)
+      node = component(:action, id:, text: label.to_s, **props)
+      @application.register_handler(node.id, :trigger, handler) if handler
+      node
+    end
 
     def button(label, id: nil, **props, &handler)
       action_component(:button, :text, label, id:, props:, handler:)

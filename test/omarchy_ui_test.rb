@@ -1632,6 +1632,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_action_is_a_typed_native_command
+    application = OmarchyUI::Application.new do
+      app do
+        action "Save", id: :save_action, icon: :save, shortcut: "Ctrl+S",
+               checkable: true, checked: false
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "action", node.fetch("type")
+    assert_equal "save_action", node.fetch("id")
+    assert_equal "Save", node.dig("props", "text")
+    assert_equal "save", node.dig("props", "icon")
+    assert_equal "Ctrl+S", node.dig("props", "shortcut")
+    assert_equal true, node.dig("props", "checkable")
+    assert_equal false, node.dig("props", "checked")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -67,6 +67,11 @@ Qt's native standard buttons. `custom_buttons` accepts `{ text:, role: }` hashes
 actions. Orientation, alignment, header/footer position, centering, spacing, and styling are reactive;
 `click`, `accept`, `reject`, and `help` report native button roles and standard-button identities.
 
+`action(text, ...)` owns a nonvisual native Qt `Action`. Text, icon metadata, enabled/checkable/
+checked state, shortcut, and visibility are reactive. A Ruby block handles `trigger`; explicit
+`trigger`, `toggle`, and `change` handlers receive the current text and checked state. The returned
+node can be referenced by action-aware components such as `action_group`.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

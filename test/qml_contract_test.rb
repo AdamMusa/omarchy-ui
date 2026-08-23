@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 93, renderer_names.length
+    assert_equal 94, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -736,5 +736,19 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"accept", {}'
     assert_includes renderer, '"reject", {}'
     assert_includes renderer, '"help", {}'
+  end
+
+  def test_action_has_a_specific_native_nonvisual_command_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "action"'
+    assert_includes renderer, "id: actionComponent"
+    assert_includes renderer, "QQC.Action {"
+    assert_includes renderer, "property alias nativeAction: nativeAction"
+    assert_includes renderer, 'shortcut: root.prop("shortcut", "")'
+    assert_includes renderer, 'icon.name: String(root.prop("icon", ""))'
+    assert_includes renderer, '"trigger", actionRoot.payload()'
+    assert_includes renderer, '"toggle", actionRoot.payload()'
+    assert_includes renderer, '"change", actionRoot.payload()'
   end
 end
