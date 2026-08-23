@@ -253,6 +253,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"change", { value: !chipRoot.selected }'
   end
 
+  def test_divider_has_a_specific_oriented_line_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "divider"'
+    assert_includes renderer, "id: dividerComponent"
+    assert_includes renderer, 'root.prop("end_indent", 0)'
+    assert_includes renderer, "parent.vertical ? parent.lineThickness"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

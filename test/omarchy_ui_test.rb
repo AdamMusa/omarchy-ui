@@ -406,6 +406,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_divider_is_a_typed_oriented_line_component
+    application = OmarchyUI::Application.new do
+      app { divider orientation: :vertical, length: 120, thickness: 2, indent: 8 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "divider", node.fetch("type")
+    assert_equal "vertical", node.dig("props", "orientation")
+    assert_equal 120, node.dig("props", "length")
+    assert_equal 2, node.dig("props", "thickness")
+  ensure
+    application&.stop
+  end
+
   def test_bar_icon_button_registers_click_handler_and_optical_properties
     application = OmarchyUI::Application.new do
       bar_widget do

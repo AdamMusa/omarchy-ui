@@ -99,6 +99,7 @@ module OmarchyUI
     def border_overlay(id: nil, **props) = component(:border_overlay, id:, **props)
     def spacer(id: nil, **props) = component(:spacer, id:, **props)
     def separator(id: nil, **props) = component(:separator, id:, **props)
+    def divider(id: nil, **props) = component(:divider, id:, **props)
     def section_header(value, id: nil, **props) = component(:section_header, id:, text: value.to_s, **props)
 
     def button(label, id: nil, **props, &handler)

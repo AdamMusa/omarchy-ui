@@ -196,6 +196,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `area_chart` | `values`, `labels`, dimensions, line/fill/grid colors, bounds and grid options | `select`, `hover` | no |
 | `bar_chart` | `values`, `labels`, dimensions, colors, bounds, grid and spacing | `select`, `hover` | no |
 | `separator` | `strength` | — | no |
+| `divider` | orientation, length, thickness, leading/trailing indentation, color and opacity | — | no |
 | `section_header` | `text` | — | no |
 | `panel_hero` | `title`, `meta`, `detail`, `foreground`, `font_family`, `icon_size`, `icon_opacity`, `meta_opacity` | — | no |
 | `optical_glyph` | `text`, `size`, `color`, `debug_bounds` | — | no |

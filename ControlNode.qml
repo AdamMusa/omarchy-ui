@@ -21,7 +21,7 @@ Loader {
   readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
-    "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
+    "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -247,6 +247,7 @@ Loader {
     if (node.type === "area_chart") return areaChartComponent
     if (node.type === "bar_chart") return barChartComponent
     if (node.type === "separator") return separatorComponent
+    if (node.type === "divider") return dividerComponent
     if (node.type === "section_header") return sectionHeaderComponent
     if (node.type === "searchable_dropdown") return searchableDropdownComponent
     if (node.type === "confirm_dialog") return confirmDialogComponent
@@ -1711,6 +1712,26 @@ Loader {
   }
 
   Component { id: separatorComponent; OmarchyUi.PanelSeparator { foreground: root.foreground; strength: Number(root.prop("strength", 0.12)) } }
+  Component {
+    id: dividerComponent
+    Item {
+      readonly property bool vertical: String(root.prop("orientation", "horizontal")) === "vertical"
+      readonly property real lineLength: Number(root.prop("length", 240))
+      readonly property real lineThickness: Number(root.prop("thickness", Style.normalBorderWidth))
+      readonly property real leadingIndent: Number(root.prop("indent", 0))
+      readonly property real trailingIndent: Number(root.prop("end_indent", 0))
+      implicitWidth: vertical ? lineThickness : lineLength
+      implicitHeight: vertical ? lineLength : lineThickness
+      Rectangle {
+        x: parent.vertical ? 0 : parent.leadingIndent
+        y: parent.vertical ? parent.leadingIndent : 0
+        width: parent.vertical ? parent.lineThickness : Math.max(0, parent.width - parent.leadingIndent - parent.trailingIndent)
+        height: parent.vertical ? Math.max(0, parent.height - parent.leadingIndent - parent.trailingIndent) : parent.lineThickness
+        color: root.prop("color", root.foreground)
+        opacity: Number(root.prop("opacity", 0.2))
+      }
+    }
+  }
   Component { id: sectionHeaderComponent; OmarchyUi.PanelSectionHeader { text: root.escapeAutoText(root.prop("text", "")); foreground: root.foreground; fontFamily: root.fontFamily } }
 
   Component {

@@ -66,6 +66,7 @@ module OmarchyUI
     area_chart: [%i[values labels width height color fill_color grid_color line_width minimum maximum show_grid visible], %i[select hover], false],
     bar_chart: [%i[values labels width height colors grid_color minimum maximum show_grid bar_spacing visible], %i[select hover], false],
     separator: [%i[strength visible], [], false],
+    divider: [%i[orientation length thickness indent end_indent color opacity visible], [], false],
     section_header: [%i[text visible], [], false],
     confirm_dialog: [%i[opened message cancel_text confirm_text selected_index background foreground scrim selected_background selected_text font_family corner_radius], %i[cancel confirm], false],
     panel_hero: [%i[title meta detail foreground font_family icon_size icon_opacity meta_opacity], [], false],
