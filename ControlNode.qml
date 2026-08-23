@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "avatar", "badge", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
@@ -206,6 +206,7 @@ Loader {
     if (node.type === "animated_image") return animatedImageComponent
     if (node.type === "avatar") return avatarComponent
     if (node.type === "badge") return badgeComponent
+    if (node.type === "chip") return chipComponent
     if (node.type === "spacer") return spacerComponent
     if (node.type === "grid") return gridComponent
     if (node.type === "row_layout") return rowLayoutComponent
@@ -641,6 +642,66 @@ Loader {
         font.pixelSize: Number(root.prop("font_size", Math.max(9, badgeRoot.height * 0.58)))
       }
       TapHandler { onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { value: badgeRoot.rawValue }) }
+    }
+  }
+
+  Component {
+    id: chipComponent
+    Rectangle {
+      id: chipRoot
+      readonly property bool selected: root.prop("selected", false) === true
+      readonly property bool deletable: root.prop("deletable", false) === true
+      readonly property bool interactive: root.prop("enabled", true) !== false
+      implicitWidth: chipRow.implicitWidth + Number(root.prop("horizontal_padding", 12)) * 2
+      implicitHeight: Number(root.prop("height", 30))
+      radius: Number(root.prop("radius", height / 2))
+      color: selected ? root.prop("selected_background", Color.accent) : root.prop("background", Color.popups.background)
+      border.width: Style.normalBorderWidth
+      border.color: selected ? root.prop("accent", Color.accent) : root.foreground
+      opacity: interactive ? 1 : 0.5
+      Row {
+        id: chipRow
+        anchors.centerIn: parent
+        spacing: Number(root.prop("spacing", 7))
+        Text {
+          visible: String(root.prop("icon", "")).length > 0
+          text: root.iconGlyph(root.prop("icon", ""))
+          textFormat: Text.PlainText
+          color: chipRoot.selected ? root.prop("selected_foreground", Color.background) : root.prop("foreground", root.foreground)
+          font.family: root.fontFamily
+          font.pixelSize: Number(root.prop("icon_size", Style.font.icon))
+        }
+        Text {
+          text: String(root.prop("text", ""))
+          textFormat: Text.PlainText
+          color: chipRoot.selected ? root.prop("selected_foreground", Color.background) : root.prop("foreground", root.foreground)
+          font.family: root.fontFamily
+          font.pixelSize: Number(root.prop("font_size", Style.font.body))
+        }
+        Text {
+          visible: chipRoot.deletable
+          text: root.iconGlyph("xmark")
+          textFormat: Text.PlainText
+          color: chipRoot.selected ? root.prop("selected_foreground", Color.background) : root.prop("foreground", root.foreground)
+          font.family: root.fontFamily
+          font.pixelSize: Number(root.prop("icon_size", Style.font.icon))
+          MouseArea {
+            anchors.fill: parent
+            enabled: chipRoot.interactive
+            onClicked: function(mouse) {
+              mouse.accepted = true
+              root.bridge.sendEvent(root.surfaceName, root.controlId, "delete", {})
+            }
+          }
+        }
+      }
+      TapHandler {
+        enabled: chipRoot.interactive
+        onTapped: {
+          root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {})
+          if (root.subscribed("change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !chipRoot.selected })
+        }
+      }
     }
   }
 

@@ -45,6 +45,7 @@ module OmarchyUI
     animated_image: [%i[source width height fill_mode playing paused speed asynchronous cache mirror smooth visible], %i[frame loaded error status], false],
     avatar: [%i[source name size radius background foreground font_size asynchronous cache visible], %i[click loaded error], false],
     badge: [%i[value maximum dot size minimum_width padding background foreground font_size visible], %i[click], false],
+    chip: [%i[text icon selected deletable enabled background selected_background foreground selected_foreground accent height radius horizontal_padding spacing font_size icon_size visible], %i[click change delete], false],
     spacer: [%i[width height visible], [], false],
     button: [%i[text icon tooltip selected active cursor focusable bordered foreground background accent font_family font_size icon_size icon_rotation icon_spinning horizontal_padding vertical_padding left_align tooltip_background tooltip_foreground tooltip_border], %i[click right_click hover], false],
     action_button: [%i[icon tooltip foreground hover_color font_family font_size size focusable cursor bordered], %i[click hover], false],

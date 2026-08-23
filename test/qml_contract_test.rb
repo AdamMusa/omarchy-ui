@@ -243,6 +243,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("dot", false)'
   end
 
+  def test_chip_has_a_specific_selectable_and_deletable_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "chip"'
+    assert_includes renderer, "id: chipComponent"
+    assert_includes renderer, 'root.prop("deletable", false)'
+    assert_includes renderer, '"delete", {}'
+    assert_includes renderer, '"change", { value: !chipRoot.selected }'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

@@ -189,6 +189,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `animated_image` | source, dimensions/fill, playback, pause, speed, async/cache/mirror/smoothing | `frame`, `loaded`, `error`, `status` | no |
 | `avatar` | optional image source, initials name, size/radius, colors, font size and loading/cache | `click`, `loaded`, `error` | no |
 | `badge` | value, maximum-count formatting, dot mode, sizing/padding and colors | `click` | no |
+| `chip` | label/icon, selected and deletable states, enabled state, dimensions, spacing and colors | `click`, `change`, `delete` | no |
 | `spacer` | — | — | no |
 | `progress` | `value`, `minimum`, `maximum`, `color` | — | no |
 | `line_chart` | `values`, `labels`, dimensions, line/fill/grid colors, bounds, point and grid options | `select`, `hover` | no |
