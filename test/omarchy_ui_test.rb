@@ -1886,6 +1886,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_stack_view_is_a_typed_native_navigation_container
+    application = OmarchyUI::Application.new do
+      app do
+        stack_view id: :navigation_stack, current_index: 1, animated: false,
+                   width: 600, height: 360 do
+          page("Home") { text "Home page" }
+          page("Details") { text "Details page" }
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "stack_view", node.fetch("type")
+    assert_equal "navigation_stack", node.fetch("id")
+    assert_equal 1, node.dig("props", "current_index")
+    assert_equal false, node.dig("props", "animated")
+    assert_equal 600, node.dig("props", "width")
+    assert_equal 360, node.dig("props", "height")
+    assert_equal %w[page page], node.fetch("children").map { |child| child.fetch("type") }
+    assert_equal %w[Home Details], node.fetch("children").map { |child| child.dig("props", "title") }
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

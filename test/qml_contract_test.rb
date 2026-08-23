@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 103, renderer_names.length
+    assert_equal 104, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -892,5 +892,23 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'index === indicatorRoot.currentIndex'
     assert_includes renderer, '"input", { value: currentIndex }'
     assert_includes renderer, '"change", { value: currentIndex }'
+  end
+
+  def test_stack_view_has_a_specific_native_push_pop_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "stack_view"'
+    assert_includes renderer, "id: stackViewComponent"
+    assert_includes renderer, "QQC.StackView {"
+    assert_includes renderer, 'root.prop("current_index", 0)'
+    assert_includes renderer, "childDelegate.createObject"
+    assert_includes renderer, "push(page, {}, operationFor(target))"
+    assert_includes renderer, "pop(operationFor(target)"
+    assert_includes renderer, "clear(QQC.StackView.Immediate)"
+    assert_includes renderer, '"push",'
+    assert_includes renderer, '"pop",'
+    assert_includes renderer, '"depth_change",'
+    assert_includes renderer, '"busy_change", { value: busy }'
+    assert_includes renderer, '"change",'
   end
 end

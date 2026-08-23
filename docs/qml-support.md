@@ -118,6 +118,11 @@ visibility are reactive. Ruby receives click, checked-state, press/release, hove
 `PageIndicator`. Count, selection, interactivity, dot sizing/spacing, geometry, colors, radius,
 enabled state, and visibility are reactive; user selection emits `input` and `change`.
 
+`stack_view(current_index: ...) { ... }` maps Ruby child pages into a native Qt Controls
+`StackView`. Moving the reactive index forward pushes pages and moving it backward pops them;
+single-step navigation can use native transitions while larger synchronization jumps remain
+deterministic. Ruby receives `change`, `push`, `pop`, depth, busy, visibility, and focus events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
