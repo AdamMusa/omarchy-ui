@@ -263,6 +263,11 @@ selection/highlight styling, checkable state, responsive sizing, accessibility, 
 activation. Ruby receives value-bearing activation, toggle/change, press/release, hover, focus, and
 visibility events.
 
+`check_delegate(text, checked: ..., value: ...) { |event| ... }` maps to the native Qt Quick
+`CheckDelegate`. It supports two-state or true tri-state values (`unchecked`, `partial`, `checked`),
+secondary text, selection/highlight styling, custom indicator colors and geometry, accessibility,
+and keyboard/pointer input. Change payloads include boolean compatibility and the exact state name.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

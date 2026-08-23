@@ -2669,6 +2669,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_check_delegate_is_a_typed_native_tristate_collection_row
+    application = OmarchyUI::Application.new do
+      app do
+        check_delegate "Select visible files", id: :visible_files, value: :visible,
+                       description: "Some files are already selected",
+                       tristate: true, check_state: :partial,
+                       indicator_size: 24, selected: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "check_delegate", node.fetch("type")
+    assert_equal "visible_files", node.fetch("id")
+    assert_equal "Select visible files", node.dig("props", "text")
+    assert_equal "visible", node.dig("props", "value")
+    assert_equal "Some files are already selected", node.dig("props", "description")
+    assert_equal true, node.dig("props", "tristate")
+    assert_equal "partial", node.dig("props", "check_state")
+    assert_equal 24, node.dig("props", "indicator_size")
+    assert_equal true, node.dig("props", "selected")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 131, renderer_names.length
+    assert_equal 132, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1401,6 +1401,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("checkable", false)'
     assert_includes renderer, 'root.prop("checked", false)'
     assert_includes renderer, 'root.prop("value", text)'
+    assert_includes renderer, '"click", payload'
+    assert_includes renderer, '"activate", payload'
+    assert_includes renderer, '"toggle", payload'
+    assert_includes renderer, '"change", payload'
+  end
+
+  def test_check_delegate_has_a_specific_native_tristate_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "check_delegate"'
+    assert_includes renderer, "id: checkDelegateComponent"
+    assert_includes renderer, "QQC.CheckDelegate {"
+    assert_includes renderer, 'root.prop("tristate", false)'
+    assert_includes renderer, 'root.prop("check_state"'
+    assert_includes renderer, 'return Qt.PartiallyChecked'
+    assert_includes renderer, 'return "partial"'
+    assert_includes renderer, "check_state: checkStateName()"
+    assert_includes renderer, 'root.prop("indicator_size", 22)'
+    assert_includes renderer, 'checkRoot.checkState === Qt.PartiallyChecked ? "−"'
     assert_includes renderer, '"click", payload'
     assert_includes renderer, '"activate", payload'
     assert_includes renderer, '"toggle", payload'
