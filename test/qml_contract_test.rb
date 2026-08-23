@@ -185,6 +185,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"change", { value: checked }'
   end
 
+  def test_line_chart_has_a_specific_canvas_renderer_and_events
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "line_chart"'
+    assert_includes renderer, "id: lineChartComponent"
+    assert_includes renderer, 'root.prop("fill_color", "")'
+    assert_includes renderer, '"select", payload(mouse)'
+    assert_includes renderer, '"hover", payload(mouse)'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")

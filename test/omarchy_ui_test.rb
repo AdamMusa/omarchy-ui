@@ -173,6 +173,27 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_line_chart_is_a_specific_reactive_data_component
+    application = OmarchyUI::Application.new do
+      state :samples, [12, 18, 15, 27]
+      app do
+        chart = line_chart state.samples, labels: %w[Mon Tue Wed Thu], fill_color: "#337aa2f7"
+        bind(chart, :values) { state.samples }
+        on(chart, :select) { |_event| }
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "line_chart", node.fetch("type")
+    assert_equal [12, 18, 15, 27], node.dig("props", "values")
+    assert_equal %w[Mon Tue Wed Thu], node.dig("props", "labels")
+    assert_includes node.fetch("events"), "select"
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0

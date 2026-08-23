@@ -44,6 +44,7 @@ module OmarchyUI
     multi_select: [%i[label values options options_command options_command_cwd placeholder empty_text no_selection_text trigger_label show_label foreground background popup_border accent font_family row_height popup_row_height popup_min_height cursor], %i[change hover], false],
     button_group: [%i[value options foreground background accent font_family font_size focusable cursor_index], %i[change hover], false],
     progress: [%i[value minimum maximum width height color visible], [], false],
+    line_chart: [%i[values labels width height color fill_color grid_color line_width minimum maximum show_grid show_points point_size visible], %i[select hover], false],
     separator: [%i[strength visible], [], false],
     section_header: [%i[text visible], [], false],
     confirm_dialog: [%i[opened message cancel_text confirm_text selected_index background foreground scrim selected_background selected_text font_family corner_radius], %i[cancel confirm], false],

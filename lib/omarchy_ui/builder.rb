@@ -126,6 +126,10 @@ module OmarchyUI
       input_component(:progress, :value, value, id:, props:)
     end
 
+    def line_chart(values, id: nil, **props)
+      component(:line_chart, id:, values:, **props)
+    end
+
     def on_click(&handler)
       raise ArgumentError, "on_click must be inside a surface or control" if @stack.empty?
       on(@stack.last, :click, &handler)
