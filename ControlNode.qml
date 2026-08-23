@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -198,6 +198,7 @@ Loader {
     if (node.type === "fitted_box") return fittedBoxComponent
     if (node.type === "wrap") return wrapComponent
     if (node.type === "split_view") return splitViewComponent
+    if (node.type === "stack_layout") return stackLayoutComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -634,6 +635,20 @@ Loader {
         model: root.node.children || []
         delegate: splitChildDelegate
       }
+    }
+  }
+
+  Component {
+    id: stackLayoutComponent
+    StackLayout {
+      implicitWidth: Number(root.prop("width", 420))
+      implicitHeight: Number(root.prop("height", 280))
+      currentIndex: Math.max(0, Math.min(count - 1, Number(root.prop("current_index", 0))))
+      onCurrentIndexChanged: {
+        if (root.subscribed("change"))
+          root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: currentIndex })
+      }
+      Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
     }
   }
 
