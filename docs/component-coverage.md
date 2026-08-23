@@ -99,7 +99,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] search_field
 - [x] password_field
 - [x] range_slider
-- [ ] dial
+- [x] dial
 - [ ] spin_box
 - [ ] color_picker
 - [ ] date_picker

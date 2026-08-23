@@ -545,4 +545,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "first.onMoved:"
     assert_includes renderer, "return { lower: first.value, upper: second.value }"
   end
+
+  def test_dial_has_a_specific_native_angular_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "dial"'
+    assert_includes renderer, "id: dialComponent"
+    assert_includes renderer, "QQC.Dial {"
+    assert_includes renderer, "QQC.Dial.Circular"
+    assert_includes renderer, '"input", { value: value, angle: angle }'
+  end
 end

@@ -13,6 +13,7 @@ module OmarchyUI
       password_field: :text,
       number_field: :value,
       slider: :value,
+      dial: :value,
       dropdown: :value,
       multi_select: :values,
       button_group: :value,

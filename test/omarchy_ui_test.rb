@@ -998,15 +998,15 @@ class OmarchyUITest < Minitest::Test
 
   def test_native_component_protocol_includes_property_and_event_maps
     application = OmarchyUI::Application.new do
-      register_component :dial, qml: "Dial.qml", properties: %i[current_value],
+      register_component :native_dial, qml: "Dial.qml", properties: %i[current_value],
                          property_map: { current_value: :value }, events: %i[change],
                          event_map: { change: :moved }
-      app { component :dial, current_value: 42 }
+      app { component :native_dial, current_value: 42 }
     end
     output = StringIO.new
     application.start(output: output, error: StringIO.new)
     render = messages(output).find { |message| message["type"] == "render" }
-    schema = render.dig("components", "dial")
+    schema = render.dig("components", "native_dial")
     assert_equal "value", schema.dig("property_map", "current_value")
     assert_equal "moved", schema.dig("event_map", "change")
     assert schema.fetch("auto_bind")
@@ -1346,6 +1346,22 @@ class OmarchyUITest < Minitest::Test
     assert_equal 20, node.dig("props", "lower")
     assert_equal 80, node.dig("props", "upper")
     assert_equal "release", node.dig("props", "snap")
+  ensure
+    application&.stop
+  end
+
+  def test_dial_is_a_typed_native_angular_input
+    application = OmarchyUI::Application.new do
+      app { dial 25, minimum: 0, maximum: 100, step: 5, input_mode: :circular, size: 120 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "dial", node.fetch("type")
+    assert_equal 25, node.dig("props", "value")
+    assert_equal 100, node.dig("props", "maximum")
+    assert_equal "circular", node.dig("props", "input_mode")
   ensure
     application&.stop
   end

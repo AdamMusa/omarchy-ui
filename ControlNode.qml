@@ -23,7 +23,7 @@ Loader {
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
-    "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
+    "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dial", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -264,6 +264,7 @@ Loader {
     if (node.type === "password_field") return passwordFieldComponent
     if (node.type === "slider") return sliderComponent
     if (node.type === "range_slider") return rangeSliderComponent
+    if (node.type === "dial") return dialComponent
     if (node.type === "dropdown") return dropdownComponent
     if (node.type === "multi_select") return multiSelectComponent
     if (node.type === "button_group") return buttonGroupComponent
@@ -2212,6 +2213,43 @@ Loader {
       }
       second.onPressedChanged: {
         if (!second.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", payload())
+      }
+    }
+  }
+
+  Component {
+    id: dialComponent
+    QQC.Dial {
+      id: nativeDial
+      from: Number(root.prop("minimum", 0))
+      to: Number(root.prop("maximum", 1))
+      value: Number(root.prop("value", from))
+      stepSize: Number(root.prop("step", 0))
+      startAngle: Number(root.prop("start_angle", -140))
+      endAngle: Number(root.prop("end_angle", 140))
+      snapMode: {
+        var mode = String(root.prop("snap", "none"))
+        if (mode === "always") return QQC.Dial.SnapAlways
+        if (mode === "release") return QQC.Dial.SnapOnRelease
+        return QQC.Dial.NoSnap
+      }
+      wrap: root.prop("wrap", false) === true
+      live: root.prop("live", true) !== false
+      inputMode: {
+        var mode = String(root.prop("input_mode", "circular"))
+        if (mode === "horizontal") return QQC.Dial.Horizontal
+        if (mode === "vertical") return QQC.Dial.Vertical
+        return QQC.Dial.Circular
+      }
+      implicitWidth: Number(root.prop("size", 100))
+      implicitHeight: implicitWidth
+      palette.windowText: root.prop("foreground", root.foreground)
+      palette.button: root.prop("background", Color.popups.background)
+      palette.highlight: root.prop("accent", Color.accent)
+      onMoved: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: value, angle: angle })
+      onPressedChanged: {
+        root.bridge.sendEvent(root.surfaceName, root.controlId, pressed ? "press" : "release", { value: value })
+        if (!pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value })
       }
     }
   }
