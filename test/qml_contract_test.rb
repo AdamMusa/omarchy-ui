@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 92, renderer_names.length
+    assert_equal 93, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -720,5 +720,21 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"input", picker.fontPayload(selectedFont)'
     assert_includes renderer, '"change", payload'
     assert_includes renderer, '"accept", payload'
+  end
+
+  def test_dialog_button_box_has_a_specific_native_role_aware_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "dialog_button_box"'
+    assert_includes renderer, "id: dialogButtonBoxComponent"
+    assert_includes renderer, "QQC.DialogButtonBox {"
+    assert_includes renderer, "standardButtons: standardButtonsValue"
+    assert_includes renderer, "QQC.DialogButtonBox.buttonRole: box.roleValue"
+    assert_includes renderer, "ListView.Vertical : ListView.Horizontal"
+    assert_includes renderer, 'root.prop("custom_buttons", [])'
+    assert_includes renderer, '"click", box.buttonPayload(button)'
+    assert_includes renderer, '"accept", {}'
+    assert_includes renderer, '"reject", {}'
+    assert_includes renderer, '"help", {}'
   end
 end

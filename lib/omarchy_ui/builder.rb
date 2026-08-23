@@ -130,6 +130,9 @@ module OmarchyUI
     def separator(id: nil, **props) = component(:separator, id:, **props)
     def divider(id: nil, **props) = component(:divider, id:, **props)
     def section_header(value, id: nil, **props) = component(:section_header, id:, text: value.to_s, **props)
+    def dialog_button_box(buttons = [], id: nil, **props)
+      component(:dialog_button_box, id:, buttons: Array(buttons), **props)
+    end
 
     def button(label, id: nil, **props, &handler)
       action_component(:button, :text, label, id:, props:, handler:)

@@ -278,6 +278,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `file_picker` | selected path(s), open/save/folder mode, multiple selection, filters, current folder, suffix, dialog labels and styling | `input`, `change`, `accept`, `reject`, `open`, `close`, `folder_change` |
 | `folder_picker` | selected directory, initial directory, title, dialog state and labels, native-dialog preference and button styling | `input`, `change`, `accept`, `reject`, `open`, `close`, `folder_change` |
 | `font_picker` | family, point/pixel size, weight, italic/underline/strikeout state, dialog state, native preference and styling | `input`, `change`, `accept`, `reject`, `open`, `close` |
+| `dialog_button_box` | standard button names, custom label/role buttons, orientation, alignment, header/footer position, spacing and styling | `click`, `accept`, `reject`, `help` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

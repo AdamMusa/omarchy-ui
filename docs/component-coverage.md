@@ -108,7 +108,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] folder_picker
 - [x] font_picker
 - [x] double_spin_box
-- [ ] dialog_button_box
+- [x] dialog_button_box
 - [ ] action
 - [ ] action_group
 

@@ -1611,6 +1611,27 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_dialog_button_box_is_a_typed_native_action_row
+    application = OmarchyUI::Application.new do
+      app do
+        dialog_button_box %i[save cancel], orientation: :horizontal, position: :footer,
+                          custom_buttons: [{ text: "Preview", role: :action }]
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "dialog_button_box", node.fetch("type")
+    assert_equal %w[save cancel], node.dig("props", "buttons")
+    assert_equal "horizontal", node.dig("props", "orientation")
+    assert_equal "footer", node.dig("props", "position")
+    assert_equal [{ "text" => "Preview", "role" => "action" }], node.dig("props", "custom_buttons")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

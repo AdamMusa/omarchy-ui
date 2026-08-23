@@ -62,6 +62,11 @@ Family, point or pixel size, weight, italic, underline, and strikeout properties
 the same fields are returned in `input`, `change`, and `accept` payloads. The dialog also reports
 `reject`, `open`, and `close` and supports the shared native-dialog and button styling options.
 
+`dialog_button_box(buttons, ...)` maps Ruby button names such as `:ok`, `:save`, and `:cancel` to
+Qt's native standard buttons. `custom_buttons` accepts `{ text:, role: }` hashes for application
+actions. Orientation, alignment, header/footer position, centering, spacing, and styling are reactive;
+`click`, `accept`, `reject`, and `help` report native button roles and standard-button identities.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
