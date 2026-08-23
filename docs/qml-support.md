@@ -268,6 +268,12 @@ visibility events.
 secondary text, selection/highlight styling, custom indicator colors and geometry, accessibility,
 and keyboard/pointer input. Change payloads include boolean compatibility and the exact state name.
 
+`radio_delegate(text, checked: ..., value: ...) { |event| ... }` maps to Qt Quick Controls’ native
+`RadioDelegate`. Sibling delegates are auto-exclusive by default, with reactive checked,
+selection/highlight, secondary text, indicator geometry/colors, accessibility, and enabled/visible
+state. Ruby receives value-bearing selection, activation, change/toggle, pointer, focus, and
+visibility events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

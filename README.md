@@ -318,6 +318,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `skeleton` | rectangle, circle or multiline-text loading placeholder with configurable geometry and direction-aware shimmer | `animation_change`, `show`, `hide` |
 | `item_delegate` | native collection row with icon/image, primary/secondary/trailing text, disclosure, selection and checkable state | `activate`, `click`, `change`, pointer/focus/visibility |
 | `check_delegate` | native two-state/tri-state collection row with exact check-state payloads, secondary text and reactive indicator styling | `activate`, `click`, `change`, `toggle`, pointer/focus/visibility |
+| `radio_delegate` | native auto-exclusive selection row with secondary text, dedicated radio indicator and value-bearing events | `select`, `activate`, `change`, `toggle`, pointer/focus/visibility |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

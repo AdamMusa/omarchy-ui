@@ -2696,6 +2696,39 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_radio_delegate_is_a_typed_native_exclusive_collection_row
+    application = OmarchyUI::Application.new do
+      app do
+        column do
+          radio_delegate "Compact", id: :compact_density, value: :compact,
+                         description: "More rows on screen", checked: true,
+                         auto_exclusive: true, indicator_size: 24, dot_size: 10
+          radio_delegate "Comfortable", id: :comfortable_density, value: :comfortable,
+                         description: "More room around each row"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    nodes = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0, "children")
+    compact, comfortable = nodes
+
+    assert_equal "radio_delegate", compact.fetch("type")
+    assert_equal "compact_density", compact.fetch("id")
+    assert_equal "Compact", compact.dig("props", "text")
+    assert_equal "compact", compact.dig("props", "value")
+    assert_equal "More rows on screen", compact.dig("props", "description")
+    assert_equal true, compact.dig("props", "checked")
+    assert_equal true, compact.dig("props", "auto_exclusive")
+    assert_equal 24, compact.dig("props", "indicator_size")
+    assert_equal 10, compact.dig("props", "dot_size")
+    assert_equal "radio_delegate", comfortable.fetch("type")
+    assert_equal "comfortable", comfortable.dig("props", "value")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
