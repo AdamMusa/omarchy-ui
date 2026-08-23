@@ -84,6 +84,15 @@ class QmlContractTest < Minitest::Test
     assert_includes panel, "OmarchyUi.BorderSurface {"
   end
 
+  def test_aspect_ratio_has_a_specific_reactive_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "aspect_ratio"'
+    assert_includes renderer, "id: aspectRatioComponent"
+    assert_includes renderer, 'Number(requestedWidth) / aspect'
+    assert_includes renderer, "Repeater { model: root.node.children || []; delegate: childDelegate }"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

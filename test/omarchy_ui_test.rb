@@ -55,6 +55,26 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_aspect_ratio_is_a_typed_container
+    application = OmarchyUI::Application.new do
+      app do
+        aspect_ratio ratio: 16.0 / 9, width: 320 do
+          image "preview.png"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "aspect_ratio", node.fetch("type")
+    assert_in_delta 16.0 / 9, node.dig("props", "ratio")
+    assert_equal 320, node.dig("props", "width")
+    assert_equal "image", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do

@@ -31,7 +31,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] scroll
 - [x] rectangle
 - [x] border_overlay
-- [ ] aspect_ratio
+- [x] aspect_ratio
 - [ ] constrained_box
 - [ ] fitted_box
 - [ ] wrap
