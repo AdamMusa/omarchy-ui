@@ -91,6 +91,7 @@ module OmarchyUI
     def avatar(source = nil, id: nil, **props)
       source.nil? ? component(:avatar, id:, **props) : component(:avatar, id:, source: source.to_s, **props)
     end
+    def badge(value = nil, id: nil, **props) = component(:badge, id:, value:, **props)
     def border_image(source, id: nil, **props, &block) = component(:border_image, id:, source: source.to_s, **props, &block)
     def border_overlay(id: nil, **props) = component(:border_overlay, id:, **props)
     def spacer(id: nil, **props) = component(:spacer, id:, **props)

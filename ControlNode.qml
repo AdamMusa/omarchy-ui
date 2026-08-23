@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "avatar", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "avatar", "badge", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
@@ -205,6 +205,7 @@ Loader {
     if (node.type === "image") return imageComponent
     if (node.type === "animated_image") return animatedImageComponent
     if (node.type === "avatar") return avatarComponent
+    if (node.type === "badge") return badgeComponent
     if (node.type === "spacer") return spacerComponent
     if (node.type === "grid") return gridComponent
     if (node.type === "row_layout") return rowLayoutComponent
@@ -607,6 +608,39 @@ Loader {
         }
       }
       TapHandler { onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {}) }
+    }
+  }
+
+  Component {
+    id: badgeComponent
+    Rectangle {
+      id: badgeRoot
+      readonly property bool dotMode: root.prop("dot", false) === true
+      readonly property real badgeSize: Number(root.prop("size", dotMode ? 8 : 20))
+      readonly property real horizontalPad: Number(root.prop("padding", 6))
+      readonly property var rawValue: root.prop("value", "")
+      readonly property real maximum: Number(root.prop("maximum", 99))
+      readonly property string displayValue: {
+        if (dotMode) return ""
+        var number = Number(rawValue)
+        return rawValue !== "" && !isNaN(number) && number > maximum ? String(maximum) + "+" : String(rawValue)
+      }
+      implicitWidth: dotMode ? badgeSize : Math.max(Number(root.prop("minimum_width", badgeSize)), badgeText.implicitWidth + horizontalPad * 2)
+      implicitHeight: badgeSize
+      radius: height / 2
+      color: root.prop("background", Color.accent)
+      Text {
+        id: badgeText
+        anchors.centerIn: parent
+        visible: !badgeRoot.dotMode
+        text: badgeRoot.displayValue
+        textFormat: Text.PlainText
+        color: root.prop("foreground", Color.background)
+        font.family: root.fontFamily
+        font.bold: true
+        font.pixelSize: Number(root.prop("font_size", Math.max(9, badgeRoot.height * 0.58)))
+      }
+      TapHandler { onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { value: badgeRoot.rawValue }) }
     }
   }
 

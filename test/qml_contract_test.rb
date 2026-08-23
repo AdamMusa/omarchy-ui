@@ -234,6 +234,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, ").toUpperCase()"
   end
 
+  def test_badge_has_a_specific_value_and_dot_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "badge"'
+    assert_includes renderer, "id: badgeComponent"
+    assert_includes renderer, 'String(maximum) + "+"'
+    assert_includes renderer, 'root.prop("dot", false)'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

@@ -374,6 +374,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_badge_is_a_typed_value_or_dot_component
+    application = OmarchyUI::Application.new do
+      app { badge 120, maximum: 99, background: "#f7768e" }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "badge", node.fetch("type")
+    assert_equal 120, node.dig("props", "value")
+    assert_equal 99, node.dig("props", "maximum")
+    assert_equal "#f7768e", node.dig("props", "background")
+  ensure
+    application&.stop
+  end
+
   def test_bar_icon_button_registers_click_handler_and_optical_properties
     application = OmarchyUI::Application.new do
       bar_widget do
