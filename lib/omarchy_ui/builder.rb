@@ -19,6 +19,7 @@ module OmarchyUI
       color_picker: :color,
       date_picker: :date,
       time_picker: :time,
+      file_picker: :path,
       dropdown: :value,
       multi_select: :values,
       button_group: :value,

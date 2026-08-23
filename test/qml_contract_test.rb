@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 89, renderer_names.length
+    assert_equal 90, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -679,5 +679,19 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"accept", { value: value }'
     assert_includes renderer, '"reject", {'
     assert_includes renderer, "value: picker.formattedTime()"
+  end
+
+  def test_file_picker_has_specific_native_file_and_folder_dialog_renderers
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "file_picker"'
+    assert_includes renderer, "id: filePickerComponent"
+    assert_includes renderer, "FileDialog {"
+    assert_includes renderer, "FolderDialog {"
+    assert_includes renderer, "FileDialog.OpenFiles"
+    assert_includes renderer, "FileDialog.SaveFile"
+    assert_includes renderer, 'root.prop("filters", [])'
+    assert_includes renderer, '"change", payload'
+    assert_includes renderer, '"folder_change", { value: value }'
   end
 end

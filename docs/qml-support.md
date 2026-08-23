@@ -47,6 +47,12 @@ emits `input` and `change`; popup lifecycle and month navigation emit `open`, `c
 reactive popup state and styling, and customizable action labels. Partial edits emit `input`; the
 actions emit `change` plus `accept`, or `reject`, followed by the popup lifecycle event.
 
+`file_picker(path, ...)` presents Qt's native `FileDialog` or `FolderDialog`. Open, multiple-open,
+save, and folder modes accept ordinary Ruby filesystem strings and return strings (or a `values`
+array for multiple selection), never QML URL objects. Filters, initial folder/path, default suffix,
+dialog state and labels, native-dialog preference, and button styling are reactive. The adapter emits
+`input`, `change`, `accept`, `reject`, `open`, `close`, and `folder_change` where applicable.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

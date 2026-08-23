@@ -1542,6 +1542,30 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_file_picker_is_a_typed_native_filesystem_input
+    application = OmarchyUI::Application.new do
+      app do
+        file_picker "/tmp/report.md", label: "Report", mode: :save,
+                    filters: ["Markdown (*.md)", "All files (*)"],
+                    current_folder: "/tmp", default_suffix: "md"
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "file_picker", node.fetch("type")
+    assert_equal "/tmp/report.md", node.dig("props", "path")
+    assert_equal "Report", node.dig("props", "label")
+    assert_equal "save", node.dig("props", "mode")
+    assert_equal ["Markdown (*.md)", "All files (*)"], node.dig("props", "filters")
+    assert_equal "/tmp", node.dig("props", "current_folder")
+    assert_equal "md", node.dig("props", "default_suffix")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

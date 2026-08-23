@@ -275,6 +275,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `color_picker` | selected color, label/title, opened state, alpha/button/native-dialog options, dimensions and styling | `input`, `change`, `accept`, `reject`, `open`, `close` |
 | `date_picker` | ISO date, label/placeholder/format, bounds, popup state and sizing, close-on-select behavior and styling | `input`, `change`, `open`, `close`, `navigate` |
 | `time_picker` | `HH:MM[:SS]` time, 12/24-hour mode, seconds visibility, minute/second steps, popup state and labels | `input`, `change`, `accept`, `reject`, `open`, `close` |
+| `file_picker` | selected path(s), open/save/folder mode, multiple selection, filters, current folder, suffix, dialog labels and styling | `input`, `change`, `accept`, `reject`, `open`, `close`, `folder_change` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |
