@@ -296,6 +296,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `breadcrumb` | native clickable destination trail accepting label/value/icon item hashes, with reactive current segment, separator, spacing and styling | `input`, `change`, `select`, `show`, `hide`, `focus`, `blur` |
 | `pagination` | one-based native page navigation with bounded selection, sibling window, ellipses, optional previous/next and first/last controls, labels and styling | `input`, `change`, `select`, `previous`, `next`, `first`, `last`, `show`, `hide`, `focus`, `blur` |
 | `expansion_panel` | native header and animated Ruby child-content reveal with title/subtitle, reactive expanded state, timing, dimensions and styling | `toggle`, `change`, `expand`, `collapse`, `show`, `hide`, `focus`, `blur` |
+| `accordion` | paired native section headers and Ruby child bodies with single/multiple expansion policy, reactive expanded indices, animation and styling | `toggle`, `change`, `expand`, `collapse`, `show`, `hide`, `focus`, `blur` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

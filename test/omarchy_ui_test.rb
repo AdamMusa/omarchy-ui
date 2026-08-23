@@ -2070,6 +2070,35 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_accordion_is_a_typed_native_multi_section_container
+    application = OmarchyUI::Application.new do
+      app do
+        accordion %w[Account Network Privacy], id: :settings_accordion,
+                  subtitles: ["Profile", "Connectivity", "Permissions"],
+                  expanded_indices: [0, 2], multiple: true, duration: 160 do
+          pane { text "Account content" }
+          pane { text "Network content" }
+          pane { text "Privacy content" }
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "accordion", node.fetch("type")
+    assert_equal "settings_accordion", node.fetch("id")
+    assert_equal %w[Account Network Privacy], node.dig("props", "titles")
+    assert_equal ["Profile", "Connectivity", "Permissions"], node.dig("props", "subtitles")
+    assert_equal [0, 2], node.dig("props", "expanded_indices")
+    assert_equal true, node.dig("props", "multiple")
+    assert_equal 160, node.dig("props", "duration")
+    assert_equal %w[pane pane pane], node.fetch("children").map { |child| child.fetch("type") }
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

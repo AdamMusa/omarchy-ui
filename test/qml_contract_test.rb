@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 110, renderer_names.length
+    assert_equal 111, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1015,5 +1015,23 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"toggle", payload'
     assert_includes renderer, '"change", payload'
     assert_includes renderer, 'expanded ? "expand" : "collapse"'
+  end
+
+  def test_accordion_has_a_specific_native_multi_section_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "accordion"'
+    assert_includes renderer, "id: accordionComponent"
+    assert_includes renderer, "QQC.Control {"
+    assert_includes renderer, "QQC.ToolButton {"
+    assert_includes renderer, 'root.prop("titles", [])'
+    assert_includes renderer, 'root.prop("expanded_indices", [])'
+    assert_includes renderer, 'root.prop("multiple", false)'
+    assert_includes renderer, 'source: Qt.resolvedUrl("ControlNode.qml")'
+    assert_includes renderer, 'item.controlId = String(root.node.children[sectionRoot.index].id)'
+    assert_includes renderer, "Behavior on height"
+    assert_includes renderer, '"toggle", payload'
+    assert_includes renderer, '"change", payload'
+    assert_includes renderer, 'opening ? "expand" : "collapse"'
   end
 end

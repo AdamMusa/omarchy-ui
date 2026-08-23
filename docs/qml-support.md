@@ -153,6 +153,12 @@ content region. Title/subtitle typography, expanded state, reveal animation dura
 spacing, padding, dimensions, colors, border, radius, enabled state, and visibility are reactive.
 User activation emits `toggle`/`change` plus the directional `expand` or `collapse` event.
 
+`accordion(titles, expanded_indices: ...) { ... }` pairs each title with one Ruby child body. It can
+enforce single-section expansion or allow multiple sections, synchronizes the complete expanded
+index set, and animates independent native headers/content regions. Subtitles, timing, spacing,
+padding, geometry, typography, colors, and visibility are reactive; every toggle reports its index
+and the resulting expanded set.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
