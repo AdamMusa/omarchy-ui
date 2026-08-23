@@ -93,7 +93,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] round_button
 - [x] tool_button
 - [x] delay_button
-- [ ] radio_button
+- [x] radio_button
 - [ ] radio_group
 - [ ] text_area
 - [ ] search_field

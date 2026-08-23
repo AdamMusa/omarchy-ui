@@ -22,7 +22,7 @@ Loader {
 
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
-    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
+    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
@@ -246,6 +246,7 @@ Loader {
     if (node.type === "bar_indicator") return barIndicatorComponent
     if (node.type === "toggle") return toggleComponent
     if (node.type === "checkbox") return checkboxComponent
+    if (node.type === "radio_button") return radioButtonComponent
     if (node.type === "toggle_switch") return toggleSwitchComponent
     if (node.type === "text_field") return textFieldComponent
     if (node.type === "number_field") return numberFieldComponent
@@ -1676,6 +1677,47 @@ Loader {
         verticalAlignment: Text.AlignVCenter
       }
       onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked })
+      onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
+    }
+  }
+
+  Component {
+    id: radioButtonComponent
+    QQC.RadioButton {
+      id: nativeRadioButton
+      text: String(root.prop("label", ""))
+      checked: root.prop("checked", false) === true
+      enabled: root.prop("enabled", true) !== false
+      spacing: Number(root.prop("spacing", 8))
+      indicator: Rectangle {
+        implicitWidth: Number(root.prop("indicator_size", 20))
+        implicitHeight: implicitWidth
+        x: nativeRadioButton.leftPadding
+        y: nativeRadioButton.topPadding + (nativeRadioButton.availableHeight - height) / 2
+        radius: width / 2
+        color: root.prop("background", "transparent")
+        border.width: Style.normalBorderWidth
+        border.color: nativeRadioButton.checked ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
+        Rectangle {
+          anchors.centerIn: parent
+          width: parent.width * 0.5
+          height: width
+          radius: width / 2
+          visible: nativeRadioButton.checked
+          color: root.prop("accent", Color.accent)
+        }
+      }
+      contentItem: Text {
+        leftPadding: nativeRadioButton.indicator.width + nativeRadioButton.spacing
+        text: nativeRadioButton.text
+        textFormat: Text.PlainText
+        color: root.prop("foreground", root.foreground)
+        font.family: String(root.prop("font_family", root.fontFamily))
+        font.pixelSize: Number(root.prop("font_size", Style.font.body))
+        verticalAlignment: Text.AlignVCenter
+      }
+      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { value: root.prop("value", null) })
+      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked, option: root.prop("value", null) })
       onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
     }
   }

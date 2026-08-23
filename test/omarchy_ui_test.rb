@@ -664,6 +664,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_radio_button_is_a_typed_native_selection_control
+    application = OmarchyUI::Application.new do
+      app { radio_button "Ruby", value: :ruby, checked: true, indicator_size: 22 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "radio_button", node.fetch("type")
+    assert_equal "Ruby", node.dig("props", "label")
+    assert_equal "ruby", node.dig("props", "value")
+    assert_equal true, node.dig("props", "checked")
+  ensure
+    application&.stop
+  end
+
   def test_line_chart_is_a_specific_reactive_data_component
     application = OmarchyUI::Application.new do
       state :samples, [12, 18, 15, 27]

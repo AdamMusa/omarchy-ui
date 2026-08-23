@@ -452,6 +452,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"change", { value: checked }'
   end
 
+  def test_radio_button_has_a_specific_native_selection_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "radio_button"'
+    assert_includes renderer, "id: radioButtonComponent"
+    assert_includes renderer, "QQC.RadioButton {"
+    assert_includes renderer, 'option: root.prop("value", null)'
+  end
+
   def test_line_chart_has_a_specific_canvas_renderer_and_events
     renderer = source("ControlNode.qml")
 

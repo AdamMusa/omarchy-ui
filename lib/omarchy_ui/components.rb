@@ -62,6 +62,7 @@ module OmarchyUI
     bar_indicator: [%i[active active_icon inactive_icon active_tooltip inactive_tooltip indicator_block foreground active_color font_family font_size], %i[click right_click middle_click wheel], false],
     toggle: [%i[label description checked cursor rounded foreground accent font_family title_size description_size], %i[change hover], false],
     checkbox: [%i[label checked foreground accent background font_family font_size indicator_size spacing cursor], %i[change hover], false],
+    radio_button: [%i[label value checked enabled foreground accent background font_family font_size indicator_size spacing visible], %i[click change hover], false],
     toggle_switch: [%i[checked busy interactive cursor cursor_ring cursor_pad rounded foreground accent track_height track_width knob_size knob_inset], %i[change hover], false],
     text_field: [%i[text placeholder password foreground accent selection_tint horizontal_padding vertical_padding cursor], %i[change submit focus blur input], false],
     number_field: [%i[label value from to step foreground accent font_family font_size field_width cursor], %i[change hover], false],

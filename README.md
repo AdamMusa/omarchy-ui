@@ -256,6 +256,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `bar_indicator` | `active`, active/inactive icons and tooltips, `indicator_block`, colors and font sizing | `click`, `right_click`, `middle_click`, `wheel` |
 | `toggle` | `label`, `description`, `checked`, `cursor`, `rounded`, colors, font/title/description sizes | `change`, `hover` |
 | `checkbox` | `label`, `checked`, colors, font/indicator sizing, spacing and `cursor` | `change`, `hover` |
+| `radio_button` | label/value, checked/enabled state, colors, typography, indicator size and spacing | `click`, `change`, `hover` |
 | `toggle_switch` | `checked`, `busy`, `interactive`, `cursor`, `cursor_ring`, `cursor_pad`, `rounded`, colors, track/knob geometry | `change`, `hover` |
 | `text_field` | `text`, `placeholder`, `password`, colors, selection tint, padding, `cursor` | `input`, `change`, `submit`, `focus`, `blur` |
 | `number_field` | `label`, `value`, `from`, `to`, `step`, colors, font/field width, `cursor` | `change`, `hover` |
