@@ -1334,6 +1334,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_range_slider_is_a_typed_native_two_handle_input
+    application = OmarchyUI::Application.new do
+      app { range_slider 20, 80, minimum: 0, maximum: 100, step: 5, snap: :release }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "range_slider", node.fetch("type")
+    assert_equal 20, node.dig("props", "lower")
+    assert_equal 80, node.dig("props", "upper")
+    assert_equal "release", node.dig("props", "snap")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

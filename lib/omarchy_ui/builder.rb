@@ -173,6 +173,12 @@ module OmarchyUI
       input_component(:progress, :value, value, id:, props:)
     end
 
+    def range_slider(lower, upper, id: nil, **props, &handler)
+      node = component(:range_slider, id:, lower:, upper:, **props)
+      @application.register_handler(node.id, :change, handler) if handler
+      node
+    end
+
     def line_chart(values, id: nil, **props)
       component(:line_chart, id:, values:, **props)
     end

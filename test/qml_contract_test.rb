@@ -535,4 +535,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "password: !passwordRoot.revealState"
     assert_includes renderer, '"reveal", { value: passwordRoot.revealState }'
   end
+
+  def test_range_slider_has_a_specific_native_two_handle_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "range_slider"'
+    assert_includes renderer, "id: rangeSliderComponent"
+    assert_includes renderer, "QQC.RangeSlider {"
+    assert_includes renderer, "first.onMoved:"
+    assert_includes renderer, "return { lower: first.value, upper: second.value }"
+  end
 end

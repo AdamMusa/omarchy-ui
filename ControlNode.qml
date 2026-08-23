@@ -23,7 +23,7 @@ Loader {
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
-    "number_field", "text_area", "search_field", "password_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
+    "number_field", "text_area", "search_field", "password_field", "slider", "range_slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -263,6 +263,7 @@ Loader {
     if (node.type === "search_field") return searchFieldComponent
     if (node.type === "password_field") return passwordFieldComponent
     if (node.type === "slider") return sliderComponent
+    if (node.type === "range_slider") return rangeSliderComponent
     if (node.type === "dropdown") return dropdownComponent
     if (node.type === "multi_select") return multiSelectComponent
     if (node.type === "button_group") return buttonGroupComponent
@@ -2178,6 +2179,40 @@ Loader {
       onReleased: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: value }) }
       onMoved: function(value) { root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: value }) }
       onRightClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "right_click", {})
+    }
+  }
+
+  Component {
+    id: rangeSliderComponent
+    QQC.RangeSlider {
+      id: nativeRangeSlider
+      from: Number(root.prop("minimum", 0))
+      to: Number(root.prop("maximum", 1))
+      stepSize: Number(root.prop("step", 0))
+      first.value: Number(root.prop("lower", from))
+      second.value: Number(root.prop("upper", to))
+      orientation: String(root.prop("orientation", "horizontal")) === "vertical" ? Qt.Vertical : Qt.Horizontal
+      snapMode: {
+        var mode = String(root.prop("snap", "none"))
+        if (mode === "always") return QQC.RangeSlider.SnapAlways
+        if (mode === "release") return QQC.RangeSlider.SnapOnRelease
+        return QQC.RangeSlider.NoSnap
+      }
+      live: root.prop("live", true) !== false
+      implicitWidth: Number(root.prop("width", orientation === Qt.Horizontal ? 240 : 40))
+      implicitHeight: Number(root.prop("height", orientation === Qt.Horizontal ? 40 : 240))
+      palette.windowText: root.prop("foreground", root.foreground)
+      palette.button: root.prop("background", Color.popups.background)
+      palette.highlight: root.prop("accent", Color.accent)
+      function payload() { return { lower: first.value, upper: second.value } }
+      first.onMoved: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", payload())
+      second.onMoved: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", payload())
+      first.onPressedChanged: {
+        if (!first.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", payload())
+      }
+      second.onPressedChanged: {
+        if (!second.pressed) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", payload())
+      }
     }
   }
 
