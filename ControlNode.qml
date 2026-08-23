@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
+  readonly property bool builtIn: ["text", "label", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
@@ -193,6 +193,7 @@ Loader {
   sourceComponent: {
     if (!node) return null
     if (node.type === "text") return textComponent
+    if (node.type === "label") return labelComponent
     if (node.type === "icon") return iconComponent
     if (node.type === "tooltip") return tooltipComponent
     if (node.type === "button") return buttonComponent
@@ -320,6 +321,44 @@ Loader {
       font.bold: root.prop("bold", false) || String(root.prop("style", "body")) === "heading"
       wrapMode: root.prop("wrap", true) ? Text.Wrap : Text.NoWrap
       width: Number(root.prop("width", implicitWidth))
+    }
+  }
+
+  Component {
+    id: labelComponent
+    QQC.Label {
+      text: String(root.prop("text", ""))
+      color: root.prop("color", root.foreground)
+      font.family: root.fontFamily
+      font.pixelSize: Number(root.prop("size", Style.font.body))
+      font.bold: root.prop("bold", false) === true
+      implicitWidth: root.prop("width", null) === null ? contentWidth : Number(root.prop("width", contentWidth))
+      wrapMode: root.prop("wrap", false) === true ? Text.Wrap : Text.NoWrap
+      elide: {
+        var mode = String(root.prop("elide", "none"))
+        if (mode === "left") return Text.ElideLeft
+        if (mode === "middle") return Text.ElideMiddle
+        if (mode === "right") return Text.ElideRight
+        return Text.ElideNone
+      }
+      horizontalAlignment: {
+        var alignment = String(root.prop("horizontal_alignment", "left"))
+        if (alignment === "center") return Text.AlignHCenter
+        if (alignment === "right") return Text.AlignRight
+        if (alignment === "justify") return Text.AlignJustify
+        return Text.AlignLeft
+      }
+      verticalAlignment: String(root.prop("vertical_alignment", "center")) === "top" ? Text.AlignTop
+        : (String(root.prop("vertical_alignment", "center")) === "bottom" ? Text.AlignBottom : Text.AlignVCenter)
+      maximumLineCount: Number(root.prop("maximum_lines", 2147483647))
+      textFormat: {
+        var format = String(root.prop("format", "plain"))
+        if (format === "rich") return Text.RichText
+        if (format === "markdown") return Text.MarkdownText
+        if (format === "styled") return Text.StyledText
+        return Text.PlainText
+      }
+      onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
     }
   }
 

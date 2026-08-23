@@ -36,6 +36,7 @@ module OmarchyUI
     flipable: [%i[flipped axis duration easing interactive width height visible], %i[click change], true],
     border_image: [%i[source width height border_left border_top border_right border_bottom horizontal_tile vertical_tile asynchronous cache mirror smooth visible], %i[click loaded error status], true],
     text: [%i[text style size bold color wrap width visible], [], false],
+    label: [%i[text color size bold width wrap elide horizontal_alignment vertical_alignment maximum_lines format visible], %i[link], false],
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],
     image: [%i[source width height fill_mode visible], [], false],

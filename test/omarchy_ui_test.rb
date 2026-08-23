@@ -295,6 +295,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_label_is_a_typed_styled_text_control
+    application = OmarchyUI::Application.new do
+      app { label "Documentation", bold: true, elide: :right, maximum_lines: 2 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "label", node.fetch("type")
+    assert_equal "Documentation", node.dig("props", "text")
+    assert_equal "right", node.dig("props", "elide")
+    assert_equal 2, node.dig("props", "maximum_lines")
+  ensure
+    application&.stop
+  end
+
   def test_bar_icon_button_registers_click_handler_and_optical_properties
     application = OmarchyUI::Application.new do
       bar_widget do

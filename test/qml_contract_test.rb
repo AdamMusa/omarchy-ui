@@ -186,6 +186,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "BorderImage.Round"
   end
 
+  def test_label_has_a_specific_native_styled_text_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "label"'
+    assert_includes renderer, "id: labelComponent"
+    assert_includes renderer, "QQC.Label {"
+    assert_includes renderer, "Text.MarkdownText"
+    assert_includes renderer, '"link", { value: link }'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'
