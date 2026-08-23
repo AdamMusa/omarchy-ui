@@ -168,6 +168,13 @@ focus changes are available as Ruby events.
 `divider`. Orientation, line thickness/length, control padding, color, opacity, enabled state, and
 visibility are reactive; visibility transitions emit `show` and `hide` when subscribed.
 
+## Menus, dialogs, and feedback
+
+`menu(items, opened: ...)` creates a native Qt Controls `Menu`. Ruby items may be labels, option
+hashes (`label`, `value`, `icon`, `icon_source`, `enabled`, `checkable`, `checked`), or separator
+hashes. Entries are rebuilt reactively, popup position/open state and close policy are controlled
+from Ruby, and trigger/toggle/highlight plus the full popup lifecycle are emitted with item data.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

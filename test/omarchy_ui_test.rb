@@ -2148,6 +2148,37 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_menu_is_a_typed_native_popup_control
+    application = OmarchyUI::Application.new do
+      app do
+        menu [
+          { label: "Open", value: :open, icon: "folder" },
+          { separator: true },
+          { label: "Pinned", value: 7, checkable: true, checked: true },
+          { label: "Disabled", enabled: false }
+        ], id: :file_menu, title: "File", opened: true, x: 12, y: 24
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "menu", node.fetch("type")
+    assert_equal "file_menu", node.fetch("id")
+    assert_equal "File", node.dig("props", "title")
+    assert_equal true, node.dig("props", "opened")
+    assert_equal 12, node.dig("props", "x")
+    assert_equal 24, node.dig("props", "y")
+    assert_equal "open", node.dig("props", "items", 0, "value")
+    assert_equal true, node.dig("props", "items", 1, "separator")
+    assert_equal true, node.dig("props", "items", 2, "checkable")
+    assert_equal true, node.dig("props", "items", 2, "checked")
+    assert_equal false, node.dig("props", "items", 3, "enabled")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

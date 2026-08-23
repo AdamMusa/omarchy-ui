@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 113, renderer_names.length
+    assert_equal 114, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1063,5 +1063,28 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("padding", 8)'
     assert_includes renderer, 'root.prop("color", root.foreground)'
     assert_includes renderer, 'visible ? "show" : "hide"'
+  end
+
+  def test_menu_has_a_specific_native_popup_entry_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "menu"'
+    assert_includes renderer, "id: menuComponent"
+    assert_includes renderer, "QQC.Menu {"
+    assert_includes renderer, "QQC.MenuItem {"
+    assert_includes renderer, "QQC.MenuSeparator {"
+    assert_includes renderer, 'root.prop("items", [])'
+    assert_includes renderer, 'root.prop("opened", false) === true'
+    assert_includes renderer, "Instantiator {"
+    assert_includes renderer, "DelegateChooser {"
+    assert_includes renderer, "menuRoot.insertItem(index, object)"
+    assert_includes renderer, "menuRoot.removeItem(object)"
+    assert_includes renderer, 'entryValue(modelData, "checkable", false)'
+    assert_includes renderer, 'entryValue(modelData, "checked", false)'
+    assert_includes renderer, '"trigger", menuRoot.entryPayload(index, modelData, this)'
+    assert_includes renderer, '"toggle", menuRoot.entryPayload(index, modelData, this)'
+    assert_includes renderer, '"highlight", menuRoot.entryPayload(index, modelData, this)'
+    assert_includes renderer, '"about_to_show", {}'
+    assert_includes renderer, '"about_to_hide", {}'
   end
 end

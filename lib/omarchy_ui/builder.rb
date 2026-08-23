@@ -175,6 +175,9 @@ module OmarchyUI
     def tool_separator(id: nil, **props)
       component(:tool_separator, id:, **props)
     end
+    def menu(items = [], id: nil, **props)
+      component(:menu, id:, items: Array(items), **props)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?
