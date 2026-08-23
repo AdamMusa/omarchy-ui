@@ -1814,6 +1814,31 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_tab_bar_is_a_typed_native_selection_control
+    application = OmarchyUI::Application.new do
+      app do
+        tab_bar ["Home", { label: "Settings", icon: "gear", enabled: false }],
+                id: :primary_tabs, current_index: 1, position: :bottom, spacing: 4
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "tab_bar", node.fetch("type")
+    assert_equal "primary_tabs", node.fetch("id")
+    assert_equal "Home", node.dig("props", "items", 0)
+    assert_equal "Settings", node.dig("props", "items", 1, "label")
+    assert_equal "gear", node.dig("props", "items", 1, "icon")
+    assert_equal false, node.dig("props", "items", 1, "enabled")
+    assert_equal 1, node.dig("props", "current_index")
+    assert_equal "bottom", node.dig("props", "position")
+    assert_equal 4, node.dig("props", "spacing")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

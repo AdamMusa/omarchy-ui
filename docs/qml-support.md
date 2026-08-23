@@ -105,6 +105,11 @@ each child's `title`. Selection is reactive in both directions and emits `input`
 `tab_click`, while bar position, sizing, colors, typography, direction, and visibility remain Ruby
 properties.
 
+`tab_bar(items, current_index: ...)` exposes a standalone native Qt Controls `TabBar`. Items may be
+labels or hashes containing `label`, `enabled`, and `icon`; the selected index is reactive and
+emits `input`, committed `change`, and `tab_click` payloads. Position, spacing, sizing, colors,
+typography, direction, visibility, and focus are independently configurable.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
