@@ -175,6 +175,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `spacer` | — | — | no |
 | `progress` | `value`, `minimum`, `maximum`, `color` | — | no |
 | `line_chart` | `values`, `labels`, dimensions, line/fill/grid colors, bounds, point and grid options | `select`, `hover` | no |
+| `bar_chart` | `values`, `labels`, dimensions, colors, bounds, grid and spacing | `select`, `hover` | no |
 | `separator` | `strength` | — | no |
 | `section_header` | `text` | — | no |
 | `panel_hero` | `title`, `meta`, `detail`, `foreground`, `font_family`, `icon_size`, `icon_opacity`, `meta_opacity` | — | no |

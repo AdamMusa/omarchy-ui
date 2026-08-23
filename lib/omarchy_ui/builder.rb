@@ -130,6 +130,10 @@ module OmarchyUI
       component(:line_chart, id:, values:, **props)
     end
 
+    def bar_chart(values, id: nil, **props)
+      component(:bar_chart, id:, values:, **props)
+    end
+
     def on_click(&handler)
       raise ArgumentError, "on_click must be inside a surface or control" if @stack.empty?
       on(@stack.last, :click, &handler)

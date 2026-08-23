@@ -45,6 +45,7 @@ module OmarchyUI
     button_group: [%i[value options foreground background accent font_family font_size focusable cursor_index], %i[change hover], false],
     progress: [%i[value minimum maximum width height color visible], [], false],
     line_chart: [%i[values labels width height color fill_color grid_color line_width minimum maximum show_grid show_points point_size visible], %i[select hover], false],
+    bar_chart: [%i[values labels width height colors grid_color minimum maximum show_grid bar_spacing visible], %i[select hover], false],
     separator: [%i[strength visible], [], false],
     section_header: [%i[text visible], [], false],
     confirm_dialog: [%i[opened message cancel_text confirm_text selected_index background foreground scrim selected_background selected_text font_family corner_radius], %i[cancel confirm], false],

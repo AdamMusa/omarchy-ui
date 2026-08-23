@@ -21,7 +21,7 @@ Loader {
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
-    "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "separator",
+    "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -210,6 +210,7 @@ Loader {
     if (node.type === "button_group") return buttonGroupComponent
     if (node.type === "progress") return progressComponent
     if (node.type === "line_chart") return lineChartComponent
+    if (node.type === "bar_chart") return barChartComponent
     if (node.type === "separator") return separatorComponent
     if (node.type === "section_header") return sectionHeaderComponent
     if (node.type === "searchable_dropdown") return searchableDropdownComponent
@@ -855,6 +856,68 @@ Loader {
           var values = root.prop("values", [])
           if (!Array.isArray(values) || values.length === 0) return ({ index: -1 })
           var index = Math.max(0, Math.min(values.length - 1, Math.round(mouse.x / Math.max(1, width) * (values.length - 1))))
+          var labels = root.prop("labels", [])
+          return { index: index, value: values[index], label: Array.isArray(labels) ? labels[index] : null }
+        }
+        onClicked: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "select", payload(mouse)) }
+        onPositionChanged: function(mouse) { root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", payload(mouse)) }
+      }
+    }
+  }
+
+  Component {
+    id: barChartComponent
+    Item {
+      implicitWidth: Number(root.prop("width", 420))
+      implicitHeight: Number(root.prop("height", 220))
+      Canvas {
+        id: barCanvas
+        anchors.fill: parent
+        antialiasing: true
+        onPaint: {
+          var ctx = getContext("2d")
+          ctx.clearRect(0, 0, width, height)
+          var raw = root.prop("values", [])
+          if (!Array.isArray(raw) || raw.length === 0) return
+          var values = raw.map(function(value) { return Number(value) })
+          var low = root.prop("minimum", null)
+          var high = root.prop("maximum", null)
+          if (low === null) low = Math.min(0, Math.min.apply(Math, values))
+          if (high === null) high = Math.max(0, Math.max.apply(Math, values))
+          low = Number(low); high = Number(high)
+          if (high === low) high = low + 1
+          var pad = 10
+          var chartWidth = Math.max(1, width - pad * 2)
+          var chartHeight = Math.max(1, height - pad * 2)
+          if (root.prop("show_grid", true) !== false) {
+            ctx.strokeStyle = root.prop("grid_color", Color.muted); ctx.lineWidth = 1
+            for (var grid = 0; grid <= 4; grid++) {
+              var gy = pad + chartHeight * grid / 4
+              ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(width - pad, gy); ctx.stroke()
+            }
+          }
+          var slot = chartWidth / values.length
+          var gap = Math.max(0, Number(root.prop("bar_spacing", 6)))
+          var colors = root.prop("colors", [Color.accent])
+          var zeroY = pad + chartHeight * (1 - (0 - low) / (high - low))
+          for (var index = 0; index < values.length; index++) {
+            var valueY = pad + chartHeight * (1 - (values[index] - low) / (high - low))
+            var left = pad + slot * index + gap / 2
+            var top = Math.min(zeroY, valueY)
+            var barHeight = Math.max(1, Math.abs(valueY - zeroY))
+            ctx.fillStyle = Array.isArray(colors) && colors.length > 0 ? colors[index % colors.length] : Color.accent
+            ctx.fillRect(left, top, Math.max(1, slot - gap), barHeight)
+          }
+        }
+      }
+      Connections { target: root; function onNodeChanged() { barCanvas.requestPaint() } }
+      MouseArea {
+        anchors.fill: parent
+        hoverEnabled: root.subscribed("hover")
+        function payload(mouse) {
+          var values = root.prop("values", [])
+          if (!Array.isArray(values) || values.length === 0) return ({ index: -1 })
+          var index = Math.max(0, Math.min(values.length - 1, Math.floor(mouse.x / Math.max(1, width) * values.length)))
           var labels = root.prop("labels", [])
           return { index: index, value: values[index], label: Array.isArray(labels) ? labels[index] : null }
         }

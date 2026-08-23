@@ -194,6 +194,21 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_bar_chart_is_a_specific_data_component
+    application = OmarchyUI::Application.new do
+      app { bar_chart [4, 8, 6], labels: %w[A B C], colors: ["#7aa2f7", "#bb9af7"] }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "bar_chart", node.fetch("type")
+    assert_equal [4, 8, 6], node.dig("props", "values")
+    assert_equal %w[A B C], node.dig("props", "labels")
+  ensure
+    application&.stop
+  end
+
   def build_counter
     OmarchyUI::Application.new do
       state :count, 0

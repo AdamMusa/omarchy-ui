@@ -157,7 +157,7 @@ renderer, reactive property support, applicable events, tests, and reference doc
 
 - [x] line_chart
 - [ ] area_chart
-- [ ] bar_chart
+- [x] bar_chart
 - [ ] stacked_bar_chart
 - [ ] pie_chart
 - [ ] donut_chart

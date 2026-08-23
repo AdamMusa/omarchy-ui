@@ -198,6 +198,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"hover", payload(mouse)'
   end
 
+  def test_bar_chart_has_a_specific_canvas_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "bar_chart"'
+    assert_includes renderer, "id: barChartComponent"
+    assert_includes renderer, 'ctx.fillRect(left, top, Math.max(1, slot - gap), barHeight)'
+  end
+
   def test_bridge_bounds_values_and_renders_external_text_as_plain_text
     service = source("Service.qml")
     renderer = source("ControlNode.qml")
