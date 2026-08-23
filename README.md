@@ -61,7 +61,7 @@ Create and run it:
 ```bash
 omarchy_ui new Counter
 cd counter
-omarchy_ui launch main.rb
+omarchy_ui run main.rb
 ```
 
 The generated project contains Ruby and assets only. Adapter and renderer QML

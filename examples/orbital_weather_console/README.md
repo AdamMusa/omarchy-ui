@@ -7,5 +7,5 @@ actions update operational state. It also exercises radar and area charts, heatm
 state, and an image-backed public briefing dialog.
 
 ```bash
-omarchy_ui launch main.rb
+omarchy_ui run main.rb
 ```

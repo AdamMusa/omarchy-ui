@@ -70,7 +70,7 @@ module OmarchyUI
         ## Run
 
         ```bash
-        omarchy_ui launch main.rb
+        omarchy_ui run main.rb
         ```
 
         Reusable Ruby UI components live in `components/` and load with ordinary Ruby

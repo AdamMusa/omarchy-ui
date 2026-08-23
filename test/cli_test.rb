@@ -16,22 +16,25 @@ class CLITest < Minitest::Test
     error = StringIO.new
     cli = OmarchyUI::CLI.new(out: StringIO.new, err: error)
 
-    status = cli.stub(:launch_file, ->(_arguments) { raise Interrupt }) do
-      cli.run(["launch", "main.rb"])
+    status = cli.stub(:run_file, ->(_arguments) { raise Interrupt }) do
+      cli.run(["run", "main.rb"])
     end
 
     assert_equal 130, status
     assert_empty error.string
   end
 
-  def test_run_executes_the_requested_ruby_file_with_arguments
-    Dir.mktmpdir do |directory|
-      program = File.join(directory, "app.rb")
-      File.write(program, "require 'omarchy_ui'; puts [OmarchyUI::VERSION, *ARGV].join(':')\n")
-      stdout, stderr, status = Open3.capture3(File.join(ROOT, "bin/omarchy_ui"), "run", program, "one", "two")
-      assert status.success?, stderr
-      assert_equal "#{OmarchyUI::VERSION}:one:two\n", stdout
+  def test_run_opens_the_requested_file_through_the_omarchy_host
+    requested = nil
+    cli = OmarchyUI::CLI.new(out: StringIO.new, err: StringIO.new)
+
+    status = cli.stub(:run_file, ->(arguments) { requested = arguments; 0 }) do
+      cli.run(["run", "main.rb"])
     end
+
+    assert_equal 0, status
+    assert_equal ["main.rb"], requested
+    assert_equal 64, cli.run(["launch", "main.rb"])
   end
 
   def test_push_stages_validates_and_installs_without_copying_git_metadata
@@ -85,7 +88,7 @@ class CLITest < Minitest::Test
       refute_includes File.read(File.join(project, "main.rb")), "eval("
       assert_includes File.read(File.join(project, "components", "welcome.rb")), "OmarchyUI::Builder.include"
       refute Dir.glob(File.join(project, "**", "*.qml")).any?
-      assert_includes File.read(File.join(project, "README.md")), "omarchy_ui launch main.rb"
+      assert_includes File.read(File.join(project, "README.md")), "omarchy_ui run main.rb"
 
       stdout, stderr, status = Open3.capture3(
         RbConfig.ruby, "-I", File.join(ROOT, "lib"), File.join(project, "main.rb")

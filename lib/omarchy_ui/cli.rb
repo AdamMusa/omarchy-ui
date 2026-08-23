@@ -21,14 +21,13 @@ module OmarchyUI
       command = arguments.shift
       case command
       when "run" then run_file(arguments)
-      when "launch" then launch_file(arguments)
       when "new" then new_project(arguments)
       when "bundle" then bundle_project(arguments)
       when "push" then push(arguments)
       when "validate" then validate(arguments)
       when "version", "--version", "-v" then @out.puts(OmarchyUI::VERSION); 0
       else
-        @err.puts("Usage: omarchy_ui <new NAME|run FILE|launch FILE|bundle [DIRECTORY]|push [DIRECTORY]|validate [DIRECTORY]|version>")
+        @err.puts("Usage: omarchy_ui <new NAME|run FILE|bundle [DIRECTORY]|push [DIRECTORY]|validate [DIRECTORY]|version>")
         command.nil? ? 0 : 64
       end
     rescue Interrupt
@@ -43,13 +42,7 @@ module OmarchyUI
     def run_file(arguments)
       file = File.expand_path(arguments.shift || raise(ArgumentError, "run requires a Ruby file"))
       raise ArgumentError, "Ruby file not found: #{file}" unless File.file?(file)
-      exec(RbConfig.ruby, "-I", File.join(FRAMEWORK_ROOT, "lib"), file, *arguments)
-    end
-
-    def launch_file(arguments)
-      file = File.expand_path(arguments.shift || raise(ArgumentError, "launch requires a Ruby file"))
-      raise ArgumentError, "Ruby file not found: #{file}" unless File.file?(file)
-      raise ArgumentError, "launch does not accept Ruby arguments" unless arguments.empty?
+      raise ArgumentError, "run does not accept Ruby arguments" unless arguments.empty?
 
       project_dir = File.dirname(file)
       Dir.mktmpdir("omarchy-ui-app-") do |runtime_dir|

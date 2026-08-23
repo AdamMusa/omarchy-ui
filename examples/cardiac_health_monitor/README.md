@@ -6,5 +6,5 @@ ECG-style charting, radial gauges, particles, a recovery heatmap, scheduled stat
 controls, and an image-backed insight dialog. It is a UI showcase, not medical advice.
 
 ```bash
-omarchy_ui launch main.rb
+omarchy_ui run main.rb
 ```

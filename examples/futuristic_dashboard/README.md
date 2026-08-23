@@ -9,13 +9,13 @@ gauges, navigation, controls, and an image-backed result dialog without applicat
 From this directory with the development checkout:
 
 ```bash
-../../bin/omarchy_ui launch main.rb
+../../bin/omarchy_ui run main.rb
 ```
 
 Or with the installed gem:
 
 ```bash
-omarchy_ui launch main.rb
+omarchy_ui run main.rb
 ```
 
 Try **Initiate scan**, **Engage overdrive**, the navigation rail, and the neural-copilot switch.
