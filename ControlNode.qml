@@ -23,7 +23,7 @@ Loader {
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
-    "number_field", "text_area", "search_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
+    "number_field", "text_area", "search_field", "password_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
@@ -261,6 +261,7 @@ Loader {
     if (node.type === "number_field") return numberFieldComponent
     if (node.type === "text_area") return textAreaComponent
     if (node.type === "search_field") return searchFieldComponent
+    if (node.type === "password_field") return passwordFieldComponent
     if (node.type === "slider") return sliderComponent
     if (node.type === "dropdown") return dropdownComponent
     if (node.type === "multi_select") return multiSelectComponent
@@ -2107,6 +2108,59 @@ Loader {
       onActiveFocusChanged: {
         root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
         if (!activeFocus && root.subscribed("change")) root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
+      }
+    }
+  }
+
+  Component {
+    id: passwordFieldComponent
+    Item {
+      id: passwordRoot
+      property bool revealState: root.prop("revealed", false) === true
+      readonly property bool canReveal: root.prop("revealable", true) !== false
+      implicitWidth: Number(root.prop("width", 260))
+      implicitHeight: passwordInput.implicitHeight
+      OmarchyUi.TextField {
+        id: passwordInput
+        width: passwordRoot.width - (passwordRoot.canReveal ? passwordRoot.height : 0)
+        anchors.left: parent.left
+        text: String(root.prop("text", ""))
+        placeholderText: String(root.prop("placeholder", ""))
+        password: !passwordRoot.revealState
+        foreground: root.prop("foreground", root.foreground)
+        accent: root.prop("accent", Color.accent)
+        selectionTint: root.prop("selection_tint", Style.selectionFillFor(foreground, accent))
+        horizontalPadding: Number(root.prop("horizontal_padding", Style.spacing.controlPaddingX))
+        verticalPadding: Number(root.prop("vertical_padding", Style.spacing.inputPaddingY))
+        onTextEdited: root.bridge.sendEvent(root.surfaceName, root.controlId, "input", { value: text })
+        onEditingFinished: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: text })
+        onAccepted: root.bridge.sendEvent(root.surfaceName, root.controlId, "submit", { value: text })
+        onActiveFocusChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, activeFocus ? "focus" : "blur", { value: text })
+      }
+      Rectangle {
+        visible: passwordRoot.canReveal
+        anchors.right: parent.right
+        width: parent.height
+        height: parent.height
+        color: "transparent"
+        Text {
+          anchors.centerIn: parent
+          text: root.iconGlyph(passwordRoot.revealState ? "eye_slash" : "eye")
+          textFormat: Text.PlainText
+          color: root.foreground
+          font.family: root.fontFamily
+          font.pixelSize: Style.font.icon
+        }
+        TapHandler {
+          onTapped: {
+            passwordRoot.revealState = !passwordRoot.revealState
+            root.bridge.sendEvent(root.surfaceName, root.controlId, "reveal", { value: passwordRoot.revealState })
+          }
+        }
+      }
+      Connections {
+        target: root
+        function onNodeChanged() { passwordRoot.revealState = root.prop("revealed", passwordRoot.revealState) === true }
       }
     }
   }

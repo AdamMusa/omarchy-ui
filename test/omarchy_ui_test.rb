@@ -1318,6 +1318,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_password_field_is_a_typed_masked_revealable_input
+    application = OmarchyUI::Application.new do
+      app { password_field "secret", placeholder: "Password", revealable: true, revealed: false }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "password_field", node.fetch("type")
+    assert_equal "secret", node.dig("props", "text")
+    assert_equal true, node.dig("props", "revealable")
+    assert_equal false, node.dig("props", "revealed")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

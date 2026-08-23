@@ -10,6 +10,7 @@ module OmarchyUI
     VALUE_INPUTS = {
       text_field: :text,
       text_area: :text,
+      password_field: :text,
       number_field: :value,
       slider: :value,
       dropdown: :value,
@@ -283,7 +284,7 @@ module OmarchyUI
     def input_component(type, property, value, id:, props:, handler: nil)
       props = props.merge(property => value) unless value.equal?(UNSET)
       node = component(type, id:, **props)
-      event = type == :text_field ? :input : :change
+      event = %i[text_field password_field].include?(type) ? :input : :change
       @application.register_handler(node.id, event, handler) if handler
       node
     end

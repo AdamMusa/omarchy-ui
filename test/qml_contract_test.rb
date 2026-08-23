@@ -526,4 +526,13 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'suggestionModel: root.prop("suggestions", [])'
     assert_includes renderer, '"search", { value: text }'
   end
+
+  def test_password_field_has_a_specific_masked_reveal_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "password_field"'
+    assert_includes renderer, "id: passwordFieldComponent"
+    assert_includes renderer, "password: !passwordRoot.revealState"
+    assert_includes renderer, '"reveal", { value: passwordRoot.revealState }'
+  end
 end
