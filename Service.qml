@@ -10,6 +10,7 @@ Item {
   readonly property string pluginDir: manifest && manifest.__sourceDir
     ? String(manifest.__sourceDir)
     : ""
+  readonly property string projectDir: pluginDir
   readonly property string rubyProgram: pluginDir + "/main.rb"
   property string program: ""
   readonly property string effectiveRubyProgram: program !== "" ? program : rubyProgram
@@ -364,7 +365,7 @@ Item {
 
   function componentSource(typeName) {
     var definition = componentDefinitions[String(typeName || "")]
-    return definition ? pluginDir + "/Components/" + definition.qml : ""
+    return definition ? pluginDir + "/Components/Builtins/" + definition.qml : ""
   }
 
   function componentDefinition(typeName) {

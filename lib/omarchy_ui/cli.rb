@@ -55,11 +55,7 @@ module OmarchyUI
       Dir.mktmpdir("omarchy-ui-app-") do |runtime_dir|
         runtime_program = File.join(runtime_dir, "main.rb")
         File.write(runtime_program, SourceBundle.new(file, root: project_dir).call)
-        Runtime::FILES.each do |name|
-          source = File.file?(File.join(project_dir, name)) ? File.join(project_dir, name) : File.join(FRAMEWORK_ROOT, name)
-          FileUtils.cp(source, runtime_dir)
-        end
-        Runtime.install_components(runtime_dir)
+        Runtime.install_package(runtime_dir)
         %w[Commons Ui].each do |module_name|
           source = File.join("/usr/share/omarchy/shell", module_name)
           raise ArgumentError, "Omarchy QML module not found: #{source}" unless File.directory?(source)
@@ -143,7 +139,7 @@ module OmarchyUI
     end
 
     def application_entries(source)
-      generated = Runtime::FILES + Runtime::AUDIT_FILES + %w[omarchy-ui-runtime run Commons Ui]
+      generated = Runtime::GENERATED_ENTRIES + Runtime::AUDIT_FILES + %w[run Commons Ui]
       Dir.children(source).reject { |entry| %w[.git dist].include?(entry) || generated.include?(entry) }
     end
 

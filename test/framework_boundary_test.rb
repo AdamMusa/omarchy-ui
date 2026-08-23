@@ -1,136 +1,63 @@
 # frozen_string_literal: true
 
 require "minitest/autorun"
+require "tmpdir"
 require_relative "../lib/omarchy_ui"
 
 class FrameworkBoundaryTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  FRAMEWORK_SOURCE_GLOBS = [
-    "*.qml",
-    "Components/**/*.{qml,js,frag}",
-    "lib/**/*.rb",
-    "runtime/**/*.{rb,c}",
-    "bin/*"
-  ].freeze
-  SHOWCASE_MARKERS = [
-    "examples/",
-    "restaurant_drinks",
-    "futuristic_dashboard",
-    "tesla_drive_dashboard",
-    "shader_studio",
-    "cardiac_health_monitor",
-    "orbital_weather_console",
-    "quantum_market_terminal",
-    "smart_home_energy",
-    "cinematic_music_studio",
-    "Table Pour",
-    "Pulse Atlas",
-    "Lumen Forge",
-    "Quantum Market",
-    "Habitat One",
-    "Tesla Drive Lab",
-    "hra-heart",
-    "luminous-heart",
-    "electric-grand-tourer",
-    "vehicle-status-render",
-    "smart-living-room",
-    "midnight-drift",
-    "golden-apollian",
-    "procedural-ocean",
-    "synthwave-city"
-  ].freeze
-  ERROR_REPORTING_RENDERERS = {
-    image: "Image.qml", animated_image: "AnimatedImage.qml", border_image: "BorderImage.qml",
-    avatar: "Avatar.qml", font_loader: "FontLoader.qml", video: "Video.qml", audio: "Audio.qml",
-    web_view: "WebView.qml", shader_effect: "ShaderEffect.qml", model_view_3d: "ModelView3d.qml",
-    media_player: "MediaPlayer.qml", sound_effect: "SoundEffect.qml", camera: "Camera.qml",
-    capture_session: "CaptureSession.qml", audio_input: "AudioInput.qml",
-    audio_output: "AudioOutput.qml", screen_capture: "ScreenCapture.qml",
-    window_capture: "WindowCapture.qml", media_recorder: "MediaRecorder.qml",
-    image_capture: "ImageCapture.qml", loader: "Loader.qml", alert_dialog: "AlertDialog.qml",
-    tab_button: "TabButton.qml", navigation_rail: "NavigationRail.qml",
-    breadcrumb: "Breadcrumb.qml", item_delegate: "ItemDelegate.qml",
-    swipe_delegate: "SwipeDelegate.qml", carousel: "Carousel.qml"
-  }.freeze
+  ADAPTER_QML = %w[App.qml BarWidget.qml Panel.qml Service.qml].freeze
+  REMOVED_CORE_FILES = %w[
+    animation application builder command component_registry components node protocol
+    scheduler source_bundle state_store value
+  ].map { |name| File.join(ROOT, "lib", "omarchy_ui", "#{name}.rb") }.freeze
 
-  def test_framework_sources_do_not_depend_on_showcase_code_or_assets
-    leaks = framework_source_files.flat_map do |path|
-      source = File.binread(path)
-      SHOWCASE_MARKERS.filter_map do |marker|
-        relative_path(path) if source.include?(marker)
-      end
-    end
-
-    assert_empty leaks.uniq.sort
-  end
-
-  def test_model_view_is_domain_neutral
-    schema = OmarchyUI::COMPONENTS.fetch(:model_view_3d).first
-    scene = File.read(File.join(ROOT, "Components/Builtins/Support/ModelView3dScene.qml"))
-
-    assert_empty schema & %i[bpm pulse pulse_scale fallback_source fallback_text fallback_fill_mode
-                              prefer_3d fallback_while_loading]
-    refute_match(/\b(?:bpm|beatAmount|pulse_scale|heart)\b/i, scene)
-  end
-
-  def test_components_never_expose_or_render_silent_fallbacks
-    fallback_properties = OmarchyUI::COMPONENTS.flat_map do |name, (properties, _events, _container)|
-      properties.grep(/\Afallback_/).map { |property| "#{name}.#{property}" }
-    end
-    model_view = File.read(File.join(ROOT, "Components/Builtins/ModelView3d.qml"))
-    avatar = File.read(File.join(ROOT, "Components/Builtins/Avatar.qml"))
-
-    assert_empty fallback_properties
-    refute_includes model_view, "Image {"
-    refute_includes model_view, "fallback"
-    assert_includes avatar, 'visible: avatarRoot.avatarSource === ""'
-    refute_includes avatar, "avatarImage.status !== Image.Ready"
-  end
-
-  def test_declared_component_types_fail_instead_of_becoming_another_type
-    builder = OmarchyUI::Builder.instance_method(:image).source_location
-    router = File.read(File.join(ROOT, "ControlNode.qml"))
-
-    refute_nil builder
-    assert_raises(ArgumentError) { OmarchyUI::Application.new { app { component(:not_a_component) } } }
-    assert_includes router, 'if (node.type === "image") return imageComponent'
-    assert_includes router, 'if (node.type === "vector_image") return vectorImageComponent'
-    assert_includes router, 'if (node.type === "model_view_3d") return modelView3dComponent'
-    refute_match(/node\.type === "model_view_3d"[^\n]+imageComponent/, router)
-  end
-
-  def test_component_and_resource_failures_use_the_framework_error_channel
-    router = File.read(File.join(ROOT, "ControlNode.qml"))
-    service = File.read(File.join(ROOT, "Service.qml"))
-
-    assert_includes router, "function componentError(code, message, payload)"
-    assert_includes router, "status === Loader.Error"
-    assert_includes service, "function reportComponentError(surfaceName, controlId, componentType, code, message)"
-    ERROR_REPORTING_RENDERERS.each do |component, renderer|
-      source = File.read(File.join(ROOT, "Components/Builtins", renderer))
-      assert_includes source, "componentError", "#{renderer} does not report failures"
-      assert_includes OmarchyUI::COMPONENTS.fetch(component)[1], :error,
-                      "#{component} does not expose its failures to Ruby"
-    end
-  end
-
-  def test_gem_and_runtime_packages_exclude_examples
+  def test_gem_is_an_explicit_zui_adapter
     specification = Gem::Specification.load(File.join(ROOT, "omarchy-ui.gemspec"))
+    dependency = specification.dependencies.find { |candidate| candidate.name == "zui" }
 
-    refute_nil specification
-    assert_empty specification.files.grep(%r{\Aexamples(?:/|\z)})
-    assert_empty OmarchyUI::Runtime::FILES.grep(%r{(?:\A|/)examples(?:/|\z)})
+    refute_nil dependency
+    assert dependency.requirement.satisfied_by?(Gem::Version.new(Zui::VERSION))
+    assert_empty specification.files.grep(%r{\AComponents/})
+    assert_empty specification.files.grep(%r{\Alib/omarchy_ui/(?:animation|application|builder|node)\.rb\z})
   end
 
-  private
-
-  def framework_source_files
-    FRAMEWORK_SOURCE_GLOBS.flat_map { |glob| Dir[File.join(ROOT, glob)] }
-      .select { |path| File.file?(path) }
-      .uniq
+  def test_ruby_api_delegates_to_the_same_zui_core_objects
+    assert_same Zui::Application, OmarchyUI::Application
+    assert_same Zui::Builder, OmarchyUI::Builder
+    assert_same Zui::StateStore, OmarchyUI::StateStore
+    assert_same Zui::COMPONENTS, OmarchyUI::COMPONENTS
+    assert_operator OmarchyUI::SourceBundle, :<, Zui::SourceBundle
   end
 
-  def relative_path(path)
-    path.delete_prefix("#{ROOT}/")
+  def test_repository_contains_only_the_omarchy_adapter_surface
+    assert_empty REMOVED_CORE_FILES.select { |path| File.exist?(path) }
+    refute Dir.exist?(File.join(ROOT, "Components"))
+    refute File.exist?(File.join(ROOT, "ControlNode.qml"))
+    assert_equal ADAPTER_QML, Dir[File.join(ROOT, "*.qml")].map { |path| File.basename(path) }.sort
+  end
+
+  def test_adapter_runtime_installs_zui_catalog_and_omarchy_host
+    Dir.mktmpdir do |directory|
+      OmarchyUI::Runtime.install_package(directory)
+
+      assert_equal File.read(File.join(ROOT, "Service.qml")), File.read(File.join(directory, "Service.qml"))
+      assert_equal File.read(File.join(Zui::FRAMEWORK_ROOT, "ControlNode.qml")), File.read(File.join(directory, "ControlNode.qml"))
+      assert File.file?(File.join(directory, "Components", "Builtins", "ModelView3d.qml"))
+      assert File.file?(File.join(directory, "Controls", "Button.qml"))
+      assert File.file?(File.join(directory, "Theme", "Style.qml"))
+      refute File.exist?(File.join(directory, "Desktop.qml"))
+    end
+  end
+
+  def test_application_code_is_not_present_in_adapter_sources
+    markers = %w[restaurant_drinks tesla_drive_dashboard shader_studio cardiac_health_monitor]
+    sources = Dir[File.join(ROOT, "{lib,runtime}", "**", "*")].select { |path| File.file?(path) }
+    leaks = sources.flat_map do |path|
+      content = File.binread(path)
+      markers.filter_map { |marker| path if content.include?(marker) }
+    end
+
+    assert_empty leaks
   end
 end

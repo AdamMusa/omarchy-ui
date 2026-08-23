@@ -5,10 +5,8 @@ set -euo pipefail
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 cd -- "$repo_dir"
 
-ruby -Ilib test/omarchy_ui_test.rb
+ruby -Ilib test/adapter_test.rb
 ruby -Ilib test/cli_test.rb
-ruby -Ilib test/command_test.rb
-ruby test/qml_contract_test.rb
 ruby -Ilib test/framework_boundary_test.rb
 ruby -Ilib examples/restaurant_drinks/test/app_test.rb
 ruby -Ilib examples/futuristic_dashboard/test/app_test.rb
@@ -48,38 +46,22 @@ if [[ -x $runtime ]]; then
 fi
 
 if command -v qmlformat >/dev/null 2>&1; then
-  while IFS= read -r -d '' qml_file; do
+  while IFS= read -r qml_file; do
     qmlformat "$qml_file" >/dev/null
-  done < <(find . -path './.git' -prune -o -name '*.qml' -type f -print0)
+  done < <(find . -maxdepth 1 -name '*.qml' -type f -print)
 fi
 
-if command -v qmllint >/dev/null 2>&1 && [ -d "$HOME/.local/share/omarchy/shell" ]; then
-  quick3d_available=false
-  quick3d_paths=(/usr/lib/qt6/qml)
-  if [[ -n ${QML_IMPORT_PATH:-} ]]; then
-    IFS=: read -r -a configured_qml_paths <<<"$QML_IMPORT_PATH"
-    quick3d_paths+=("${configured_qml_paths[@]}")
-  fi
-  for qml_path in "${quick3d_paths[@]}"; do
-    if [[ -f $qml_path/QtQuick3D/qmldir ]]; then
-      quick3d_available=true
-      break
-    fi
-  done
-  while IFS= read -r -d '' qml_file; do
-    if [[ $qml_file == */Support/ModelView3dScene.qml && $quick3d_available == false ]]; then
-      echo "Skipping optional Qt Quick 3D lint (install qt6-quick3d to enable): $qml_file"
-      continue
-    fi
-    qmllint -I "$HOME/.local/share/omarchy/shell" "$qml_file"
-  done < <(find . -path './.git' -prune -o -name '*.qml' -type f -print0)
-fi
-
-if [ -x /usr/lib/qt6/bin/qsb ]; then
-  while IFS= read -r -d '' shader_file; do
-    /usr/lib/qt6/bin/qsb --silent --dump "$shader_file" >/dev/null
-  done < <(find Components examples -name '*.qsb' -type f -print0)
+if command -v qmllint >/dev/null 2>&1 && [ -d /usr/share/omarchy/shell ]; then
+  lint_dir=$(mktemp -d)
+  trap 'rm -rf -- "$lint_dir"' EXIT
+  ruby -Ilib -e 'require "omarchy_ui"; OmarchyUI::Runtime.install_package(ARGV.fetch(0))' "$lint_dir"
+  ln -s /usr/share/omarchy/shell/Commons "$lint_dir/Commons"
+  ln -s /usr/share/omarchy/shell/Ui "$lint_dir/Ui"
+  qmllint -I "$lint_dir" -I /usr/share/omarchy/shell \
+    "$lint_dir/App.qml" "$lint_dir/Service.qml" "$lint_dir/Panel.qml" "$lint_dir/BarWidget.qml"
+  rm -rf -- "$lint_dir"
+  trap - EXIT
 fi
 
 git diff --check
-echo "Omarchy UI framework tests passed."
+echo "Omarchy UI adapter tests passed."

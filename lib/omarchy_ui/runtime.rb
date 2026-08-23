@@ -7,8 +7,11 @@ module OmarchyUI
     module_function
 
     BUNDLED = File.expand_path("../../vendor/runtime/x86_64-linux/omarchy-ui-runtime", __dir__)
-    FILES = %w[Service.qml ControlNode.qml Panel.qml BarWidget.qml App.qml].freeze
+    ADAPTER_FILES = %w[Service.qml Panel.qml BarWidget.qml App.qml].freeze
+    CORE_FILES = %w[ControlNode.qml Components Controls Theme].freeze
+    FILES = (ADAPTER_FILES + ["ControlNode.qml"]).freeze
     AUDIT_FILES = %w[omarchy-ui-runtime.sha256 RUNTIME_PROVENANCE.md].freeze
+    GENERATED_ENTRIES = (ADAPTER_FILES + CORE_FILES + %w[Desktop.qml omarchy-ui-runtime]).freeze
 
     def executable
       override = ENV["OMARCHY_UI_RUNTIME"]
@@ -31,8 +34,11 @@ module OmarchyUI
     end
 
     def install_package(path, framework_root: FRAMEWORK_ROOT)
-      FILES.each { |file| FileUtils.cp(File.join(framework_root, file), File.join(path, file)) }
-      install_components(path, framework_root:)
+      Zui::Runtime.install_qml(path)
+      FileUtils.rm_f(File.join(path, "Desktop.qml"))
+      ADAPTER_FILES.each do |file|
+        FileUtils.cp(File.join(framework_root, file), File.join(path, file))
+      end
 
       if File.file?(BUNDLED)
         destination = File.join(path, "omarchy-ui-runtime")
@@ -43,13 +49,13 @@ module OmarchyUI
         source = File.join(framework_root, "vendor", "runtime", "x86_64-linux", file)
         FileUtils.cp(source, File.join(path, file)) if File.file?(source)
       end
+      path
     end
 
-    def install_components(path, framework_root: FRAMEWORK_ROOT)
-      destination = File.join(path, "Components")
-      FileUtils.mkdir_p(destination)
-      source = File.join(framework_root, "Components", "Builtins")
-      FileUtils.cp_r(source, destination) if Dir.exist?(source)
+    def install_components(path, **)
+      Zui::Runtime.install_qml(path)
+      FileUtils.rm_f(File.join(path, "Desktop.qml"))
+      path
     end
   end
 end
