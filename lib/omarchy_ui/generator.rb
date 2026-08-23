@@ -35,7 +35,7 @@ module OmarchyUI
           app :main, title: "#{@name}", width: 760, height: 520 do
             welcome_card(
               title: "Welcome to #{@name}",
-              message: "This is the official Omarchy UI framework."
+              message: "This Omarchy app is powered by the Zui framework."
             )
           end
         end
@@ -65,7 +65,7 @@ module OmarchyUI
       <<~MARKDOWN
         # #{@name}
 
-        A standalone application built with Omarchy UI.
+        A pure Ruby Omarchy application built with Zui through the Omarchy UI adapter.
 
         ## Run
 
