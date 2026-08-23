@@ -174,6 +174,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `wrap` | dimensions, `spacing`, horizontal/vertical `orientation`, `layout_direction` | `click` | yes |
 | `split_view` | dimensions and horizontal/vertical `orientation`; children accept preferred/min/fill sizing | `click`, `resize` | yes |
 | `stack_layout` | `current_index` and dimensions; displays one child page at a time | `click`, `change` | yes |
+| `loader` | `active`, `asynchronous`, optional dimensions; lazily creates its first child | `click`, `loaded`, `status` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |

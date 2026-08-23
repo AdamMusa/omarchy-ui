@@ -30,6 +30,7 @@ module OmarchyUI
     wrap: [%i[width height spacing orientation layout_direction visible], %i[click], true],
     split_view: [%i[width height orientation visible], %i[click resize], true],
     stack_layout: [%i[current_index width height visible], %i[click change], true],
+    loader: [%i[active asynchronous width height visible], %i[click loaded status], true],
     text: [%i[text style size bold color wrap width visible], [], false],
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],

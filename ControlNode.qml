@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -199,6 +199,7 @@ Loader {
     if (node.type === "wrap") return wrapComponent
     if (node.type === "split_view") return splitViewComponent
     if (node.type === "stack_layout") return stackLayoutComponent
+    if (node.type === "loader") return lazyLoaderComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -649,6 +650,31 @@ Loader {
           root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: currentIndex })
       }
       Repeater { model: root.node.children || []; delegate: layoutChildDelegate }
+    }
+  }
+
+  Component {
+    id: lazyLoaderComponent
+    Loader {
+      readonly property var childNode: root.node && Array.isArray(root.node.children) && root.node.children.length > 0
+        ? root.node.children[0] : null
+      active: root.prop("active", true) !== false && childNode !== null
+      asynchronous: root.prop("asynchronous", false) === true
+      source: active ? Qt.resolvedUrl("ControlNode.qml") : ""
+      implicitWidth: Number(root.prop("width", item ? item.implicitWidth : 0))
+      implicitHeight: Number(root.prop("height", item ? item.implicitHeight : 0))
+      onLoaded: {
+        item.bridge = root.bridge
+        item.surfaceName = root.surfaceName
+        item.controlId = String(childNode.id)
+        item.foreground = root.foreground
+        item.fontFamily = root.fontFamily
+        if (root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", {})
+      }
+      onStatusChanged: {
+        if (root.subscribed("status"))
+          root.bridge.sendEvent(root.surfaceName, root.controlId, "status", { value: status })
+      }
     }
   }
 

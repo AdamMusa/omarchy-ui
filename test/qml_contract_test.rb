@@ -139,6 +139,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("current_index", 0)'
   end
 
+  def test_loader_has_a_specific_lazy_native_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "loader"'
+    assert_includes renderer, "id: lazyLoaderComponent"
+    assert_includes renderer, 'source: active ? Qt.resolvedUrl("ControlNode.qml") : ""'
+    assert_includes renderer, 'root.subscribed("loaded")'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'
