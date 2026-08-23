@@ -41,7 +41,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] loader
 - [x] flickable
 - [x] focus_scope
-- [ ] flipable
+- [x] flipable
 - [ ] border_image
 - [ ] window
 - [ ] application_window

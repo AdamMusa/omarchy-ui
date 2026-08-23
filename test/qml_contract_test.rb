@@ -166,6 +166,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "forceActiveFocus()"
   end
 
+  def test_flipable_has_a_specific_native_two_face_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "flipable"'
+    assert_includes renderer, "id: flipableComponent"
+    assert_includes renderer, "Flipable {"
+    assert_includes renderer, "Behavior on angle"
+    assert_includes renderer, "root.configureFace(item, root.node.children[1])"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

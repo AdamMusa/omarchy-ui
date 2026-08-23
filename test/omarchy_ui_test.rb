@@ -236,6 +236,27 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_flipable_is_a_typed_two_face_container
+    application = OmarchyUI::Application.new do
+      app do
+        flipable flipped: true, axis: :horizontal, duration: 450 do
+          card { text "Front" }
+          card { text "Back" }
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "flipable", node.fetch("type")
+    assert_equal true, node.dig("props", "flipped")
+    assert_equal "horizontal", node.dig("props", "axis")
+    assert_equal %w[card card], node.fetch("children").map { |child| child.fetch("type") }
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do

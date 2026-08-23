@@ -19,13 +19,13 @@ Loader {
   }
 
   readonly property bool builtIn: ["text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
-    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope",
+    "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
   readonly property bool structuralContainer: ["row", "column", "container", "grid", "row_layout",
-    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "key_catcher"]
+    "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "key_catcher"]
     .indexOf(node ? node.type : "") >= 0
 
   function prop(name, fallback) {
@@ -91,6 +91,15 @@ Loader {
 
   function subscribed(eventName) {
     return node && Array.isArray(node.events) && node.events.indexOf(eventName) >= 0
+  }
+
+  function configureFace(face, childNode) {
+    if (!face || !childNode) return
+    face.bridge = bridge
+    face.surfaceName = surfaceName
+    face.controlId = String(childNode.id)
+    face.foreground = foreground
+    face.fontFamily = fontFamily
   }
 
   function nativeDefinition() {
@@ -202,6 +211,7 @@ Loader {
     if (node.type === "loader") return lazyLoaderComponent
     if (node.type === "flickable") return flickableComponent
     if (node.type === "focus_scope") return focusScopeComponent
+    if (node.type === "flipable") return flipableComponent
     if (node.type === "stack") return stackComponent
     if (node.type === "scroll") return scrollComponent
     if (node.type === "rectangle") return rectangleComponent
@@ -735,6 +745,46 @@ Loader {
         implicitWidth: childrenRect.width
         implicitHeight: childrenRect.height
         Repeater { model: root.node.children || []; delegate: childDelegate }
+      }
+    }
+  }
+
+  Component {
+    id: flipableComponent
+    Flipable {
+      id: nativeFlipable
+      implicitWidth: Number(root.prop("width", Math.max(frontFace.implicitWidth, backFace.implicitWidth)))
+      implicitHeight: Number(root.prop("height", Math.max(frontFace.implicitHeight, backFace.implicitHeight)))
+      readonly property bool flipped: root.prop("flipped", false) === true
+      readonly property bool verticalAxis: String(root.prop("axis", "vertical")) === "vertical"
+      front: Loader {
+        id: frontFace
+        source: root.node && root.node.children && root.node.children.length > 0 ? Qt.resolvedUrl("ControlNode.qml") : ""
+        onLoaded: root.configureFace(item, root.node.children[0])
+      }
+      back: Loader {
+        id: backFace
+        source: root.node && root.node.children && root.node.children.length > 1 ? Qt.resolvedUrl("ControlNode.qml") : ""
+        onLoaded: root.configureFace(item, root.node.children[1])
+      }
+      transform: Rotation {
+        id: flipRotation
+        origin.x: nativeFlipable.width / 2
+        origin.y: nativeFlipable.height / 2
+        axis.x: nativeFlipable.verticalAxis ? 0 : 1
+        axis.y: nativeFlipable.verticalAxis ? 1 : 0
+        axis.z: 0
+        angle: nativeFlipable.flipped ? 180 : 0
+        Behavior on angle {
+          NumberAnimation {
+            duration: Number(root.prop("duration", 300))
+            easing.type: root.easingType(root.prop("easing", "in_out_quad"))
+          }
+        }
+      }
+      TapHandler {
+        enabled: root.prop("interactive", false) === true
+        onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: !nativeFlipable.flipped })
       }
     }
   }
