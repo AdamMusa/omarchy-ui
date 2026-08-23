@@ -2228,6 +2228,44 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_menu_bar_is_a_typed_native_hierarchical_control
+    application = OmarchyUI::Application.new do
+      app do
+        menu_bar [
+          {
+            title: "File",
+            items: [
+              { label: "Open", value: :open, icon: "folder" },
+              { separator: true },
+              { label: "Quit", value: :quit }
+            ]
+          },
+          {
+            title: "View",
+            items: [{ label: "Sidebar", checkable: true, checked: true }]
+          }
+        ], id: :main_menu, spacing: 4, height: 44
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "menu_bar", node.fetch("type")
+    assert_equal "main_menu", node.fetch("id")
+    assert_equal "File", node.dig("props", "menus", 0, "title")
+    assert_equal "open", node.dig("props", "menus", 0, "items", 0, "value")
+    assert_equal true, node.dig("props", "menus", 0, "items", 1, "separator")
+    assert_equal "View", node.dig("props", "menus", 1, "title")
+    assert_equal true, node.dig("props", "menus", 1, "items", 0, "checkable")
+    assert_equal true, node.dig("props", "menus", 1, "items", 0, "checked")
+    assert_equal 4, node.dig("props", "spacing")
+    assert_equal 44, node.dig("props", "height")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

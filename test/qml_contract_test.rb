@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 116, renderer_names.length
+    assert_equal 117, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1118,5 +1118,25 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'root.prop("opacity", 0.25)'
     assert_includes renderer, 'root.prop("color", root.foreground)'
     assert_includes renderer, 'visible ? "show" : "hide"'
+  end
+
+  def test_menu_bar_has_a_specific_native_hierarchical_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "menu_bar"'
+    assert_includes renderer, "id: menuBarComponent"
+    assert_includes renderer, "QQC.MenuBar {"
+    assert_includes renderer, "QQC.Menu {"
+    assert_includes renderer, "QQC.MenuItem {"
+    assert_includes renderer, "QQC.MenuSeparator {"
+    assert_includes renderer, 'root.prop("menus", [])'
+    assert_includes renderer, "menuBarRoot.insertMenu(index, object)"
+    assert_includes renderer, "nativeMenu.insertItem(index, object)"
+    assert_includes renderer, "menu_index: menuIndex"
+    assert_includes renderer, "item_index: itemIndex"
+    assert_includes renderer, '"trigger", menuBarRoot.itemPayload'
+    assert_includes renderer, '"toggle", menuBarRoot.itemPayload'
+    assert_includes renderer, '"menu_open",'
+    assert_includes renderer, '"menu_close",'
   end
 end

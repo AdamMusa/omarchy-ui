@@ -184,6 +184,12 @@ focus events include the Ruby value and current checked state.
 available width/height, padding, color, opacity, enabled state, and visibility are reactive, and
 visibility transitions emit `show` or `hide` when subscribed.
 
+`menu_bar(menus, ...)` constructs a native Qt Controls `MenuBar`; each Ruby menu hash supplies a
+title and an `items` array using the same item/separator schema as `menu`. Both hierarchy levels are
+instantiated with native ownership, and trigger/toggle/highlight payloads include menu and item
+indices. Dimensions, spacing, padding, typography, colors, enabled state, visibility, and per-menu
+open/close lifecycle are reactive.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

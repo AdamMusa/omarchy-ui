@@ -142,7 +142,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] menu
 - [x] menu_item
 - [x] menu_separator
-- [ ] menu_bar
+- [x] menu_bar
 - [ ] context_menu
 - [ ] popup
 - [ ] dialog
