@@ -227,6 +227,15 @@ module OmarchyUI
     def busy_indicator(running = true, id: nil, **props)
       component(:busy_indicator, id:, running: running, **props)
     end
+    def progress_ring(value = UNSET, id: nil, **props)
+      ring_props = props.dup
+      if value.equal?(UNSET)
+        ring_props[:indeterminate] = true unless ring_props.key?(:indeterminate)
+      else
+        ring_props[:value] = value
+      end
+      component(:progress_ring, id:, **ring_props)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

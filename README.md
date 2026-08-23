@@ -314,6 +314,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `banner` | in-layout severity notice with icon, title/message, action and dismiss controls, responsive content and reactive styling | `action`, `dismiss`, `click`, `hover`, visibility/focus |
 | `toast` | compact timed popup with title/message, severity icon, corner placement, persistent mode, hover pause and click dismissal | `timeout`, `dismiss`, `click`, `open`, `close`, `hover` |
 | `busy_indicator` | native indeterminate activity indicator with reactive running state, size, palette, opacity and accessibility | `running_change`, `show`, `hide` |
+| `progress_ring` | determinate or indeterminate circular progress with ranges, animated values, direction/start angle, center labels and accessibility | `value_change`, `show`, `hide` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

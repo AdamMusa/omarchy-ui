@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 128, renderer_names.length
+    assert_equal 129, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1346,5 +1346,26 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'palette.highlight: root.prop("color", Color.accent)'
     assert_includes renderer, 'Accessible.name: String(root.prop("accessible_name", "Loading"))'
     assert_includes renderer, '"running_change", { value: running }'
+  end
+
+  def test_progress_ring_has_a_specific_circular_progress_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "progress_ring"'
+    assert_includes renderer, "id: progressRingComponent"
+    assert_includes renderer, "id: ringRoot"
+    assert_includes renderer, "Canvas {"
+    assert_includes renderer, 'root.prop("minimum", 0)'
+    assert_includes renderer, 'root.prop("maximum", 1)'
+    assert_includes renderer, 'root.prop("indeterminate", false)'
+    assert_includes renderer, 'root.prop("thickness", 5)'
+    assert_includes renderer, 'root.prop("start_angle", -90)'
+    assert_includes renderer, 'root.prop("clockwise", true)'
+    assert_includes renderer, "context.arc(centerX, centerY, radius, start, end"
+    assert_includes renderer, "RotationAnimator {"
+    assert_includes renderer, "Behavior on displayedProgress"
+    assert_includes renderer, 'root.prop("label_format", "{percent}%")'
+    assert_includes renderer, '"value_change", {'
+    assert_includes renderer, "normalized: normalizedValue"
   end
 end

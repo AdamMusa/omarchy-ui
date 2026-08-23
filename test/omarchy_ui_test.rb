@@ -2575,6 +2575,38 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_progress_ring_supports_determinate_and_default_indeterminate_modes
+    application = OmarchyUI::Application.new do
+      app do
+        progress_ring 75, id: :upload_progress, minimum: 0, maximum: 100,
+                          size: 80, thickness: 7, show_label: true,
+                          label_format: "{percent}% uploaded", clockwise: false
+        progress_ring id: :waiting_progress
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    nodes = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children")
+    determinate, indeterminate = nodes
+
+    assert_equal "progress_ring", determinate.fetch("type")
+    assert_equal "upload_progress", determinate.fetch("id")
+    assert_equal 75, determinate.dig("props", "value")
+    assert_equal 0, determinate.dig("props", "minimum")
+    assert_equal 100, determinate.dig("props", "maximum")
+    assert_equal 80, determinate.dig("props", "size")
+    assert_equal 7, determinate.dig("props", "thickness")
+    assert_equal true, determinate.dig("props", "show_label")
+    assert_equal "{percent}% uploaded", determinate.dig("props", "label_format")
+    assert_equal false, determinate.dig("props", "clockwise")
+    assert_equal "progress_ring", indeterminate.fetch("type")
+    assert_equal true, indeterminate.dig("props", "indeterminate")
+    refute indeterminate.fetch("props").key?("value")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -247,6 +247,11 @@ popup lifecycle are exposed as Ruby events.
 indicator. Running state, dimensions, palette color, opacity, enabled/visible state, and accessible
 name are reactive; Ruby can observe running and visibility changes.
 
+`progress_ring(value = nil, ...)` renders circular determinate progress for an arbitrary
+minimum/maximum range; omitting the value selects an indeterminate rotating arc. Thickness, track
+and progress colors, start angle, direction, dimensions, animation, center label/format,
+accessibility, and visibility are reactive. Ruby receives normalized value and visibility changes.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
