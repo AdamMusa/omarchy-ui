@@ -62,7 +62,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] selectable_text
 - [x] animated_image
 - [x] video
-- [ ] audio
+- [x] audio
 - [x] avatar
 - [x] badge
 - [x] chip

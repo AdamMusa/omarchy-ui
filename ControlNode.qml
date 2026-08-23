@@ -19,7 +19,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "video", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
@@ -206,6 +206,7 @@ Loader {
     if (node.type === "image") return imageComponent
     if (node.type === "animated_image") return animatedImageComponent
     if (node.type === "video") return videoComponent
+    if (node.type === "audio") return audioComponent
     if (node.type === "avatar") return avatarComponent
     if (node.type === "badge") return badgeComponent
     if (node.type === "chip") return chipComponent
@@ -605,6 +606,48 @@ Loader {
       onDurationChanged: {
         if (root.subscribed("duration")) root.bridge.sendEvent(root.surfaceName, root.controlId, "duration", { value: duration })
       }
+    }
+  }
+
+  Component {
+    id: audioComponent
+    Item {
+      id: audioRoot
+      implicitWidth: 0
+      implicitHeight: 0
+      function syncPlayback() {
+        var requested = String(root.prop("playback", ""))
+        if (requested === "play") audioPlayer.play()
+        else if (requested === "pause") audioPlayer.pause()
+        else if (requested === "stop") audioPlayer.stop()
+      }
+      MediaPlayer {
+        id: audioPlayer
+        source: String(root.prop("source", ""))
+        autoPlay: root.prop("auto_play", false) === true
+        loops: Number(root.prop("loops", 1))
+        playbackRate: Number(root.prop("playback_rate", 1))
+        audioOutput: AudioOutput {
+          volume: Math.max(0, Math.min(1, Number(root.prop("volume", 1))))
+          muted: root.prop("muted", false) === true
+        }
+        onPlaybackStateChanged: function(playbackState) {
+          var eventName = playbackState === MediaPlayer.PlayingState ? "play"
+            : (playbackState === MediaPlayer.PausedState ? "pause" : "stop")
+          root.bridge.sendEvent(root.surfaceName, root.controlId, eventName, {})
+        }
+        onErrorOccurred: function(error, message) {
+          root.bridge.sendEvent(root.surfaceName, root.controlId, "error", { code: error, message: message })
+        }
+        onPositionChanged: {
+          if (root.subscribed("position")) root.bridge.sendEvent(root.surfaceName, root.controlId, "position", { value: position, duration: duration })
+        }
+        onDurationChanged: {
+          if (root.subscribed("duration")) root.bridge.sendEvent(root.surfaceName, root.controlId, "duration", { value: duration })
+        }
+      }
+      Component.onCompleted: syncPlayback()
+      Connections { target: root; function onNodeChanged() { audioRoot.syncPlayback() } }
     }
   }
 

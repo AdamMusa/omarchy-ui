@@ -234,6 +234,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"position", { value: position, duration: duration }'
   end
 
+  def test_audio_has_a_specific_native_media_player_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "audio"'
+    assert_includes renderer, "id: audioComponent"
+    assert_includes renderer, "MediaPlayer {"
+    assert_includes renderer, "audioOutput: AudioOutput {"
+    assert_includes renderer, 'requested === "pause"'
+  end
+
   def test_avatar_has_a_specific_image_and_initials_renderer
     renderer = source("ControlNode.qml")
 

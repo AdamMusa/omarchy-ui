@@ -374,6 +374,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_audio_is_a_typed_native_media_player_component
+    application = OmarchyUI::Application.new do
+      app { audio "alert.ogg", playback: :play, loops: 2, volume: 0.5 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "audio", node.fetch("type")
+    assert_equal "alert.ogg", node.dig("props", "source")
+    assert_equal "play", node.dig("props", "playback")
+    assert_equal 0.5, node.dig("props", "volume")
+  ensure
+    application&.stop
+  end
+
   def test_avatar_is_a_typed_image_with_initials_fallback
     application = OmarchyUI::Application.new do
       app { avatar "profile.png", name: "Ada Lovelace", size: 64 }
