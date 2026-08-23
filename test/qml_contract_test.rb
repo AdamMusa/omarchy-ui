@@ -205,6 +205,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "linkColor: root.prop"
   end
 
+  def test_selectable_text_has_a_specific_native_selection_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "selectable_text"'
+    assert_includes renderer, "id: selectableTextComponent"
+    assert_includes renderer, "selectByMouse: true"
+    assert_includes renderer, '"selection", {'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

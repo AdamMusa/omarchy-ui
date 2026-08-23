@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
@@ -195,6 +195,7 @@ Loader {
     if (node.type === "text") return textComponent
     if (node.type === "label") return labelComponent
     if (node.type === "rich_text") return richTextComponent
+    if (node.type === "selectable_text") return selectableTextComponent
     if (node.type === "icon") return iconComponent
     if (node.type === "tooltip") return tooltipComponent
     if (node.type === "button") return buttonComponent
@@ -378,6 +379,34 @@ Loader {
       maximumLineCount: Number(root.prop("maximum_lines", 2147483647))
       onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
       HoverHandler { cursorShape: parent.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor }
+    }
+  }
+
+  Component {
+    id: selectableTextComponent
+    TextEdit {
+      text: String(root.prop("text", ""))
+      readOnly: true
+      selectByMouse: true
+      persistentSelection: true
+      color: root.prop("color", root.foreground)
+      selectionColor: root.prop("selection_color", Color.accent)
+      selectedTextColor: root.prop("selected_text_color", Color.background)
+      font.family: root.fontFamily
+      font.pixelSize: Number(root.prop("size", Style.font.body))
+      font.bold: root.prop("bold", false) === true
+      implicitWidth: root.prop("width", null) === null ? contentWidth : Number(root.prop("width", contentWidth))
+      wrapMode: root.prop("wrap", true) !== false ? TextEdit.Wrap : TextEdit.NoWrap
+      textFormat: {
+        var format = String(root.prop("format", "plain"))
+        if (format === "rich") return TextEdit.RichText
+        if (format === "markdown") return TextEdit.MarkdownText
+        return TextEdit.PlainText
+      }
+      onSelectionChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "selection", {
+        start: selectionStart, end: selectionEnd, text: selectedText
+      })
+      onLinkActivated: function(link) { root.bridge.sendEvent(root.surfaceName, root.controlId, "link", { value: link }) }
     }
   }
 

@@ -82,6 +82,7 @@ module OmarchyUI
 
     def label(value, id: nil, **props) = component(:label, id:, text: value.to_s, **props)
     def rich_text(markup, id: nil, **props) = component(:rich_text, id:, text: markup.to_s, **props)
+    def selectable_text(value, id: nil, **props) = component(:selectable_text, id:, text: value.to_s, **props)
 
     def icon(name, id: nil, **props) = component(:icon, id:, name: name.to_s, **props)
     def tooltip(value, id: nil, **props) = component(:tooltip, id:, text: value.to_s, **props)

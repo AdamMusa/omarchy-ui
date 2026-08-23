@@ -326,6 +326,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_selectable_text_is_a_typed_read_only_selection_component
+    application = OmarchyUI::Application.new do
+      app { selectable_text "Copy this value", selection_color: "#7aa2f7", wrap: false }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "selectable_text", node.fetch("type")
+    assert_equal "Copy this value", node.dig("props", "text")
+    assert_equal "#7aa2f7", node.dig("props", "selection_color")
+    assert_equal false, node.dig("props", "wrap")
+  ensure
+    application&.stop
+  end
+
   def test_bar_icon_button_registers_click_handler_and_optical_properties
     application = OmarchyUI::Application.new do
       bar_widget do

@@ -38,6 +38,7 @@ module OmarchyUI
     text: [%i[text style size bold color wrap width visible], [], false],
     label: [%i[text color size bold width wrap elide horizontal_alignment vertical_alignment maximum_lines format visible], %i[link], false],
     rich_text: [%i[text color link_color size bold width wrap maximum_lines visible], %i[link], false],
+    selectable_text: [%i[text color selection_color selected_text_color size bold width wrap format visible], %i[selection link], false],
     icon: [%i[name text size color visible], [], false],
     tooltip: [%i[text delay timeout foreground background border font_family font_size visible], [], false],
     image: [%i[source width height fill_mode visible], [], false],
