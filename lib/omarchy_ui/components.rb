@@ -55,6 +55,7 @@ module OmarchyUI
     spacer: [%i[width height visible], [], false],
     button: [%i[text icon tooltip selected active cursor focusable bordered foreground background accent font_family font_size icon_size icon_rotation icon_spinning horizontal_padding vertical_padding left_align tooltip_background tooltip_foreground tooltip_border], %i[click right_click hover], false],
     round_button: [%i[text icon checked checkable enabled diameter foreground background checked_background accent font_family font_size icon_size visible], %i[click change press release hover], false],
+    tool_button: [%i[text icon checked checkable enabled width height foreground background checked_background accent font_family font_size icon_size visible], %i[click change press release hover], false],
     action_button: [%i[icon tooltip foreground hover_color font_family font_size size focusable cursor bordered], %i[click hover], false],
     bar_icon_button: [%i[icon tooltip active foreground active_color slot_size optical_size font_family font_size text_rotation keep_space dimmed concealed interactive], %i[click right_click middle_click wheel], false],
     bar_indicator: [%i[active active_icon inactive_icon active_tooltip inactive_tooltip indicator_block foreground active_color font_family font_size], %i[click right_click middle_click wheel], false],

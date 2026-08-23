@@ -20,7 +20,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
@@ -203,6 +203,7 @@ Loader {
     if (node.type === "tooltip") return tooltipComponent
     if (node.type === "button") return buttonComponent
     if (node.type === "round_button") return roundButtonComponent
+    if (node.type === "tool_button") return toolButtonComponent
     if (node.type === "row") return rowComponent
     if (node.type === "column") return columnComponent
     if (node.type === "container") return containerComponent
@@ -527,6 +528,42 @@ Loader {
         font.family: String(root.prop("font_family", root.fontFamily))
         font.pixelSize: Number(String(root.prop("icon", "")).length > 0 ? root.prop("icon_size", Style.font.icon) : root.prop("font_size", Style.font.body))
         font.bold: true
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+      }
+      onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { checked: checked })
+      onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked })
+      onPressed: root.bridge.sendEvent(root.surfaceName, root.controlId, "press", {})
+      onReleased: root.bridge.sendEvent(root.surfaceName, root.controlId, "release", {})
+      onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
+    }
+  }
+
+  Component {
+    id: toolButtonComponent
+    QQC.ToolButton {
+      id: nativeToolButton
+      text: String(root.prop("text", ""))
+      checkable: root.prop("checkable", false) === true
+      checked: root.prop("checked", false) === true
+      enabled: root.prop("enabled", true) !== false
+      implicitWidth: Number(root.prop("width", 40))
+      implicitHeight: Number(root.prop("height", 36))
+      background: Rectangle {
+        radius: Style.cornerRadius
+        color: nativeToolButton.checked
+          ? root.prop("checked_background", root.prop("accent", Color.accent))
+          : root.prop("background", nativeToolButton.hovered ? Color.popups.background : "transparent")
+        border.width: nativeToolButton.activeFocus ? Style.normalBorderWidth : 0
+        border.color: root.prop("accent", Color.accent)
+        opacity: nativeToolButton.down ? 0.72 : 1
+      }
+      contentItem: Text {
+        text: String(root.prop("icon", "")).length > 0 ? root.iconGlyph(root.prop("icon", "")) : nativeToolButton.text
+        textFormat: Text.PlainText
+        color: nativeToolButton.checked ? Color.background : root.prop("foreground", root.foreground)
+        font.family: String(root.prop("font_family", root.fontFamily))
+        font.pixelSize: Number(String(root.prop("icon", "")).length > 0 ? root.prop("icon_size", Style.font.icon) : root.prop("font_size", Style.font.body))
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
       }

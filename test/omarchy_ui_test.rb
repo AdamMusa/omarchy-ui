@@ -552,6 +552,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_tool_button_is_a_typed_native_toolbar_control
+    application = OmarchyUI::Application.new do
+      app { tool_button "", icon: :edit, width: 42, checkable: true }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "tool_button", node.fetch("type")
+    assert_equal "edit", node.dig("props", "icon")
+    assert_equal 42, node.dig("props", "width")
+    assert_equal true, node.dig("props", "checkable")
+  ensure
+    application&.stop
+  end
+
   def test_bar_indicator_serializes_active_and_inactive_states
     application = OmarchyUI::Application.new do
       bar_widget do

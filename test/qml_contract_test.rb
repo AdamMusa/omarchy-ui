@@ -40,6 +40,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"change", { value: checked }'
   end
 
+  def test_tool_button_has_a_specific_native_toolbar_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "tool_button"'
+    assert_includes renderer, "id: toolButtonComponent"
+    assert_includes renderer, "QQC.ToolButton {"
+    assert_includes renderer, 'nativeToolButton.hovered ? Color.popups.background'
+  end
+
   def test_native_qml_bridge_maps_properties_events_children_and_animations
     qml = source("ControlNode.qml")
     assert_includes qml, "function syncNativeProperties()"
