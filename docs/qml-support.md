@@ -175,6 +175,11 @@ hashes (`label`, `value`, `icon`, `icon_source`, `enabled`, `checkable`, `checke
 hashes. Entries are rebuilt reactively, popup position/open state and close policy are controlled
 from Ruby, and trigger/toggle/highlight plus the full popup lifecycle are emitted with item data.
 
+`menu_item(label, value: ...)` exposes an independently usable native Qt Controls `MenuItem`.
+Enabled/checkable/checked/highlighted state, icon, keyboard shortcut, geometry, typography, colors,
+border, radius, and visibility are reactive. Trigger, toggle/change, pointer, hover, highlight, and
+focus events include the Ruby value and current checked state.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

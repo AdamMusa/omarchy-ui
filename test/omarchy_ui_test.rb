@@ -2179,6 +2179,32 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_menu_item_is_a_typed_native_action_control
+    application = OmarchyUI::Application.new do
+      app do
+        menu_item "Pinned", id: :pinned_item, value: 7, icon: :pin,
+                  shortcut: "Ctrl+P", checkable: true, checked: true,
+                  highlighted: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "menu_item", node.fetch("type")
+    assert_equal "pinned_item", node.fetch("id")
+    assert_equal "Pinned", node.dig("props", "text")
+    assert_equal 7, node.dig("props", "value")
+    assert_equal "pin", node.dig("props", "icon")
+    assert_equal "Ctrl+P", node.dig("props", "shortcut")
+    assert_equal true, node.dig("props", "checkable")
+    assert_equal true, node.dig("props", "checked")
+    assert_equal true, node.dig("props", "highlighted")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 114, renderer_names.length
+    assert_equal 115, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1086,5 +1086,23 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"highlight", menuRoot.entryPayload(index, modelData, this)'
     assert_includes renderer, '"about_to_show", {}'
     assert_includes renderer, '"about_to_hide", {}'
+  end
+
+  def test_menu_item_has_a_specific_native_entry_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "menu_item"'
+    assert_includes renderer, "id: menuItemComponent"
+    assert_includes renderer, "QQC.MenuItem {"
+    assert_includes renderer, 'text: String(root.prop("text", ""))'
+    assert_includes renderer, 'checkable: root.prop("checkable", false) === true'
+    assert_includes renderer, 'checked: root.prop("checked", false) === true'
+    assert_includes renderer, 'highlighted: root.prop("highlighted", false) === true'
+    assert_includes renderer, "Shortcut {"
+    assert_includes renderer, 'sequence: String(root.prop("shortcut", ""))'
+    assert_includes renderer, '"trigger", payload(false)'
+    assert_includes renderer, '"toggle", current'
+    assert_includes renderer, '"change", current'
+    assert_includes renderer, '"highlight", { value: highlighted }'
   end
 end

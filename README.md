@@ -300,6 +300,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `tool_bar` | native header/footer toolbar containing arbitrary Ruby controls in row/column layout, with spacing, padding, dimensions and styling | `click`, `position_change`, `show`, `hide`, `focus`, `blur` |
 | `tool_separator` | native toolbar separator with horizontal/vertical orientation, thickness, length, padding, color and opacity | `show`, `hide` |
 | `menu` | native popup menu accepting label/option/separator entries with reactive open state, position, close policy, checked/enabled state and styling | `trigger`, `toggle`, `highlight`, `open`, `close`, `about_to_show`, `about_to_hide` |
+| `menu_item` | standalone native menu entry with value, icon, shortcut, enabled/checkable/checked/highlighted state, dimensions and styling | `trigger`, `toggle`, `change`, `press`, `release`, `hover`, `highlight`, `focus`, `blur` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |
