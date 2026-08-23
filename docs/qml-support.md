@@ -77,6 +77,13 @@ IDs), resolves their native actions after rendering, and owns a native Qt `Actio
 selection, enabled state, checked action, membership, and visibility are reactive. `trigger` and
 `change` return the originating action ID; `actions_change` reports the resolved membership list.
 
+## Navigation containers
+
+`page(title, ...) { ... }` is backed by a native Qt Controls `Page`. It lays out ordinary Ruby
+children as a column, row, or stack and supports reactive spacing, padding, dimensions, background,
+typography, layout direction, and optional styled title/header and footer regions. Visibility,
+focus, title mutation, and page clicks emit `show`, `hide`, `focus`, `blur`, `title_change`, and `click`.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

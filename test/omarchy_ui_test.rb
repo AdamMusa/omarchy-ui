@@ -1677,6 +1677,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_page_is_a_typed_native_navigation_container
+    application = OmarchyUI::Application.new do
+      app do
+        page "Settings", id: :settings, header_text: "Account", footer_text: "Saved",
+             layout: :column, spacing: 12, padding: 20 do
+          text "Profile"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "page", node.fetch("type")
+    assert_equal "settings", node.fetch("id")
+    assert_equal "Settings", node.dig("props", "title")
+    assert_equal "Account", node.dig("props", "header_text")
+    assert_equal "Saved", node.dig("props", "footer_text")
+    assert_equal "column", node.dig("props", "layout")
+    assert_equal 12, node.dig("props", "spacing")
+    assert_equal 20, node.dig("props", "padding")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

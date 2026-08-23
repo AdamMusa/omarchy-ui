@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 95, renderer_names.length
+    assert_equal 96, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -766,5 +766,20 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"change", groupRoot.actionPayload(checkedAction)'
     assert_includes renderer, '"actions_change", {'
     assert_includes renderer, "values: attachedIds()"
+  end
+
+  def test_page_has_a_specific_native_navigation_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "page"'
+    assert_includes renderer, "id: pageComponent"
+    assert_includes renderer, "QQC.Page {"
+    assert_includes renderer, 'title: String(root.prop("title", ""))'
+    assert_includes renderer, 'root.prop("header_text", pageRoot.title)'
+    assert_includes renderer, 'root.prop("footer_text", "")'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, 'visible ? "show" : "hide"'
+    assert_includes renderer, 'activeFocus ? "focus" : "blur"'
+    assert_includes renderer, '"title_change", { value: title }'
   end
 end

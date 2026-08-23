@@ -116,7 +116,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 
 - [x] list_view
 - [x] key_catcher
-- [ ] page
+- [x] page
 - [ ] pane
 - [ ] frame
 - [ ] group_box
