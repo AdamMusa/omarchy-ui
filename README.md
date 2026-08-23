@@ -290,6 +290,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `tab_button` | standalone native tab button with checked/auto-exclusive state, icon, shortcut, dimensions, typography, colors and border styling | `click`, `change`, `toggle`, `press`, `release`, `hover`, `focus`, `blur` |
 | `page_indicator` | native page dots with reactive count/index, optional interaction, spacing, dot sizing, dimensions and colors | `input`, `change`, `show`, `hide`, `focus`, `blur` |
 | `stack_view` | native push/pop stack over Ruby child pages, driven by a reactive index with optional transitions, dimensions and styling | `change`, `push`, `pop`, `depth_change`, `busy_change`, `show`, `hide`, `focus`, `blur` |
+| `swipe_view` | native horizontal/vertical swipe navigation over Ruby child pages with reactive index, interaction, dimensions, direction and styling | `input`, `change`, `count_change`, `show`, `hide`, `focus`, `blur` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

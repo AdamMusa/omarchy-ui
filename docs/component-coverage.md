@@ -125,7 +125,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] tab_button
 - [x] page_indicator
 - [x] stack_view
-- [ ] swipe_view
+- [x] swipe_view
 - [ ] drawer
 - [ ] navigation_rail
 - [ ] breadcrumb

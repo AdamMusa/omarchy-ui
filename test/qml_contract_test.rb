@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 104, renderer_names.length
+    assert_equal 105, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -910,5 +910,20 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"depth_change",'
     assert_includes renderer, '"busy_change", { value: busy }'
     assert_includes renderer, '"change",'
+  end
+
+  def test_swipe_view_has_a_specific_native_gesture_paging_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "swipe_view"'
+    assert_includes renderer, "id: swipeViewComponent"
+    assert_includes renderer, "QQC.SwipeView {"
+    assert_includes renderer, 'root.prop("current_index", 0)'
+    assert_includes renderer, 'interactive: root.prop("interactive", true) !== false'
+    assert_includes renderer, 'root.prop("orientation", "horizontal")'
+    assert_includes renderer, "delegate: childDelegate"
+    assert_includes renderer, '"input", { value: currentIndex }'
+    assert_includes renderer, '"change", { value: currentIndex }'
+    assert_includes renderer, '"count_change", { value: count }'
   end
 end

@@ -1913,6 +1913,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_swipe_view_is_a_typed_native_gesture_container
+    application = OmarchyUI::Application.new do
+      app do
+        swipe_view id: :onboarding, current_index: 1, orientation: :vertical,
+                   interactive: true, width: 540, height: 360 do
+          page("Welcome") { text "Welcome page" }
+          page("Finish") { text "Finish page" }
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "swipe_view", node.fetch("type")
+    assert_equal "onboarding", node.fetch("id")
+    assert_equal 1, node.dig("props", "current_index")
+    assert_equal "vertical", node.dig("props", "orientation")
+    assert_equal true, node.dig("props", "interactive")
+    assert_equal 540, node.dig("props", "width")
+    assert_equal 360, node.dig("props", "height")
+    assert_equal %w[Welcome Finish], node.fetch("children").map { |child| child.dig("props", "title") }
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

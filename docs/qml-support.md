@@ -123,6 +123,11 @@ enabled state, and visibility are reactive; user selection emits `input` and `ch
 single-step navigation can use native transitions while larger synchronization jumps remain
 deterministic. Ruby receives `change`, `push`, `pop`, depth, busy, visibility, and focus events.
 
+`swipe_view(current_index: ...) { ... }` renders each Ruby child as a page in a native Qt Controls
+`SwipeView`. Horizontal or vertical touch/trackpad navigation and programmatic selection stay in
+sync; interaction, geometry, clipping, direction, styling, and visibility are reactive. Selection
+emits `input` and `change`, and structural updates emit `count_change`.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
