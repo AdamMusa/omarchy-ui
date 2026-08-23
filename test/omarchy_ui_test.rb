@@ -2793,6 +2793,42 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_grid_view_is_a_typed_native_virtualized_collection
+    items = [
+      { id: 1, name: "Documents", detail: "24 files", glyph: :folder },
+      { id: 2, name: "Pictures", detail: "81 files", glyph: :image }
+    ]
+    application = OmarchyUI::Application.new do
+      app do
+        grid_view items, id: :folders, key_field: :id, label_field: :name,
+                         description_field: :detail, icon_field: :glyph,
+                         selected: 2, cell_width: 180, cell_height: 132,
+                         flow: :left_to_right, layout_direction: :right_to_left,
+                         snap_mode: :row, key_navigation_wraps: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "grid_view", node.fetch("type")
+    assert_equal "folders", node.fetch("id")
+    assert_equal 2, node.dig("props", "items").length
+    assert_equal "id", node.dig("props", "key_field")
+    assert_equal "name", node.dig("props", "label_field")
+    assert_equal "detail", node.dig("props", "description_field")
+    assert_equal "glyph", node.dig("props", "icon_field")
+    assert_equal 2, node.dig("props", "selected")
+    assert_equal 180, node.dig("props", "cell_width")
+    assert_equal 132, node.dig("props", "cell_height")
+    assert_equal "right_to_left", node.dig("props", "layout_direction")
+    assert_equal "row", node.dig("props", "snap_mode")
+    assert_equal true, node.dig("props", "key_navigation_wraps")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

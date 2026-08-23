@@ -286,6 +286,12 @@ left/right action lanes, programmatic side opening, animated native swipe transi
 close-after-action, and accessibility. Ruby receives activation, side-action, swipe
 position/completion/open/close, pointer, focus, and visibility events.
 
+`grid_view(items, ...) { |event| ... }` maps Ruby arrays directly to a native QML `GridView`.
+Object key/label/description/icon fields, selected value or current index, cell geometry, spacing,
+padding, flow, RTL direction, snapping, bounds behavior, keyboard wrapping, highlight animation,
+styling, and empty state are reactive. Ruby receives item activation/selection, current/count and
+highlight changes, scroll/movement lifecycle, focus, and visibility events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

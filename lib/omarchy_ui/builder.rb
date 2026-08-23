@@ -277,6 +277,11 @@ module OmarchyUI
       @application.register_handler(node.id, :activate, handler) if handler
       node
     end
+    def grid_view(items = [], id: nil, **props, &handler)
+      node = component(:grid_view, id:, items: Array(items), **props)
+      @application.register_handler(node.id, :activate, handler) if handler
+      node
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

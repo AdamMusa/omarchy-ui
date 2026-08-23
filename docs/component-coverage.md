@@ -164,7 +164,7 @@ transitions, and animation groups receive Ruby APIs even though they are not vis
 - [x] radio_delegate
 - [x] switch_delegate
 - [x] swipe_delegate
-- [ ] grid_view
+- [x] grid_view
 - [ ] table_view
 - [ ] tree_view
 - [ ] data_table

@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 135, renderer_names.length
+    assert_equal 136, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1482,5 +1482,28 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"swipe_complete", {'
     assert_includes renderer, '"swipe_open", {'
     assert_includes renderer, '"swipe_close", {}'
+  end
+
+  def test_grid_view_has_a_specific_native_virtualized_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "grid_view"'
+    assert_includes renderer, "id: gridViewComponent"
+    assert_includes renderer, "id: gridControl"
+    assert_includes renderer, "GridView {"
+    assert_includes renderer, 'root.prop("items", [])'
+    assert_includes renderer, 'root.prop("key_field", "id")'
+    assert_includes renderer, 'root.prop("cell_width", 160)'
+    assert_includes renderer, 'root.prop("cell_height", 120)'
+    assert_includes renderer, "GridView.FlowTopToBottom"
+    assert_includes renderer, "GridView.SnapToRow"
+    assert_includes renderer, "Flickable.StopAtBounds"
+    assert_includes renderer, 'root.prop("key_navigation_wraps", false)'
+    assert_includes renderer, "Keys.onReturnPressed"
+    assert_includes renderer, '"activate", payload'
+    assert_includes renderer, '"current_change", payload'
+    assert_includes renderer, '"count_change", { value: count }'
+    assert_includes renderer, '"movement_start", { x: contentX, y: contentY }'
+    assert_includes renderer, '"movement_end", { x: contentX, y: contentY }'
   end
 end
