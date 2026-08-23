@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 90, renderer_names.length
+    assert_equal 91, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -691,6 +691,19 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "FileDialog.OpenFiles"
     assert_includes renderer, "FileDialog.SaveFile"
     assert_includes renderer, 'root.prop("filters", [])'
+    assert_includes renderer, '"change", payload'
+    assert_includes renderer, '"folder_change", { value: value }'
+  end
+
+  def test_folder_picker_has_a_specific_native_directory_dialog_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "folder_picker"'
+    assert_includes renderer, "id: folderPickerComponent"
+    assert_includes renderer, "FolderDialog {"
+    assert_includes renderer, 'root.prop("current_folder", root.prop("path", ""))'
+    assert_includes renderer, "FolderDialog.DontUseNativeDialog"
+    assert_includes renderer, '"input", payload'
     assert_includes renderer, '"change", payload'
     assert_includes renderer, '"folder_change", { value: value }'
   end

@@ -1566,6 +1566,28 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_folder_picker_is_a_typed_native_directory_input
+    application = OmarchyUI::Application.new do
+      app do
+        folder_picker "/tmp/output", label: "Output", title: "Choose output folder",
+                      current_folder: "/tmp", native_dialog: false
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "folder_picker", node.fetch("type")
+    assert_equal "/tmp/output", node.dig("props", "path")
+    assert_equal "Output", node.dig("props", "label")
+    assert_equal "Choose output folder", node.dig("props", "title")
+    assert_equal "/tmp", node.dig("props", "current_folder")
+    assert_equal false, node.dig("props", "native_dialog")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

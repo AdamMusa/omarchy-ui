@@ -53,6 +53,10 @@ array for multiple selection), never QML URL objects. Filters, initial folder/pa
 dialog state and labels, native-dialog preference, and button styling are reactive. The adapter emits
 `input`, `change`, `accept`, `reject`, `open`, `close`, and `folder_change` where applicable.
 
+`folder_picker(path, ...)` is the dedicated directory-only API. It uses Qt's `FolderDialog`, keeps
+the selected and current directories reactive as Ruby strings, and exposes dialog lifecycle,
+selection, rejection, and folder-navigation events without requiring `file_picker` mode options.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
