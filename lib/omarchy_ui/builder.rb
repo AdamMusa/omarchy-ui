@@ -108,6 +108,9 @@ module OmarchyUI
       action_component(:chip, :text, label, id:, props:, handler:)
     end
     def border_image(source, id: nil, **props, &block) = component(:border_image, id:, source: source.to_s, **props, &block)
+    def window(title = "", id: nil, **props, &block)
+      component(:window, id:, title: title.to_s, **props, &block)
+    end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s
       raise ArgumentError, "layout_item_proxy target cannot be empty" if target_id.empty?

@@ -207,6 +207,29 @@ class OmarchyUITest < Minitest::Test
     assert_equal "layout_item_proxy target cannot be empty", error.message
   end
 
+  def test_window_is_a_typed_native_secondary_surface_container
+    application = OmarchyUI::Application.new do
+      app do
+        window "Inspector", id: :inspector, width: 520, height: 360,
+               visible: true, modality: :window_modal, flags: %i[dialog stay_on_top] do
+          text "Independent content"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "window", node.fetch("type")
+    assert_equal "Inspector", node.dig("props", "title")
+    assert_equal 520, node.dig("props", "width")
+    assert_equal "window_modal", node.dig("props", "modality")
+    assert_equal %w[dialog stay_on_top], node.dig("props", "flags")
+    assert_equal "Independent content", node.dig("children", 0, "props", "text")
+  ensure
+    application&.stop
+  end
+
   def test_loader_is_a_typed_lazy_container
     application = OmarchyUI::Application.new do
       app do

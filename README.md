@@ -180,6 +180,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `focus_scope` | `focus`, `active_focus`, optional dimensions; establishes a keyboard-focus boundary | `click`, `focus`, `blur` | yes |
 | `flipable` | `flipped`, horizontal/vertical axis, duration, easing, interaction and dimensions; first two children are front/back | `click`, `change` | yes |
 | `border_image` | source, dimensions, four border slices, horizontal/vertical tiling, loading/cache/mirror/smoothing | `click`, `loaded`, `error`, `status` | yes |
+| `window` | title, geometry limits, color, visibility, modality, flags, opacity and content orientation | `close`, visibility/active changes, `move`, `resize` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `label` | text, typography, dimensions, wrapping, elision, alignment, line limit and plain/styled/rich/Markdown format | `link` | no |
 | `rich_text` | explicit rich markup, typography, width/wrapping, line limit and link color | `link` | no |

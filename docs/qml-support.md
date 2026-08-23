@@ -21,6 +21,11 @@ and mirrors it into another Qt Quick Layout. Fill, preferred, minimum, maximum, 
 per-edge margin properties remain reactive. The `target_change` event reports whether the target
 is currently resolved.
 
+`window(title, ...) { ... }` creates an independent native `QtQuick.Window`. Geometry, size
+constraints, visibility, modality, flags, opacity, color, and content orientation are reactive,
+while its Ruby children render in the window's content scene. Native close, activation,
+visibility, move, and resize changes are delivered as Ruby events.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |
