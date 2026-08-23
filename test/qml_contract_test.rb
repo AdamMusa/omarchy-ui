@@ -555,4 +555,14 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "QQC.Dial.Circular"
     assert_includes renderer, '"input", { value: value, angle: angle }'
   end
+
+  def test_spin_box_has_a_specific_native_integer_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "spin_box"'
+    assert_includes renderer, "id: spinBoxComponent"
+    assert_includes renderer, "QQC.SpinBox {"
+    assert_includes renderer, "textFromValue: function(value, locale)"
+    assert_includes renderer, '"increase", { value: value }'
+  end
 end

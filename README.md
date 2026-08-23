@@ -267,6 +267,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `slider` | `value`, `minimum`, `maximum`, `step`, `integer`, track/fill/knob colors and sizes, `ticks`, `tick_color` | `input`, `change`, `right_click` |
 | `range_slider` | lower/upper values, bounds, step, orientation, snapping/live behavior, dimensions and colors | `input`, `change` |
 | `dial` | value/bounds/step, angular limits, snapping, wrapping, live mode, input mode, size and colors | `input`, `change`, `press`, `release` |
+| `spin_box` | integer value/bounds/step, editable/wrap modes, prefix/suffix, width/enabled state, colors and typography | `change`, `increase`, `decrease` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

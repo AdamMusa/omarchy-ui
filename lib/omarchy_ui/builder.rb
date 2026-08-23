@@ -14,6 +14,7 @@ module OmarchyUI
       number_field: :value,
       slider: :value,
       dial: :value,
+      spin_box: :value,
       dropdown: :value,
       multi_select: :values,
       button_group: :value,
