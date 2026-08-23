@@ -112,6 +112,10 @@ module OmarchyUI
       action_component(:button, :text, label, id:, props:, handler:)
     end
 
+    def round_button(label = "", id: nil, **props, &handler)
+      action_component(:round_button, :text, label, id:, props:, handler:)
+    end
+
     def action_button(icon, id: nil, **props, &handler)
       action_component(:action_button, :icon, icon, id:, props:, handler:)
     end

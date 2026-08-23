@@ -31,6 +31,15 @@ class QmlContractTest < Minitest::Test
     assert_includes qml, "eventMap: definition.event_map"
   end
 
+  def test_round_button_has_a_specific_native_checkable_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "round_button"'
+    assert_includes renderer, "id: roundButtonComponent"
+    assert_includes renderer, "QQC.RoundButton {"
+    assert_includes renderer, '"change", { value: checked }'
+  end
+
   def test_native_qml_bridge_maps_properties_events_children_and_animations
     qml = source("ControlNode.qml")
     assert_includes qml, "function syncNativeProperties()"

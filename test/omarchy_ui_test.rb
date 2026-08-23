@@ -536,6 +536,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_round_button_is_a_typed_native_checkable_control
+    application = OmarchyUI::Application.new do
+      app { round_button "", icon: :plus, diameter: 48, checkable: true, checked: true }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "round_button", node.fetch("type")
+    assert_equal "plus", node.dig("props", "icon")
+    assert_equal 48, node.dig("props", "diameter")
+    assert_equal true, node.dig("props", "checked")
+  ensure
+    application&.stop
+  end
+
   def test_bar_indicator_serializes_active_and_inactive_states
     application = OmarchyUI::Application.new do
       bar_widget do
