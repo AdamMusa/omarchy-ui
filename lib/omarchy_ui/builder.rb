@@ -88,6 +88,9 @@ module OmarchyUI
     def tooltip(value, id: nil, **props) = component(:tooltip, id:, text: value.to_s, **props)
     def image(source, id: nil, **props) = component(:image, id:, source: source.to_s, **props)
     def animated_image(source, id: nil, **props) = component(:animated_image, id:, source: source.to_s, **props)
+    def avatar(source = nil, id: nil, **props)
+      source.nil? ? component(:avatar, id:, **props) : component(:avatar, id:, source: source.to_s, **props)
+    end
     def border_image(source, id: nil, **props, &block) = component(:border_image, id:, source: source.to_s, **props, &block)
     def border_overlay(id: nil, **props) = component(:border_overlay, id:, **props)
     def spacer(id: nil, **props) = component(:spacer, id:, **props)

@@ -18,7 +18,7 @@ Loader {
     return bridge ? bridge.nodeFor(controlId) : null
   }
 
-  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "spacer",
+  readonly property bool builtIn: ["text", "label", "rich_text", "selectable_text", "icon", "tooltip", "button", "row", "column", "container", "image", "animated_image", "avatar", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
     "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator",
@@ -204,6 +204,7 @@ Loader {
     if (node.type === "container") return containerComponent
     if (node.type === "image") return imageComponent
     if (node.type === "animated_image") return animatedImageComponent
+    if (node.type === "avatar") return avatarComponent
     if (node.type === "spacer") return spacerComponent
     if (node.type === "grid") return gridComponent
     if (node.type === "row_layout") return rowLayoutComponent
@@ -565,6 +566,47 @@ Loader {
         if (status === AnimatedImage.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height, frames: frameCount })
         if (status === AnimatedImage.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
       }
+    }
+  }
+
+  Component {
+    id: avatarComponent
+    Rectangle {
+      id: avatarRoot
+      implicitWidth: Number(root.prop("size", 48))
+      implicitHeight: implicitWidth
+      radius: Number(root.prop("radius", width / 2))
+      color: root.prop("background", Color.accent)
+      clip: true
+      readonly property string avatarSource: String(root.prop("source", ""))
+      readonly property string displayName: String(root.prop("name", ""))
+      Text {
+        anchors.centerIn: parent
+        visible: avatarImage.status !== Image.Ready
+        text: {
+          var words = avatarRoot.displayName.trim().split(/\s+/)
+          if (words.length === 0 || words[0].length === 0) return "?"
+          return (words[0].charAt(0) + (words.length > 1 ? words[words.length - 1].charAt(0) : "")).toUpperCase()
+        }
+        color: root.prop("foreground", Color.background)
+        font.family: root.fontFamily
+        font.bold: true
+        font.pixelSize: Number(root.prop("font_size", avatarRoot.width * 0.38))
+      }
+      Image {
+        id: avatarImage
+        anchors.fill: parent
+        source: avatarRoot.avatarSource
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: root.prop("asynchronous", true) !== false
+        cache: root.prop("cache", true) !== false
+        visible: status === Image.Ready
+        onStatusChanged: {
+          if (status === Image.Ready && root.subscribed("loaded")) root.bridge.sendEvent(root.surfaceName, root.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height })
+          if (status === Image.Error && root.subscribed("error")) root.bridge.sendEvent(root.surfaceName, root.controlId, "error", {})
+        }
+      }
+      TapHandler { onTapped: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", {}) }
     }
   }
 

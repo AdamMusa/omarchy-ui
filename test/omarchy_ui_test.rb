@@ -358,6 +358,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_avatar_is_a_typed_image_with_initials_fallback
+    application = OmarchyUI::Application.new do
+      app { avatar "profile.png", name: "Ada Lovelace", size: 64 }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "avatar", node.fetch("type")
+    assert_equal "profile.png", node.dig("props", "source")
+    assert_equal "Ada Lovelace", node.dig("props", "name")
+    assert_equal 64, node.dig("props", "size")
+  ensure
+    application&.stop
+  end
+
   def test_bar_icon_button_registers_click_handler_and_optical_properties
     application = OmarchyUI::Application.new do
       bar_widget do

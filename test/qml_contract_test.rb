@@ -224,6 +224,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"frame", { value: currentFrame, count: frameCount }'
   end
 
+  def test_avatar_has_a_specific_image_and_initials_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "avatar"'
+    assert_includes renderer, "id: avatarComponent"
+    assert_includes renderer, "id: avatarImage"
+    assert_includes renderer, "Image.PreserveAspectCrop"
+    assert_includes renderer, ").toUpperCase()"
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'
