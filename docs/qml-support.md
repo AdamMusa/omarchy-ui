@@ -213,6 +213,11 @@ informative and selectable detailed text, supports native standard-button roles,
 same semantic button and popup lifecycle events as `dialog`. Content typography, spacing,
 geometry, modal behavior, colors, and visibility are independently reactive.
 
+`message_dialog(title, message, ...)` uses Qt Quick Dialogs’ platform-native message box rather
+than an in-scene styled control. Informative/detailed text, native standard-button flags, window or
+application modality, and opening are reactive. `button` returns the native button and role names;
+accept/reject and open/close lifecycle events remain available to Ruby.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

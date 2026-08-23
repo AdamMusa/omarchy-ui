@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 121, renderer_names.length
+    assert_equal 122, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -1218,5 +1218,23 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'standardButtonsValue(root.prop("standard_buttons", ["ok"]))'
     assert_includes renderer, '"accept", {}'
     assert_includes renderer, '"reject", {}'
+  end
+
+  def test_message_dialog_has_a_specific_platform_native_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "message_dialog"'
+    assert_includes renderer, "id: messageDialogComponent"
+    assert_includes renderer, "Dialogs.MessageDialog {"
+    assert_includes renderer, 'root.prop("message", "")'
+    assert_includes renderer, 'root.prop("informative_text", "")'
+    assert_includes renderer, 'root.prop("detailed_text", "")'
+    assert_includes renderer, 'buttonsValue(root.prop("buttons", ["ok"]))'
+    assert_includes renderer, 'modalityValue(root.prop("modality", "application"))'
+    assert_includes renderer, '"button", {'
+    assert_includes renderer, "button: buttonName(button), role: roleName(role)"
+    assert_includes renderer, '"accept", {}'
+    assert_includes renderer, '"reject", {}'
+    assert_includes renderer, 'visible ? "open" : "close"'
   end
 end

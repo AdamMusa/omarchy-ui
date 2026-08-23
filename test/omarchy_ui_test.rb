@@ -2382,6 +2382,34 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_message_dialog_is_a_typed_platform_native_control
+    application = OmarchyUI::Application.new do
+      app do
+        message_dialog "Unsaved changes", "Save before closing?",
+                       id: :save_prompt, opened: true,
+                       informative_text: "Your latest edits are not on disk.",
+                       detailed_text: "Document: notes.txt",
+                       buttons: %i[save discard cancel], modality: :window
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "message_dialog", node.fetch("type")
+    assert_equal "save_prompt", node.fetch("id")
+    assert_equal "Unsaved changes", node.dig("props", "title")
+    assert_equal "Save before closing?", node.dig("props", "message")
+    assert_equal "Your latest edits are not on disk.", node.dig("props", "informative_text")
+    assert_equal "Document: notes.txt", node.dig("props", "detailed_text")
+    assert_equal %w[save discard cancel], node.dig("props", "buttons")
+    assert_equal "window", node.dig("props", "modality")
+    assert_equal true, node.dig("props", "opened")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
