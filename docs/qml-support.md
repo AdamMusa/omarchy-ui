@@ -84,6 +84,11 @@ children as a column, row, or stack and supports reactive spacing, padding, dime
 typography, layout direction, and optional styled title/header and footer regions. Visibility,
 focus, title mutation, and page clicks emit `show`, `hide`, `focus`, `blur`, `title_change`, and `click`.
 
+`pane(...) { ... }` provides a native Qt Controls `Pane` for grouping related Ruby UI without a
+title region. Its row, column, or stack content layout; per-edge padding; dimensions; background;
+border; radius; direction; visibility; and clipping are reactive. It emits `click`, `show`, `hide`,
+`focus`, and `blur` when those handlers are subscribed.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

@@ -282,6 +282,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `action` | text, icon name/source/color/size, enabled/checkable/checked state, keyboard shortcut and visibility | `trigger`, `toggle`, `change` |
 | `action_group` | action nodes/IDs, exclusive and enabled state, checked action and visibility | `trigger`, `change`, `actions_change` |
 | `page` | title, optional header/footer text and geometry, row/column/stack content layout, spacing/padding, dimensions and styling; contains Ruby children | `click`, `show`, `hide`, `focus`, `blur`, `title_change` |
+| `pane` | native untitled content surface with row/column/stack layout, per-edge padding, dimensions, background, border, radius, direction and clipping; contains Ruby children | `click`, `show`, `hide`, `focus`, `blur` |
 | `dropdown` | `label`, `value`, `options`, colors, font, row sizes, `show_label`, `cursor` | `change`, `hover` |
 | `searchable_dropdown` | dropdown fields plus `placeholder`, `empty_text`, `trigger_label`, popup sizing | `change`, `hover` |
 | `multi_select` | `label`, `values`, `options`, command options, placeholder/empty labels, popup sizing, colors | `change`, `hover` |

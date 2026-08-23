@@ -6,7 +6,7 @@ module OmarchyUI
     CONTAINERS = %i[
       row column container grid row_layout column_layout grid_layout flow center card
       stack scroll rectangle aspect_ratio constrained_box fitted_box wrap split_view stack_layout loader flickable focus_scope flipable border_image key_catcher
-      page
+      page pane
     ].freeze
     VALUE_INPUTS = {
       text_field: :text,
@@ -123,6 +123,9 @@ module OmarchyUI
     end
     def page(title = "", id: nil, **props, &block)
       component(:page, id:, title: title.to_s, **props, &block)
+    end
+    def pane(id: nil, **props, &block)
+      component(:pane, id:, **props, &block)
     end
     def layout_item_proxy(target, id: nil, **props)
       target_id = target.is_a?(Node) ? target.id : target.to_s

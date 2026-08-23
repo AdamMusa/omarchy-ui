@@ -1704,6 +1704,33 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_pane_is_a_typed_native_content_surface
+    application = OmarchyUI::Application.new do
+      app do
+        pane id: :account_pane, layout: :row, spacing: 10, padding: 16,
+             left_padding: 24, background: "#112233", radius: 8 do
+          text "Account"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "pane", node.fetch("type")
+    assert_equal "account_pane", node.fetch("id")
+    assert_equal "row", node.dig("props", "layout")
+    assert_equal 10, node.dig("props", "spacing")
+    assert_equal 16, node.dig("props", "padding")
+    assert_equal 24, node.dig("props", "left_padding")
+    assert_equal "#112233", node.dig("props", "background")
+    assert_equal 8, node.dig("props", "radius")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do
