@@ -9,6 +9,7 @@ ruby -Ilib test/omarchy_ui_test.rb
 ruby -Ilib test/cli_test.rb
 ruby -Ilib test/command_test.rb
 ruby test/qml_contract_test.rb
+ruby -Ilib test/framework_boundary_test.rb
 ruby -Ilib examples/restaurant_drinks/test/app_test.rb
 ruby -Ilib examples/futuristic_dashboard/test/app_test.rb
 showcase_apps=(

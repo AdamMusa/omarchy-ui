@@ -33,6 +33,11 @@ QQC.TabButton {
       width: Number(renderer.prop("icon_width", Style.font.body))
       height: Number(renderer.prop("icon_height", Style.font.body))
       fillMode: Image.PreserveAspectFit
+      onStatusChanged: {
+        if (status === Image.Error)
+          renderer.componentError("tab_button_icon_failed",
+            "Unable to load the declared tab button icon image", { source: String(source) })
+      }
     }
 
     Text {

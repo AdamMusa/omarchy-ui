@@ -349,6 +349,11 @@ grid styling, typography, and visibility; `select` and `hover` payloads identify
 
 ## Drawing, shaders, particles, and effects
 
+Built-in component resolution is fail-fast: the requested native renderer is either created or a
+framework component error is reported. Renderers do not replace failed resources or unavailable
+modules with a different visual type. Defaults such as an empty-source avatar's initials are used
+only when selected explicitly by the component's inputs, never after a declared resource fails.
+
 `canvas(commands, ...)` is a structured 2D drawing API: Ruby supplies command hashes instead of
 JavaScript. It supports paths, lines, Bézier/quadratic curves, arcs, rectangles/rounded rectangles,
 fill/stroke/clip, text, transforms, compositing, shadows, and linear/radial gradient styles. Canvas
@@ -371,9 +376,9 @@ mipmap, live/recursive capture, and source hiding as Ruby properties.
 `model_view_3d("assets/model.glb", ...)` loads actual GLB/glTF geometry through Qt Quick 3D's
 runtime asset loader. Mesh bounds are centered and fitted when available; explicit `model_scale`
 and center coordinates cover assets whose importer does not publish bounds. Camera, antialiasing,
-key/fill lights, rotation, wheel/pinch/double-click zoom, drag orbit, automatic rotation, and
-geometry-scale pulse animation are Ruby properties and events. This optional surface requires the
-`qt6-quick3d` system module; `assimp` enables the broad runtime import path.
+key/fill lights, rotation, wheel/pinch/double-click zoom, drag orbit, and automatic rotation are
+Ruby properties and events. This optional surface requires the `qt6-quick3d` system module;
+`assimp` enables the broad runtime import path.
 
 `particle_system` owns a native particle system, emitter, image particle, velocity/acceleration,
 gravity, and turbulence. Emission, lifetime, size, texture/color/alpha/rotation variation, bounds,

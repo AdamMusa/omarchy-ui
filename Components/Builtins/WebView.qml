@@ -39,7 +39,11 @@ WebEngineView {
   onLoadingChanged: function(request) {
     if (request.status === WebEngineLoadingInfo.LoadStartedStatus) send("load_start", { url: String(request.url) })
     else if (request.status === WebEngineLoadingInfo.LoadSucceededStatus) send("load_success", { url: String(request.url) })
-    else if (request.status === WebEngineLoadingInfo.LoadFailedStatus) send("load_failure", { url: String(request.url), code: request.errorCode, message: request.errorString })
+    else if (request.status === WebEngineLoadingInfo.LoadFailedStatus) {
+      var payload = { url: String(request.url), native_code: request.errorCode }
+      if (renderer) renderer.componentError("web_load_failed", request.errorString, payload)
+      send("load_failure", { url: String(request.url), code: request.errorCode, message: request.errorString })
+    }
   }
   onLoadProgressChanged: send("load_progress", { value: loadProgress })
   onUrlChanged: send("url_change", { value: String(url), can_go_back: canGoBack, can_go_forward: canGoForward })

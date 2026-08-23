@@ -15,7 +15,7 @@ Item {
         onStatusChanged: {
           if (renderer.subscribed("status")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "status", { value: status, name: name })
           if (status === FontLoader.Ready && renderer.subscribed("loaded")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "loaded", { name: name })
-          if (status === FontLoader.Error && renderer.subscribed("error")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "error", {})
+          if (status === FontLoader.Error) renderer.componentError("font_load_failed", "Unable to load the declared font", { source: String(source) })
         }
       }
     }

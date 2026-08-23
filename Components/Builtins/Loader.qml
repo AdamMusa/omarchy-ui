@@ -26,5 +26,8 @@ Loader {
       onStatusChanged: {
         if (renderer.subscribed("status"))
           renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "status", { value: status })
+        if (status === Loader.Error)
+          renderer.componentError("loader_child_failed",
+            "Unable to load the child of the declared loader component", {})
       }
     }

@@ -18,10 +18,6 @@ module CardiacHealthMonitor
   ECG_PATTERN = [0, 1, 0, -1, 0, 2, 4, 3, 0, -4, 18, -7, 3, 0, 1, 0, -1, 0].freeze
 
   module UI
-    def bounded_heart_zoom(value)
-      [[value.to_f, 1.0].max, 2.6].min
-    end
-
     def pulse_header
       rectangle width: 1392, height: 74, padding: 14, color: CardiacHealthMonitor::PANEL,
                 radius: 20, border_color: CardiacHealthMonitor::BORDER, border_width: 1 do
@@ -54,40 +50,9 @@ module CardiacHealthMonitor
       stack do
         rectangle width: 450, height: 510, color: CardiacHealthMonitor::PANEL,
                   radius: 22, border_color: CardiacHealthMonitor::BORDER, border_width: 1
-        heart_model = model_view_3d "assets/hra-heart.glb", id: :heart_model_3d,
-                              fallback_source: "assets/luminous-heart.png",
-                              width: 450, height: 510, background: "transparent",
-                              foreground: CardiacHealthMonitor::WHITE, accent: CardiacHealthMonitor::CORAL,
-                              rotation_x: state.heart_rotation_x,
-                              rotation_y: state.heart_rotation_y,
-                              rotation_z: -35, zoom: state.heart_zoom,
-                              minimum_zoom: 0.72, maximum_zoom: 2.6,
-                              interactive: true, auto_rotate: false,
-                              pulse: state.monitoring, bpm: state.bpm,
-                              pulse_scale: 0.072, reset_revision: state.heart_reset_revision,
-                              field_of_view: 36, camera_distance: 460, fit_size: 238,
-                              model_scale: 1_250, center_x: 0.019, center_y: 0.476, center_z: 0.036,
-                              key_light_color: "#fff1ed", fill_light_color: CardiacHealthMonitor::CYAN,
-                              light_brightness: 0.82, antialiasing: :msaa
-        bind(heart_model, :rotation_x) { state.heart_rotation_x }
-        bind(heart_model, :rotation_y) { state.heart_rotation_y }
-        bind(heart_model, :zoom) { state.heart_zoom }
-        bind(heart_model, :pulse) { state.monitoring }
-        bind(heart_model, :bpm) { state.bpm }
-        bind(heart_model, :reset_revision) { state.heart_reset_revision }
-        on(heart_model, :rotation_change) do |event|
-          transaction do
-            state.heart_rotation_x = event.fetch("x", state.heart_rotation_x).to_f.round(2)
-            state.heart_rotation_y = event.fetch("y", state.heart_rotation_y).to_f.round(2)
-            state.heart_orientation = format("%+.1f° / %+.1f°", state.heart_rotation_x, state.heart_rotation_y)
-          end
-        end
-        on(heart_model, :zoom_change) do |event|
-          state.heart_zoom = bounded_heart_zoom(event.fetch("value", state.heart_zoom))
-        end
-        on(heart_model, :double_click) { state.heart_orientation = "DETAIL FOCUS" }
-        on(heart_model, :loaded) { state.model_ready = true }
-        on(heart_model, :error) { state.model_ready = false }
+        image "assets/luminous-heart.png", id: :heart_image,
+              width: 450, height: 510, fill_mode: :preserve_aspect_crop,
+              asynchronous: true, cache: true, smooth: true, mipmap: true
         gradient colors: ["#00050a11", "#18050a11", "#d0050a11"], stops: [0.0, 0.58, 1.0],
                  width: 450, height: 510, start_y: 0, end_y: 510, radius: 22
         particle_system id: :heart_particles, width: 450, height: 510, running: state.monitoring,
@@ -100,40 +65,17 @@ module CardiacHealthMonitor
         rectangle width: 450, height: 510, padding: 18, color: "transparent", radius: 22 do
           column spacing: 300 do
             row spacing: 8, alignment: :center do
-              render_mode = chip(state.model_ready ? "LIVE 3D" : "HEART IMAGE", id: :heart_render_mode,
-                                 selected: true, background: "#23151d",
-                                 selected_background: "#32141d", foreground: CardiacHealthMonitor::CORAL,
-                                 selected_foreground: CardiacHealthMonitor::CORAL,
-                                 accent: CardiacHealthMonitor::CORAL)
-              bind(render_mode, :text) { state.model_ready ? "LIVE 3D" : "HEART IMAGE" }
-              spacer width: 176
-              zoom = badge "100%", id: :heart_zoom_readout, size: 28,
-                           background: "#132838", foreground: CardiacHealthMonitor::CYAN
-              bind(zoom, :value) { "#{(state.heart_zoom * 100).round}%" }
-              round_button "", id: :heart_reset, icon: :reset, diameter: 28,
-                           foreground: CardiacHealthMonitor::CORAL, background: "#25151d",
-                           accent: CardiacHealthMonitor::CORAL do
-                transaction do
-                  state.heart_zoom = 1.0
-                  state.heart_rotation_x = -98.0
-                  state.heart_rotation_y = -18.0
-                  state.heart_orientation = "CENTERED"
-                  state.heart_reset_revision = state.heart_reset_revision + 1
-                end
-              end
+              chip "HEART IMAGE", id: :heart_render_mode,
+                                  selected: true, background: "#23151d",
+                                  selected_background: "#32141d", foreground: CardiacHealthMonitor::CORAL,
+                                  selected_foreground: CardiacHealthMonitor::CORAL,
+                                  accent: CardiacHealthMonitor::CORAL
             end
             column spacing: 3 do
-              text "CARDIAC TWIN", size: 18, bold: true, color: CardiacHealthMonitor::WHITE, wrap: false
-              inspection = text "Double-click to zoom · drag or pinch to inspect", id: :heart_inspection_hint,
+              text "CARDIAC IMAGE", size: 18, bold: true, color: CardiacHealthMonitor::WHITE, wrap: false
+              text "Live cardiac visualization", id: :heart_inspection_hint,
                    style: :caption, color: CardiacHealthMonitor::CYAN, width: 405, wrap: false
-              bind(inspection, :text) do
-                if state.model_ready
-                  "#{(state.heart_zoom * 100).round}% · #{state.heart_orientation} · drag / double-click / pinch"
-                else
-                  "Live cardiac visualization"
-                end
-              end
-              text "Actual HRA GLB geometry · visualization only", style: :caption,
+              text "Anatomical image · visualization only", style: :caption,
                    color: CardiacHealthMonitor::MUTED, width: 405, wrap: false
             end
           end
@@ -216,11 +158,13 @@ module CardiacHealthMonitor
         column spacing: 13 do
           text "RECOVERY GUIDE", size: 15, bold: true, color: CardiacHealthMonitor::WHITE, wrap: false
           spacer height: 6
-          progress_ring state.recovery, id: :recovery_ring, minimum: 0, maximum: 100,
-                        size: 184, width: 268, height: 196, thickness: 11,
-                        track_color: "#19303b", color: CardiacHealthMonitor::MINT,
-                        foreground: CardiacHealthMonitor::WHITE, label: "Readiness",
-                        label_format: "%{value}%", show_label: true
+          rectangle width: 268, height: 220, padding: 12, color: "transparent" do
+            progress_ring state.recovery, id: :recovery_ring, minimum: 0, maximum: 100,
+                          size: 184, width: 244, height: 196, thickness: 11,
+                          track_color: "#19303b", color: CardiacHealthMonitor::MINT,
+                          foreground: CardiacHealthMonitor::WHITE, label: "Readiness",
+                          label_format: "%{value}%", show_label: true
+          end
           column spacing: 4 do
             text "NERVOUS SYSTEM", style: :caption, color: CardiacHealthMonitor::MUTED, wrap: false
             text "Balanced", size: 18, bold: true, color: CardiacHealthMonitor::MINT, wrap: false
@@ -311,12 +255,6 @@ module CardiacHealthMonitor
       state :recovery, 86
       state :monitoring, true
       state :breathing, false
-      state :model_ready, false
-      state :heart_zoom, 1.0
-      state :heart_rotation_x, -98.0
-      state :heart_rotation_y, -18.0
-      state :heart_orientation, "CENTERED"
-      state :heart_reset_revision, 0
       state :insight_dialog, false
       state :sample_time, "NOW"
       state :ecg, ECG_PATTERN * 3

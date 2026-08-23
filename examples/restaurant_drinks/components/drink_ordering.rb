@@ -2,23 +2,23 @@
 
 module RestaurantDrinks
   MENU = [
-    { id: "still_water", name: "Still Water", category: "Water", mark: "H₂O", color: "#77c9ff", price: 250,
+    { id: "still_water", name: "Still Water", category: "Water", image: "assets/still-water.png", color: "#77c9ff", price: 250,
       description: "Chilled filtered water" },
-    { id: "sparkling_water", name: "Sparkling Water", category: "Water", mark: "✦", color: "#75e6da", price: 325,
+    { id: "sparkling_water", name: "Sparkling Water", category: "Water", image: "assets/sparkling-water.png", color: "#75e6da", price: 325,
       description: "Bright mineral bubbles" },
-    { id: "coca_cola", name: "Coca-Cola", category: "Soda", mark: "C", color: "#ff5f57", price: 350,
+    { id: "coca_cola", name: "Coca-Cola", category: "Soda", image: "assets/coca-cola.png", color: "#ff5f57", price: 350,
       description: "The original ice-cold classic" },
-    { id: "diet_coke", name: "Diet Coke", category: "Soda", mark: "DC", color: "#d7dee8", price: 350,
+    { id: "diet_coke", name: "Diet Coke", category: "Soda", image: "assets/diet-coke.png", color: "#d7dee8", price: 350,
       description: "Crisp, light and sugar-free" },
-    { id: "sprite", name: "Sprite", category: "Soda", mark: "S", color: "#70e17b", price: 350,
+    { id: "sprite", name: "Sprite", category: "Soda", image: "assets/sprite.png", color: "#70e17b", price: 350,
       description: "Lemon-lime refreshment" },
-    { id: "ginger_ale", name: "Ginger Ale", category: "Soda", mark: "G", color: "#e9bd61", price: 375,
+    { id: "ginger_ale", name: "Ginger Ale", category: "Soda", image: "assets/ginger-ale.png", color: "#e9bd61", price: 375,
       description: "Golden, dry and gently spiced" },
-    { id: "lemonade", name: "House Lemonade", category: "Juice", mark: "L", color: "#ffe36e", price: 425,
+    { id: "lemonade", name: "House Lemonade", category: "Juice", image: "assets/house-lemonade.png", color: "#ffe36e", price: 425,
       description: "Fresh lemon with a clean finish" },
-    { id: "orange_juice", name: "Orange Juice", category: "Juice", mark: "O", color: "#ffad52", price: 450,
+    { id: "orange_juice", name: "Orange Juice", category: "Juice", image: "assets/orange-juice.png", color: "#ffad52", price: 450,
       description: "Cold-pressed orange juice" },
-    { id: "iced_tea", name: "Iced Tea", category: "Tea", mark: "T", color: "#cf8b52", price: 375,
+    { id: "iced_tea", name: "Iced Tea", category: "Tea", image: "assets/iced-tea.png", color: "#cf8b52", price: 375,
       description: "Fresh-brewed black tea over ice" }
   ].freeze
 
@@ -178,14 +178,14 @@ module RestaurantDrinks
       quantity = state.cart.fetch(key, 0).to_i
       unit_price = restaurant_unit_price(drink, state.size)
 
-      card id: "drink.#{drink[:id]}", width: 245, height: 224, padding: 16, spacing: 10,
+      card id: "drink.#{drink[:id]}", width: 245, height: 244, padding: 14, spacing: 8,
            color: "#16231f", border_color: quantity.positive? ? drink[:color] : "#2c4039", accent: drink[:color] do
-        row spacing: 12, alignment: :center do
-          rectangle width: 48, height: 48, color: drink[:color], radius: 14 do
-            text drink[:mark], size: 17, bold: true, color: "#08100e", wrap: false
-          end
+        row spacing: 10, alignment: :center do
+          image drink[:image], id: "drink.#{drink[:id]}.image", width: 72, height: 72,
+                fill_mode: :preserve_aspect_crop, asynchronous: true, cache: true,
+                smooth: true, mipmap: true
           column spacing: 2 do
-            text drink[:name], bold: true, size: 16, width: 150, color: "#f4fbf8", wrap: false
+            text drink[:name], bold: true, size: 15, width: 130, color: "#f4fbf8", wrap: true
             text drink[:category], style: :caption, color: drink[:color], wrap: false
           end
         end

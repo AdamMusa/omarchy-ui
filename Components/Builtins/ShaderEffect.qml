@@ -89,7 +89,10 @@ Item {
       if (value === "front") return ShaderEffect.FrontFaceCulling
       return ShaderEffect.NoCulling
     }
-    onStatusChanged: if (renderer.subscribed("status")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "status", { value: status, log: log })
+    onStatusChanged: {
+      if (renderer.subscribed("status")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "status", { value: status, log: log })
+      if (status === ShaderEffect.Error) renderer.componentError("shader_load_failed", log, { fragment_shader: String(fragmentShader), vertex_shader: String(vertexShader) })
+    }
   }
 
   Timer {

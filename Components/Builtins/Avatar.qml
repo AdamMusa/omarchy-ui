@@ -18,7 +18,7 @@ Rectangle {
       readonly property string displayName: String(renderer.prop("name", ""))
       Text {
         anchors.centerIn: parent
-        visible: avatarImage.status !== Image.Ready
+        visible: avatarRoot.avatarSource === ""
         text: {
           var words = avatarRoot.displayName.trim().split(/\s+/)
           if (words.length === 0 || words[0].length === 0) return "?"
@@ -32,14 +32,14 @@ Rectangle {
       Image {
         id: avatarImage
         anchors.fill: parent
-        source: avatarRoot.avatarSource
+        source: renderer.assetUrl(avatarRoot.avatarSource)
         fillMode: Image.PreserveAspectCrop
         asynchronous: renderer.prop("asynchronous", true) !== false
         cache: renderer.prop("cache", true) !== false
-        visible: status === Image.Ready
+        visible: avatarRoot.avatarSource !== ""
         onStatusChanged: {
           if (status === Image.Ready && renderer.subscribed("loaded")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height })
-          if (status === Image.Error && renderer.subscribed("error")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "error", {})
+          if (status === Image.Error) renderer.componentError("avatar_image_failed", "Unable to load the declared avatar image", { source: String(source) })
         }
       }
       TapHandler { onTapped: renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "click", {}) }

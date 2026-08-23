@@ -63,7 +63,7 @@ Item {
     }
 
     onErrorOccurred: function(error, message) {
-      audioRoot.send("error", { code: error, message: message, source: audioPlayer.source })
+      renderer.componentError("audio_playback_failed", message, { native_code: error, source: String(audioPlayer.source) })
     }
 
     onPositionChanged: {

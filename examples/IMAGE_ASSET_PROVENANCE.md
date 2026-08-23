@@ -18,6 +18,26 @@ original pearl-white unbranded electric sedan in an elevated three-quarter studi
 light-gray background, realistic materials and shadow, and no text, UI, emblems, logos, or
 trademarks. It was created specifically for the center-display vehicle-status panel.
 
+The dashboard carousel and operational states use four additional generated variants:
+`vehicle-front.png`, `vehicle-side.png`, `vehicle-trunk-open.png`, and
+`vehicle-charge-open.png`. The original grand-tourer image was the edit reference. Prompts preserved
+the same unbranded graphite vehicle, wet alpine road, blue-hour lighting, wide crop, and closed body
+panels for the camera views; the two state variants changed only the rear hatch or charge-port door.
+All variants exclude people, text, UI, logos, and watermarks.
+
+## Nova Pour drink menu
+
+Saved in `restaurant_drinks/assets/` as `still-water.png`, `sparkling-water.png`,
+`coca-cola.png`, `diet-coke.png`, `sprite.png`, `ginger-ale.png`, `house-lemonade.png`,
+`orange-juice.png`, and `iced-tea.png`.
+
+Prompt set: premium photorealistic square restaurant-menu photography of one centered beverage on
+a subtly reflective stone bar in a futuristic emerald-black restaurant, with a warm key light,
+cyan rim light, realistic condensation, no people, no UI, and no watermark. Each prompt specified
+the matching glass, liquid, ice, bubbles, citrus, or mint treatment. Coca-Cola, Diet Coke, and
+Sprite requested their recognizable can design and exact product name; the water, ginger ale,
+lemonade, orange juice, and iced tea prompts requested no branding.
+
 ## Luminous heart
 
 Saved at `cardiac_health_monitor/assets/luminous-heart.png`.
@@ -25,18 +45,6 @@ Saved at `cardiac_health_monitor/assets/luminous-heart.png`.
 Prompt: premium cinematic 3D wellness visualization of an anatomically plausible luminous heart in
 a midnight clinical chamber; translucent coral tissue, cyan vascular highlights, scan rings, calm
 precision; complete centered subject; no gore, labels, logos, UI, or watermark.
-
-## Anatomical heart geometry
-
-Saved at `cardiac_health_monitor/assets/hra-heart.glb`.
-
-This is the HuBMAP CCF / Human Reference Atlas male heart reference object (`VH_M_Heart.glb`),
-retrieved from the HuBMAP CCF Releases repository. It is used under CC BY 4.0 and retains its
-anatomical structure metadata. Attribution: HuBMAP CCF / HRA 3D Reference Object Library.
-
-- Library: https://hubmapconsortium.github.io/ccf/pages/ccf-3d-reference-library.html
-- Source: https://github.com/hubmapconsortium/ccf-releases/tree/main/v1.2/models
-- License: https://creativecommons.org/licenses/by/4.0/
 
 ## Orbital storm
 

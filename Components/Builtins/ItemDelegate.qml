@@ -58,6 +58,11 @@ QQC.ItemDelegate {
       sourceSize.width: width
       sourceSize.height: height
       fillMode: Image.PreserveAspectFit
+      onStatusChanged: {
+        if (status === Image.Error)
+          renderer.componentError("item_delegate_icon_failed",
+            "Unable to load the declared item delegate icon image", { source: String(source) })
+      }
     }
 
     Text {

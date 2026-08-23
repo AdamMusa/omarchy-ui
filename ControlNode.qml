@@ -45,6 +45,7 @@ Loader {
     "column_layout", "grid_layout", "flow", "center", "card", "stack", "scroll", "rectangle", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image", "key_catcher", "shader_effect", "shader_effect_source", "multi_effect", "rectangular_shadow", "opacity_mask", "blur", "drop_shadow", "colorize", "glow", "drag_area", "drop_area", "pinch_area", "hover_area", "capture_session"]
     .indexOf(node ? node.type : "") >= 0
   property string loadedAdapterKey: ""
+  property string lastComponentErrorKey: ""
 
   function prop(name, fallback) {
     var props = node && node.props ? node.props : null
@@ -127,6 +128,22 @@ Loader {
 
   function subscribed(eventName) {
     return node && Array.isArray(node.events) && node.events.indexOf(eventName) >= 0
+  }
+
+  function componentError(code, message, payload) {
+    var componentType = node ? String(node.type) : "component"
+    var errorCode = String(code || "component_error")
+    var errorMessage = String(message || "Component failed")
+    var errorKey = componentType + ":" + errorCode + ":" + errorMessage
+    if (errorKey === lastComponentErrorKey) return
+    lastComponentErrorKey = errorKey
+    if (bridge && bridge.reportComponentError)
+      bridge.reportComponentError(surfaceName, controlId, componentType, errorCode, errorMessage)
+    if (!subscribed("error")) return
+    var eventPayload = payload && typeof payload === "object" ? payload : ({})
+    eventPayload.code = errorCode
+    eventPayload.message = errorMessage
+    bridge.sendEvent(surfaceName, controlId, "error", eventPayload)
   }
 
   function configureFace(face, childNode) {
@@ -281,6 +298,7 @@ Loader {
     if (node.type === "container") return containerComponent
     if (node.type === "image") return imageComponent
     if (node.type === "vector_image") return vectorImageComponent
+    if (node.type === "model_view_3d") return modelView3dComponent
     if (node.type === "font_loader") return fontLoaderComponent
     if (node.type === "text_metrics") return textMetricsComponent
     if (node.type === "animated_image") return animatedImageComponent
@@ -423,6 +441,7 @@ Loader {
   }
   source: ""
   onLoaded: {
+    lastComponentErrorKey = ""
     if (!item) return
     if (builtIn && item.hasOwnProperty("renderer")) {
       item.renderer = root
@@ -436,6 +455,10 @@ Loader {
     }
     runTransition()
     if (subscribed("mount")) bridge.sendEvent(surfaceName, controlId, "mount", {})
+  }
+  onStatusChanged: {
+    if (status === Loader.Error)
+      componentError("component_load_failed", "Unable to load the declared " + (node ? node.type : "component") + " renderer", { source: String(source) })
   }
   onNodeChanged: {
     Qt.callLater(ensureAdapterLoaded)
@@ -556,6 +579,11 @@ Loader {
   Component {
     id: vectorImageComponent
     Builtins.VectorImage { renderer: root }
+  }
+
+  Component {
+    id: modelView3dComponent
+    Builtins.ModelView3d { renderer: root }
   }
 
   Component {

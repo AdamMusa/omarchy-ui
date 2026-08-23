@@ -6,17 +6,17 @@ Item {
     id: modelViewRoot
 
     required property var renderer
-    property real currentPitch: Number(renderer.prop("rotation_x", -8))
-    property real currentYaw: Number(renderer.prop("rotation_y", -18))
+    property real currentPitch: Number(renderer.prop("rotation_x", 0))
+    property real currentYaw: Number(renderer.prop("rotation_y", 0))
     property real currentRoll: Number(renderer.prop("rotation_z", 0))
     property real currentZoom: clampZoom(Number(renderer.prop("zoom", 1)))
     property real automaticYaw: 0
-    property real beatAmount: 0
     property real fittedScale: 1
     property real boundsDiameter: 0
     property vector3d modelCenter: Qt.vector3d(0, 0, 0)
     property real observedResetRevision: Number(renderer.prop("reset_revision", 0))
     property bool ready: false
+    property string loadedModelSource: ""
 
     function clampZoom(value) {
         return Math.max(Number(renderer.prop("minimum_zoom", 0.65)), Math.min(Number(renderer.prop("maximum_zoom", 3.2)), Number(value)));
@@ -47,8 +47,8 @@ Item {
     }
 
     function resetView(notify) {
-        currentPitch = Number(renderer.prop("rotation_x", -8));
-        currentYaw = Number(renderer.prop("rotation_y", -18));
+        currentPitch = Number(renderer.prop("rotation_x", 0));
+        currentYaw = Number(renderer.prop("rotation_y", 0));
         currentRoll = Number(renderer.prop("rotation_z", 0));
         setZoom(Number(renderer.prop("zoom", 1)), notify);
         if (notify)
@@ -88,10 +88,23 @@ Item {
 
     }
 
+    function synchronizeModelSource() {
+        var requestedSource = String(renderer.assetUrl(renderer.prop("source", "")));
+        if (requestedSource === loadedModelSource)
+            return ;
+
+        ready = false;
+        loadedModelSource = requestedSource;
+        runtimeModel.source = requestedSource;
+    }
+
     implicitWidth: Number(renderer.prop("width", 420))
     implicitHeight: Number(renderer.prop("height", 420))
     clip: true
-    Component.onCompleted: syncFromRenderer()
+    Component.onCompleted: {
+        synchronizeModelSource();
+        syncFromRenderer();
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -114,7 +127,7 @@ Item {
 
         DirectionalLight {
             eulerRotation: Qt.vector3d(-28, -34, 0)
-            color: renderer.prop("key_light_color", "#fff0ea")
+            color: renderer.prop("key_light_color", "#ffffff")
             brightness: Number(renderer.prop("light_brightness", 1.35))
             castsShadow: true
             shadowFactor: 70
@@ -123,33 +136,22 @@ Item {
 
         PointLight {
             position: Qt.vector3d(-180, 90, 240)
-            color: renderer.prop("fill_light_color", "#5bdcff")
+            color: renderer.prop("fill_light_color", "#ffffff")
             brightness: Number(renderer.prop("light_brightness", 1.35)) * 5
             quadraticFade: 2e-05
             linearFade: 0.003
-        }
-
-        PointLight {
-            position: Qt.vector3d(160, -110, 100)
-            color: "#ff315d"
-            brightness: Number(renderer.prop("light_brightness", 1.35)) * 3
-            quadraticFade: 3e-05
         }
 
         Node {
             id: orbitNode
 
             eulerRotation: Qt.vector3d(modelViewRoot.currentPitch, modelViewRoot.currentYaw + modelViewRoot.automaticYaw, modelViewRoot.currentRoll)
-            scale: {
-                var pulse = Number(renderer.prop("pulse_scale", 0.065)) * modelViewRoot.beatAmount;
-                var scale = modelViewRoot.fittedScale * modelViewRoot.currentZoom;
-                return Qt.vector3d(scale * (1 + pulse * 0.78), scale * (1 + pulse), scale * (1 + pulse * 0.62));
-            }
+            scale: Qt.vector3d(modelViewRoot.fittedScale * modelViewRoot.currentZoom, modelViewRoot.fittedScale * modelViewRoot.currentZoom, modelViewRoot.fittedScale * modelViewRoot.currentZoom)
 
             RuntimeLoader {
                 id: runtimeModel
 
-                source: renderer.assetUrl(renderer.prop("source", ""))
+                source: ""
                 position: Qt.vector3d(-modelViewRoot.modelCenter.x, -modelViewRoot.modelCenter.y, -modelViewRoot.modelCenter.z)
                 onBoundsChanged: modelViewRoot.updateBounds()
                 onStatusChanged: {
@@ -168,9 +170,9 @@ Item {
                         });
                     } else if (status === RuntimeLoader.Error) {
                         modelViewRoot.ready = false;
-                        modelViewRoot.event("error", {
+                        renderer.componentError("model_load_failed", errorString, {
                             "source": source,
-                            "message": errorString
+                            "status": status
                         });
                     }
                 }
@@ -182,56 +184,10 @@ Item {
             backgroundMode: SceneEnvironment.Transparent
             antialiasingMode: String(renderer.prop("antialiasing", "msaa")) === "none" ? SceneEnvironment.NoAA : SceneEnvironment.MSAA
             antialiasingQuality: SceneEnvironment.VeryHigh
-            temporalAAEnabled: true
+            temporalAAEnabled: false
             aoStrength: 45
             aoDistance: 12
             tonemapMode: SceneEnvironment.TonemapModeAces
-        }
-
-    }
-
-    SequentialAnimation {
-        loops: Animation.Infinite
-        running: renderer.prop("pulse", false) === true
-
-        NumberAnimation {
-            target: modelViewRoot
-            property: "beatAmount"
-            from: 0
-            to: 1
-            duration: 90
-            easing.type: Easing.OutQuad
-        }
-
-        NumberAnimation {
-            target: modelViewRoot
-            property: "beatAmount"
-            from: 1
-            to: -0.18
-            duration: 135
-            easing.type: Easing.InOutQuad
-        }
-
-        NumberAnimation {
-            target: modelViewRoot
-            property: "beatAmount"
-            from: -0.18
-            to: 0.42
-            duration: 75
-            easing.type: Easing.OutQuad
-        }
-
-        NumberAnimation {
-            target: modelViewRoot
-            property: "beatAmount"
-            from: 0.42
-            to: 0
-            duration: 110
-            easing.type: Easing.InOutQuad
-        }
-
-        PauseAnimation {
-            duration: Math.max(80, Math.round(60000 / Math.max(20, Number(renderer.prop("bpm", 68)))) - 410)
         }
 
     }
@@ -280,9 +236,9 @@ Item {
             });
         }
         onActiveScaleChanged: {
-            if (active) {
+            if (active)
                 modelViewRoot.setZoom(startingZoom * activeScale, false);
-            }
+
         }
     }
 
@@ -318,6 +274,7 @@ Item {
 
     Connections {
         function onNodeChanged() {
+            modelViewRoot.synchronizeModelSource();
             modelViewRoot.syncFromRenderer();
         }
 

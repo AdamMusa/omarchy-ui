@@ -32,6 +32,15 @@ Item {
 
   signal effectReceived(string name, var payload)
 
+  function reportComponentError(surfaceName, controlId, componentType, code, message) {
+    var location = String(surfaceName || "") + "/" + String(controlId || "")
+    var detail = String(componentType || "component") + " error at " + location
+    if (code) detail += " [" + String(code) + "]"
+    if (message) detail += ": " + String(message)
+    lastError = detail.slice(0, 512)
+    console.warn("omarchy-ui component:", lastError)
+  }
+
   function validId(value) {
     return typeof value === "string"
       && value.length > 0

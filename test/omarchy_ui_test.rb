@@ -468,8 +468,8 @@ class OmarchyUITest < Minitest::Test
   def test_model_view_3d_is_a_typed_interactive_glb_component
     application = OmarchyUI::Application.new do
       app do
-        model_view_3d "heart.glb", rotation_x: -90, rotation_y: 12,
-                                   zoom: 1.4, pulse: true, bpm: 72,
+        model_view_3d "scene.glb", rotation_x: -90, rotation_y: 12,
+                                   zoom: 1.4,
                                    interactive: true, reset_revision: 3
       end
     end
@@ -479,11 +479,9 @@ class OmarchyUITest < Minitest::Test
       .dig("surfaces", "main", "children", 0)
 
     assert_equal "model_view_3d", node.fetch("type")
-    assert_equal "heart.glb", node.dig("props", "source")
+    assert_equal "scene.glb", node.dig("props", "source")
     assert_equal(-90, node.dig("props", "rotation_x"))
     assert_equal 1.4, node.dig("props", "zoom")
-    assert_equal true, node.dig("props", "pulse")
-    assert_equal 72, node.dig("props", "bpm")
     assert_equal 3, node.dig("props", "reset_revision")
   ensure
     application&.stop
@@ -551,7 +549,7 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
-  def test_avatar_is_a_typed_image_with_initials_fallback
+  def test_avatar_is_a_typed_image_with_explicit_empty_source_initials
     application = OmarchyUI::Application.new do
       app { avatar "profile.png", name: "Ada Lovelace", size: 64 }
     end

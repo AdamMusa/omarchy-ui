@@ -34,6 +34,6 @@ AnimatedImage {
       onStatusChanged: {
         if (renderer.subscribed("status")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "status", { value: status })
         if (status === AnimatedImage.Ready && renderer.subscribed("loaded")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height, frames: frameCount })
-        if (status === AnimatedImage.Error && renderer.subscribed("error")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "error", {})
+        if (status === AnimatedImage.Error) renderer.componentError("animated_image_load_failed", "Unable to load the declared animated image", { source: String(source) })
       }
     }

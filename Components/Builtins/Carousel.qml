@@ -43,7 +43,19 @@ Rectangle {
       color: Color.popups.background; radius: Style.cornerRadius; border.color: index === pathControl.currentIndex ? renderer.prop("accent", Color.accent) : "transparent"
       Column {
         anchors.fill: parent; anchors.margins: 12; spacing: 8
-        Image { width: parent.width; height: parent.height - 76; fillMode: Image.PreserveAspectCrop; source: renderer.assetUrl(carouselRoot.field(modelData, "image_field", "image") || ""); visible: source !== "" }
+        Image {
+          width: parent.width
+          height: parent.height - 76
+          fillMode: Image.PreserveAspectCrop
+          source: renderer.assetUrl(carouselRoot.field(modelData, "image_field", "image") || "")
+          visible: source !== ""
+          onStatusChanged: {
+            if (status === Image.Error)
+              renderer.componentError("carousel_image_failed",
+                "Unable to load the declared carousel image",
+                { index: index, source: String(source) })
+          }
+        }
         Text { width: parent.width; text: String(carouselRoot.field(modelData, "label_field", "label") || modelData); color: renderer.prop("foreground", renderer.foreground); font.family: renderer.prop("font_family", renderer.fontFamily); font.pixelSize: Number(renderer.prop("font_size", Style.font.body)); horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight }
         Text { width: parent.width; text: String(carouselRoot.field(modelData,"description_field","description")||"");color:renderer.prop("muted",renderer.foreground);font.family:renderer.prop("font_family",renderer.fontFamily);font.pixelSize:Math.max(9,Number(renderer.prop("font_size",Style.font.body))-2);horizontalAlignment:Text.AlignHCenter;elide:Text.ElideRight }
       }

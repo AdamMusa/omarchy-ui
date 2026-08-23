@@ -302,6 +302,12 @@ QQC.Dialog {
                 asynchronous: renderer.prop("image_asynchronous", true) !== false
                 cache: renderer.prop("image_cache", true) !== false
                 smooth: true
+                onStatusChanged: {
+                    if (status === Image.Error)
+                        renderer.componentError("alert_dialog_image_failed", "Unable to load the declared alert dialog image", {
+                            "source": String(source)
+                        });
+                }
             }
 
         }

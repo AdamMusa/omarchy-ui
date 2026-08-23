@@ -38,6 +38,13 @@ class RestaurantDrinksAppTest < Minitest::Test
     assert_includes ids, "future_pour_hero"
     assert_includes ids, "bar_progress"
     assert_equal 9, RestaurantDrinks::MENU.length
+    RestaurantDrinks::MENU.each do |drink|
+      image = nodes.find { |node| node["id"] == "drink.#{drink[:id]}.image" }
+      refute_nil image, "missing menu image for #{drink[:name]}"
+      assert_equal "image", image.fetch("type")
+      assert_equal drink[:image], image.dig("props", "source")
+      assert File.file?(File.expand_path("../#{drink[:image]}", __dir__)), "missing asset #{drink[:image]}"
+    end
     assert_equal({}, app.state.cart)
   end
 

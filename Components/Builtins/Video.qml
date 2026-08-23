@@ -28,7 +28,7 @@ Video {
       onPaused: renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "pause", {})
       onStopped: renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "stop", {})
       onErrorOccurred: function(error, message) {
-        renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "error", { code: error, message: message })
+        renderer.componentError("video_playback_failed", message, { native_code: error, source: String(source) })
       }
       onPositionChanged: {
         if (renderer.subscribed("position")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "position", { value: position, duration: duration })

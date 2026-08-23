@@ -1,9 +1,9 @@
 # Nova Pour
 
 A futuristic waiter-friendly restaurant drink ordering application written entirely in the
-Omarchy UI Ruby DSL. The application owns no QML. Its original beverage hero artwork is loaded
-through the framework image component, and its live bar telemetry advances each confirmed order
-from mixing to ready.
+Omarchy UI Ruby DSL. The application owns no QML. Its original beverage hero artwork and nine
+photorealistic drink photos are loaded through the framework image component, while live bar
+telemetry advances each confirmed order from mixing to ready.
 
 ![Table Pour application](preview.png)
 

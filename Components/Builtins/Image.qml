@@ -105,6 +105,6 @@ Image {
         if (status === Image.Ready)
             send("loaded", payload);
         else if (status === Image.Error)
-            send("error", payload);
+            renderer.componentError("image_load_failed", "Unable to load the declared image", payload);
     }
 }

@@ -89,6 +89,12 @@ QQC.Pane {
               width: Number(renderer.prop("icon_size", Style.font.icon))
               height: width
               fillMode: Image.PreserveAspectFit
+              onStatusChanged: {
+                if (status === Image.Error)
+                  renderer.componentError("navigation_rail_icon_failed",
+                    "Unable to load the declared navigation rail icon image",
+                    { index: index, source: String(source) })
+              }
             }
 
             Text {

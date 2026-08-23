@@ -11,13 +11,24 @@ Item {
     function selectedScreen() {
         var screens = Application.screens || [];
         var requested = renderer ? renderer.prop("screen", 0) : 0;
-        if (typeof requested === "number")
-            return requested >= 0 && requested < screens.length ? screens[requested] : null;
+        if (typeof requested === "number") {
+            if (requested >= 0 && requested < screens.length)
+                return screens[requested];
+            if (renderer)
+                renderer.componentError("screen_not_found", "The declared screen does not exist", {
+                    "screen": String(requested)
+                });
+            return null;
+        }
 
         for (var index = 0; index < screens.length; index++) if (screens[index].name === String(requested)) {
             return screens[index];
         }
-        return screens.length ? screens[0] : null;
+        if (renderer)
+            renderer.componentError("screen_not_found", "The declared screen does not exist", {
+                "screen": String(requested)
+            });
+        return null;
     }
 
     function command() {
@@ -42,7 +53,7 @@ Item {
         id: nativeCapture
 
         screen: screenRoot.selectedScreen()
-        active: renderer && renderer.prop("active", false) === true
+        active: renderer && renderer.prop("active", false) === true && screenRoot.selectedScreen() !== null
         onActiveChanged: {
             if (renderer) {
                 renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, active ? "start" : "stop", {
@@ -50,9 +61,8 @@ Item {
             }
         }
         onErrorOccurred: function(error, errorString) {
-            renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "error", {
-                "code": error,
-                "message": errorString
+            renderer.componentError("screen_capture_failed", errorString, {
+                "native_code": error
             });
         }
     }

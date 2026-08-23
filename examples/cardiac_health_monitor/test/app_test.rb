@@ -19,37 +19,17 @@ class CardiacHealthMonitorTest < Minitest::Test
     app = CardiacHealthMonitor.build
     nodes = all(app.tree.fetch("main"))
     ids = nodes.map { |node| node["id"] }
-    %w[heart_model_3d heart_render_mode heart_zoom_readout heart_reset heart_particles
+    %w[heart_image heart_render_mode heart_particles
        ecg_waveform bpm.gauge recovery_heatmap insight_dialog].each do |id|
       assert_includes ids, id
     end
-    heart = nodes.find { |node| node["id"] == "heart_model_3d" }
-    assert_equal "model_view_3d", heart.fetch("type")
-    assert_equal "assets/hra-heart.glb", heart.dig("props", "source")
-    assert_equal "assets/luminous-heart.png", heart.dig("props", "fallback_source")
-    assert_equal true, heart.dig("props", "interactive")
-    assert_equal true, heart.dig("props", "pulse")
-  end
-
-  def test_heart_can_zoom_rotate_and_reset_through_the_3d_view
-    app = CardiacHealthMonitor.build
-    app.start(output: StringIO.new, error: StringIO.new)
-    app.receive(event("heart_model_3d", "zoom_change", "value" => 1.55))
-    assert_in_delta 1.55, app.state.heart_zoom
-    app.receive(event("heart_model_3d", "rotation_change", "x" => 18.125, "y" => -42.875, "z" => 0))
-    assert_in_delta 18.13, app.state.heart_rotation_x
-    assert_in_delta(-42.88, app.state.heart_rotation_y)
-    assert_equal "+18.1° / -42.9°", app.state.heart_orientation
-    app.receive(event("heart_model_3d", "double_click", "zoom" => 2.1))
-    assert_equal "DETAIL FOCUS", app.state.heart_orientation
-    app.receive(event("heart_reset"))
-    assert_in_delta 1.0, app.state.heart_zoom
-    assert_in_delta(-98.0, app.state.heart_rotation_x)
-    assert_in_delta(-18.0, app.state.heart_rotation_y)
-    assert_equal "CENTERED", app.state.heart_orientation
-    assert_equal 1, app.state.heart_reset_revision
-  ensure
-    app&.stop
+    heart = nodes.find { |node| node["id"] == "heart_image" }
+    assert_equal "image", heart.fetch("type")
+    assert_equal "assets/luminous-heart.png", heart.dig("props", "source")
+    assert_equal "preserve_aspect_crop", heart.dig("props", "fill_mode")
+    refute nodes.any? { |node| node["type"] == "model_view_3d" }
+    refute_includes ids, "heart_reset"
+    refute_includes ids, "heart_zoom_readout"
   end
 
   def test_breathing_and_insight_controls_are_stateful

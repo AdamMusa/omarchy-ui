@@ -13,12 +13,46 @@ module TeslaDriveDashboard
   CYAN = "#55dff5"
   MINT = "#67f0b5"
   LIME = "#c9ff18"
+  VEHICLE_VIEWS = %w[
+    assets/electric-grand-tourer.png
+    assets/vehicle-front.png
+    assets/vehicle-side.png
+  ].freeze
 
   module UI
-    def drive_metric(label, value, color: TeslaDriveDashboard::WHITE, width: 126)
+    def vehicle_image_source
+      return "assets/vehicle-trunk-open.png" if state.trunk_open
+      return "assets/vehicle-charge-open.png" if state.charge_port_open
+
+      TeslaDriveDashboard::VEHICLE_VIEWS[state.vehicle_view % TeslaDriveDashboard::VEHICLE_VIEWS.length]
+    end
+
+    def select_vehicle_view(offset)
+      transaction do
+        state.trunk_open = false
+        state.charge_port_open = false
+        state.vehicle_view = (state.vehicle_view + offset) % TeslaDriveDashboard::VEHICLE_VIEWS.length
+        state.camera_angle = (state.vehicle_view - 1) * 45
+      end
+    end
+
+    def toggle_vehicle_panel(panel)
+      opening = !state[panel]
+      transaction do
+        state.driving = false if opening
+        state.speed = 0 if opening
+        state.locked = false if opening
+        state.trunk_open = false
+        state.charge_port_open = false
+        state[panel] = opening
+      end
+    end
+
+    def drive_metric(label, value, id: nil, color: TeslaDriveDashboard::WHITE, width: 126, &reader)
       column spacing: 2, width: width do
         text label, style: :caption, color: TeslaDriveDashboard::MUTED, wrap: false
-        text value, size: 16, bold: true, color: color, wrap: false
+        metric = text value, id: id, size: 16, bold: true, color: color, wrap: false
+        bind(metric, :text, &reader) if reader
       end
     end
 
@@ -241,7 +275,10 @@ module TeslaDriveDashboard
                                      thickness: 12, label: "Battery", label_format: "%{value}%"
               bind(battery, :value) { state.charge }
               column spacing: 14, width: 190 do
-                drive_metric "EST. RANGE", "#{state.range} mi", color: TeslaDriveDashboard::CYAN, width: 180
+                drive_metric "EST. RANGE", "#{state.range} mi", id: :energy_range,
+                             color: TeslaDriveDashboard::CYAN, width: 180 do
+                  "#{state.range.round(1)} mi"
+                end
                 drive_metric "AVG. CONSUMPTION", "238 Wh/mi", width: 180
                 charge = button "Plan charge", id: :plan_charge, icon: :location,
                                 bordered: true, foreground: TeslaDriveDashboard::WHITE,
@@ -379,38 +416,67 @@ module TeslaDriveDashboard
 
             rectangle width: 536, height: 214, padding: 10, color: "#121413", radius: 18,
                       border_color: "#242827", border_width: 1 do
-              row spacing: 8, alignment: :center do
-                column spacing: 10, width: 96 do
-                  round_button "", id: :left_camera, icon: :arrow_left, diameter: 42,
-                               foreground: TeslaDriveDashboard::LIME, background: "#202322",
-                               accent: TeslaDriveDashboard::LIME do
-                    state.camera_angle = state.camera_angle - 15
-                  end
-                  charge = button state.charge_port_open ? "Close port" : "Charge",
-                                  id: :charge_port_toggle, icon: :power, bordered: true,
-                                  foreground: TeslaDriveDashboard::WHITE, background: "#1d201f",
-                                  accent: TeslaDriveDashboard::LIME do
-                    state.charge_port_open = !state.charge_port_open
-                  end
-                  bind(charge, :text) { state.charge_port_open ? "Close port" : "Charge" }
+              stack width: 516, height: 194 do
+                hero_image = image vehicle_image_source, id: :vehicle_hero_image,
+                                   width: 516, height: 194, fill_mode: :preserve_aspect_crop,
+                                   asynchronous: true, cache: true, smooth: true, mipmap: true
+                bind(hero_image, :source) { vehicle_image_source }
+                bind(hero_image, :scale, animation: { duration: 650, easing: :in_out_cubic }) do
+                  state.driving ? (state.drive_motion ? 1.025 : 1.0) : 1.0
                 end
-                hero_image = image "assets/electric-grand-tourer.png", id: :vehicle_hero_image,
-                                   width: 300, height: 190, fill_mode: :preserve_aspect_crop,
-                                   asynchronous: true, cache: true, mipmap: true
                 on(hero_image, :loaded) { state.image_ready = true }
-                column spacing: 10, width: 96 do
-                  round_button "", id: :right_camera, icon: :arrow_right, diameter: 42,
-                               foreground: TeslaDriveDashboard::LIME, background: "#202322",
-                               accent: TeslaDriveDashboard::LIME do
-                    state.camera_angle = state.camera_angle + 15
+
+                gradient colors: ["#5404080c", "#0004080c", "#6604080c"],
+                         stops: [0.0, 0.5, 1.0], width: 516, height: 194,
+                         start_x: 0, end_x: 516, radius: 12
+
+                motion = particle_system id: :vehicle_motion_particles,
+                                         width: 516, height: 194, running: state.driving,
+                                         emit_rate: 18, life_span: 850, maximum_emitted: 28,
+                                         size: 3, end_size: 1, size_variation: 2,
+                                         color: TeslaDriveDashboard::CYAN, alpha: 0.28,
+                                         emitter_x: 0, emitter_y: 150,
+                                         emitter_width: 516, emitter_height: 42,
+                                         velocity_angle: 180, velocity: 65,
+                                         velocity_angle_variation: 8, velocity_variation: 24
+                bind(motion, :running) { state.driving }
+
+                rectangle width: 516, height: 194, padding: 10, color: "transparent" do
+                  row spacing: 0, alignment: :center do
+                    column spacing: 10, width: 104 do
+                      round_button "", id: :left_camera, icon: :arrow_left, diameter: 42,
+                                   foreground: TeslaDriveDashboard::LIME, background: "#bf111514",
+                                   accent: TeslaDriveDashboard::LIME do
+                        select_vehicle_view(-1)
+                      end
+                      charge = button state.charge_port_open ? "Close port" : "Charge",
+                                      id: :charge_port_toggle, icon: :power, bordered: true,
+                                      width: 104, foreground: TeslaDriveDashboard::WHITE,
+                                      background: "#d9191d1c", accent: TeslaDriveDashboard::LIME do
+                        toggle_vehicle_panel(:charge_port_open)
+                      end
+                      bind(charge, :text) { state.charge_port_open ? "Close port" : "Charge" }
+                    end
+
+                    spacer width: 288
+
+                    column spacing: 10, width: 104 do
+                      round_button "", id: :right_camera, icon: :arrow_right, diameter: 42,
+                                   foreground: TeslaDriveDashboard::LIME, background: "#bf111514",
+                                   accent: TeslaDriveDashboard::LIME do
+                        select_vehicle_view(1)
+                      end
+                      trunk = button state.trunk_open ? "Close trunk" : "Trunk", id: :trunk_toggle,
+                                     icon: :upload, bordered: true, width: 104,
+                                     foreground: TeslaDriveDashboard::WHITE,
+                                     background: "#d9191d1c", accent: TeslaDriveDashboard::LIME do
+                        toggle_vehicle_panel(:trunk_open)
+                      end
+                      bind(trunk, :text) { state.trunk_open ? "Close trunk" : "Trunk" }
+                    end
                   end
-                  trunk = button state.trunk_open ? "Close trunk" : "Trunk", id: :trunk_toggle,
-                                 icon: :upload, bordered: true, foreground: TeslaDriveDashboard::WHITE,
-                                 background: "#1d201f", accent: TeslaDriveDashboard::LIME do
-                    state.trunk_open = !state.trunk_open
-                  end
-                  bind(trunk, :text) { state.trunk_open ? "Close trunk" : "Trunk" }
                 end
+
               end
             end
 
@@ -440,14 +506,28 @@ module TeslaDriveDashboard
                                icon: state.driving ? :pause : :play,
                                bordered: false, foreground: "#090a0a", background: TeslaDriveDashboard::LIME,
                                accent: TeslaDriveDashboard::LIME, vertical_padding: 10 do
-                  state.driving = !state.driving
+                  transaction do
+                    starting = !state.driving
+                    state.trunk_open = false if starting
+                    state.charge_port_open = false if starting
+                    state.speed = 0 unless starting
+                    state.driving = starting
+                  end
                 end
                 bind(drive, :text) { state.driving ? "PAUSE SIMULATION" : "START DRIVE" }
                 bind(drive, :icon) { state.driving ? "pause" : "play" }
                 row spacing: 18 do
-                  drive_metric "POWER", "#{state.speed + 84} kW", color: TeslaDriveDashboard::LIME, width: 88
-                  drive_metric "TRACTION", "#{state.traction}%", width: 88
-                  drive_metric "CAMERA", "#{state.camera_angle}°", color: TeslaDriveDashboard::CYAN, width: 88
+                  drive_metric "POWER", "0 kW", id: :drive_power,
+                               color: TeslaDriveDashboard::LIME, width: 88 do
+                    "#{state.driving ? (state.speed * 2.4).round : 0} kW"
+                  end
+                  drive_metric "TRACTION", "0%", id: :drive_traction, width: 88 do
+                    "#{state.driving ? state.traction : 0}%"
+                  end
+                  drive_metric "CAMERA", "#{state.camera_angle}°", id: :drive_camera,
+                               color: TeslaDriveDashboard::CYAN, width: 88 do
+                    "#{state.camera_angle}°"
+                  end
                 end
               end
             end
@@ -524,9 +604,14 @@ module TeslaDriveDashboard
                                        thickness: 11, label: "BATTERY", label_format: "%{value}%"
                 bind(battery, :value) { state.charge }
                 column spacing: 12, width: 162 do
-                  drive_metric "EST. RANGE", "#{state.range.round(1)} mi",
-                               color: TeslaDriveDashboard::LIME, width: 160
-                  drive_metric "ROUTE LEFT", "#{state.route_miles.round(1)} mi", width: 160
+                  drive_metric "EST. RANGE", "#{state.range.round(1)} mi", id: :drive_range,
+                               color: TeslaDriveDashboard::LIME, width: 160 do
+                    "#{state.range.round(1)} mi"
+                  end
+                  drive_metric "ROUTE LEFT", "#{state.route_miles.round(1)} mi",
+                               id: :drive_route_left, width: 160 do
+                    "#{state.route_miles.round(1)} mi"
+                  end
                   charge_plan = button "PLAN CHARGE", id: :plan_charge,
                                        bordered: true, foreground: TeslaDriveDashboard::WHITE,
                                        background: "#222524", accent: TeslaDriveDashboard::LIME do
@@ -625,12 +710,12 @@ module TeslaDriveDashboard
 
   def self.build
     OmarchyUI::Application.new do
-      state :speed, 64
+      state :speed, 0
       state :charge, 82
       state :range, 286
       state :traction, 61
       state :mode, "Sport"
-      state :driving, true
+      state :driving, false
       state :climate, true
       state :locked, true
       state :autopilot, true
@@ -646,7 +731,9 @@ module TeslaDriveDashboard
       state :charge_dialog, false
       state :destination_search, ""
       state :emergency, false
-      state :camera_angle, 0
+      state :camera_angle, -45
+      state :vehicle_view, 0
+      state :drive_motion, false
       state :media_position, 0.0
       state :media_duration, 49.0
       state :power_curve, [18, 26, 21, 38, 46, 42, 58, 65, 59, 72, 68, 84, 76, 91]
@@ -694,6 +781,7 @@ module TeslaDriveDashboard
             state.route_progress = [state.route_progress + distance_step * 2.3, 100.0].min
             state.charge = [state.charge - distance_step * 0.035, 0.0].max.round(1)
             state.range = [state.range - distance_step, 0.0].max.round(1)
+            state.drive_motion = !state.drive_motion
           end
         end
       end

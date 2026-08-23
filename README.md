@@ -157,6 +157,11 @@ Every component supports `visible`, `enabled`, `opacity`, `scale`, `rotation`, `
 The versioned [component coverage matrix](docs/component-coverage.md) tracks the complete built-in
 catalog. Generic custom adapters are intentionally excluded from its completion count.
 
+Component identity is strict. An `image` always renders a native image and a `model_view_3d`
+always renders real Qt Quick 3D geometry. The framework never substitutes one component type for
+another when a module or resource fails; it records a framework component error and emits the
+component's `error` event when that event is supported and subscribed.
+
 ### Layout and display
 
 | Ruby component | Component-specific properties | Events | Container |
@@ -182,7 +187,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `split_view` | dimensions and horizontal/vertical `orientation`; children accept preferred/min/fill sizing | `click`, `resize` | yes |
 | `stack_layout` | `current_index` and dimensions; displays one child page at a time | `click`, `change` | yes |
 | `layout_item_proxy` | target control ID or node, dimensions, fill/preferred/min/max sizing, alignment and margins | `target_change` | no |
-| `loader` | `active`, `asynchronous`, optional dimensions; lazily creates its first child | `click`, `loaded`, `status` | yes |
+| `loader` | `active`, `asynchronous`, optional dimensions; lazily creates its first child | `click`, `loaded`, `status`, `error` | yes |
 | `flickable` | viewport/content dimensions, direction, bounds behavior, interaction and clipping | `click`, `scroll`, `flick_start`, `flick_end` | yes |
 | `focus_scope` | `focus`, `active_focus`, optional dimensions; establishes a keyboard-focus boundary | `click`, `focus`, `blur` | yes |
 | `flipable` | `flipped`, horizontal/vertical axis, duration, easing, interaction and dimensions; first two children are front/back | `click`, `change` | yes |
@@ -198,7 +203,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |
 | `image` | app-relative/local/URL `source`, dimensions/source size, fill mode, alignment, async/cache/smoothing/mipmap/mirroring and load retention | `progress`, `status`, `loaded`, `error` | no |
 | `vector_image` | source, dimensions/fill, geometry/curve renderer, trust policy, async shapes and animation controls | `source_change` | no |
-| `model_view_3d` | GLB/glTF source, fit/center, camera, lighting, rotation, zoom, auto-rotation, pulse and interaction controls | load/status/error, click/double-click, rotation/zoom changes | no |
+| `model_view_3d` | GLB/glTF source, fit/center, camera, lighting, rotation, zoom, auto-rotation and interaction controls | load/status/error, click/double-click, rotation/zoom changes | no |
 | `font_loader` | local or remote font source | `loaded`, `error`, `status` with resolved family name | no |
 | `text_metrics` | text/font settings, spacing, elision and elision width | `metrics` with native bounds, advance width and elided text | no |
 | `animated_image` | source, dimensions/fill, playback, pause, speed, async/cache/mirror/smoothing | `frame`, `loaded`, `error`, `status` | no |
@@ -295,13 +300,13 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `group_box` | titled native bordered container with reactive typography/alignment, row/column/stack layout, per-edge padding, dimensions and styling; contains Ruby children | `click`, `show`, `hide`, `focus`, `blur`, `title_change` |
 | `tabs` | native tab bar and stacked child pages; labels or child titles, reactive selected index, top/bottom bar position, dimensions and styling | `input`, `change`, `tab_click`, `show`, `hide`, `focus`, `blur` |
 | `tab_bar` | standalone native tab selection bar accepting label or option-hash items, with reactive index, top/bottom position, spacing, dimensions and styling | `input`, `change`, `tab_click`, `show`, `hide`, `focus`, `blur` |
-| `tab_button` | standalone native tab button with checked/auto-exclusive state, icon, shortcut, dimensions, typography, colors and border styling | `click`, `change`, `toggle`, `press`, `release`, `hover`, `focus`, `blur` |
+| `tab_button` | standalone native tab button with checked/auto-exclusive state, icon, shortcut, dimensions, typography, colors and border styling | `click`, `change`, `toggle`, `press`, `release`, `hover`, `focus`, `blur`, `error` |
 | `page_indicator` | native page dots with reactive count/index, optional interaction, spacing, dot sizing, dimensions and colors | `input`, `change`, `show`, `hide`, `focus`, `blur` |
 | `stack_view` | native push/pop stack over Ruby child pages, driven by a reactive index with optional transitions, dimensions and styling | `change`, `push`, `pop`, `depth_change`, `busy_change`, `show`, `hide`, `focus`, `blur` |
 | `swipe_view` | native horizontal/vertical swipe navigation over Ruby child pages with reactive index, interaction, dimensions, direction and styling | `input`, `change`, `count_change`, `show`, `hide`, `focus`, `blur` |
 | `drawer` | native edge drawer with reactive opening, edge gestures, modal/dim behavior, close policy, child layout, dimensions and styling | `open`, `close`, `about_to_show`, `about_to_hide`, `position_change`, `show`, `hide`, `focus`, `blur` |
-| `navigation_rail` | compact or extended vertical destination rail accepting label/icon item hashes, with reactive selection, alignment, dimensions and styling | `input`, `change`, `select`, `show`, `hide`, `focus`, `blur` |
-| `breadcrumb` | native clickable destination trail accepting label/value/icon item hashes, with reactive current segment, separator, spacing and styling | `input`, `change`, `select`, `show`, `hide`, `focus`, `blur` |
+| `navigation_rail` | compact or extended vertical destination rail accepting label/icon item hashes, with reactive selection, alignment, dimensions and styling | `input`, `change`, `select`, `show`, `hide`, `focus`, `blur`, `error` |
+| `breadcrumb` | native clickable destination trail accepting label/value/icon item hashes, with reactive current segment, separator, spacing and styling | `input`, `change`, `select`, `show`, `hide`, `focus`, `blur`, `error` |
 | `pagination` | one-based native page navigation with bounded selection, sibling window, ellipses, optional previous/next and first/last controls, labels and styling | `input`, `change`, `select`, `previous`, `next`, `first`, `last`, `show`, `hide`, `focus`, `blur` |
 | `expansion_panel` | native header and animated Ruby child-content reveal with title/subtitle, reactive expanded state, timing, dimensions and styling | `toggle`, `change`, `expand`, `collapse`, `show`, `hide`, `focus`, `blur` |
 | `accordion` | paired native section headers and Ruby child bodies with single/multiple expansion policy, reactive expanded indices, animation and styling | `toggle`, `change`, `expand`, `collapse`, `show`, `hide`, `focus`, `blur` |
@@ -314,7 +319,7 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `context_menu` | native right-click menu attached to a Ruby node/ID or activation area, with programmatic opening and the full item/separator schema | `request`, `trigger`, `toggle`, `highlight`, `open`, `close`, `about_to_show`, `about_to_hide` |
 | `popup` | native popup containing arbitrary Ruby controls with reactive opening, position, modal/dim/focus behavior, close policy, layout, styling and transitions | `open`, `close`, `about_to_show`, `about_to_hide`, `show`, `hide`, `focus`, `blur`, `position_change` |
 | `dialog` | native titled dialog containing arbitrary Ruby controls with standard button roles, reactive opening, modal behavior, geometry, layout and styling | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
-| `alert_dialog` | Omarchy-themed severity alert with aligned icon/message, optional app-relative image, informative/selectable details and semantic button roles | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle |
+| `alert_dialog` | Omarchy-themed severity alert with aligned icon/message, optional app-relative image, informative/selectable details and semantic button roles | `accept`, `reject`, `apply`, `reset`, `discard`, `help`, `open`, `close`, popup lifecycle, `error` |
 | `message_dialog` | platform-native Qt message box with title, primary/informative/detailed text, standard-button flags and modality | `button`, `accept`, `reject`, `open`, `close` |
 | `bottom_sheet` | bottom-anchored popup with arbitrary Ruby content, modal scrim, drag handle, swipe dismissal, responsive sizing and transitions | `open`, `close`, popup lifecycle, `drag`, `drag_end`, `dismiss` |
 | `modal_sheet` | edge-attached modal surface with title/header, close affordance, arbitrary Ruby content, responsive sizing and slide transitions | `open`, `close`, `dismiss`, popup lifecycle |
@@ -324,11 +329,11 @@ Unknown icon values are rendered literally, so a Nerd Font glyph can also be pas
 | `busy_indicator` | native indeterminate activity indicator with reactive running state, size, palette, opacity and accessibility | `running_change`, `show`, `hide` |
 | `progress_ring` | determinate or indeterminate circular progress with ranges, animated values, direction/start angle, center labels and accessibility | `value_change`, `show`, `hide` |
 | `skeleton` | rectangle, circle or multiline-text loading placeholder with configurable geometry and direction-aware shimmer | `animation_change`, `show`, `hide` |
-| `item_delegate` | native collection row with icon/image, primary/secondary/trailing text, disclosure, selection and checkable state | `activate`, `click`, `change`, pointer/focus/visibility |
+| `item_delegate` | native collection row with icon/image, primary/secondary/trailing text, disclosure, selection and checkable state | `activate`, `click`, `change`, pointer/focus/visibility, `error` |
 | `check_delegate` | native two-state/tri-state collection row with exact check-state payloads, secondary text and reactive indicator styling | `activate`, `click`, `change`, `toggle`, pointer/focus/visibility |
 | `radio_delegate` | native auto-exclusive selection row with secondary text, dedicated radio indicator and value-bearing events | `select`, `activate`, `change`, `toggle`, pointer/focus/visibility |
 | `switch_delegate` | native switch row with secondary text, animated track/thumb, selection styling and value-bearing state events | `activate`, `click`, `change`, `toggle`, pointer/focus/visibility |
-| `swipe_delegate` | native swipeable collection row with configurable left/right action lanes, programmatic opening and position/completion lifecycle | `left_action`, `right_action`, swipe lifecycle, activation/pointer/focus |
+| `swipe_delegate` | native swipeable collection row with configurable left/right action lanes, programmatic opening and position/completion lifecycle | `left_action`, `right_action`, swipe lifecycle, activation/pointer/focus, `error` |
 | `grid_view` | native virtualized grid for Ruby arrays with field mapping, selection, keyboard navigation, flow/RTL, snapping, highlight and empty state | `activate`, `change`, current/count/highlight/scroll/movement lifecycle |
 | `table_view` | arbitrary-column native virtualized table backed by a dynamic Qt TableModel, with headers, selection, editing and navigation | cell/selection/edit/count/scroll/movement lifecycle |
 | `tree_view` | hierarchical native virtualized tree backed by Qt TreeModel, with arbitrary columns, path selection, expansion and editing | cell/selection/edit/expand/collapse/count/scroll/movement lifecycle |

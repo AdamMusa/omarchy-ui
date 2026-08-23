@@ -383,20 +383,29 @@ class QmlContractTest < Minitest::Test
     model = source("Components/Builtins/Support/ModelView3dScene.qml")
 
     assert_includes renderer, '"model_view_3d"'
+    assert_includes renderer, 'node.type === "model_view_3d"'
+    assert_includes renderer, "id: modelView3dComponent"
     assert_includes host, 'Qt.resolvedUrl("Support/ModelView3dScene.qml")'
-    assert_includes host, 'renderer.prop("fallback_source", "")'
-    assert_includes host, '"code": "qtquick3d_unavailable"'
+    refute_includes host, "Image {"
+    refute_match(/fallback_(?:source|text|fill_mode|while_loading)|prefer_3d/, host)
+    assert_includes host, 'renderer.componentError("qtquick3d_unavailable"'
     assert_includes model, "import QtQuick3D"
     assert_includes model, "import QtQuick3D.AssetUtils"
     assert_includes model, "View3D {"
     assert_includes model, "RuntimeLoader {"
-    assert_includes model, 'source: renderer.assetUrl(renderer.prop("source", ""))'
+    assert_includes model, "function synchronizeModelSource()"
+    assert_includes model, "requestedSource === loadedModelSource"
+    assert_includes model, 'source: ""'
     assert_includes model, "onBoundsChanged: modelViewRoot.updateBounds()"
     assert_includes model, "DragHandler {"
     assert_includes model, "PinchHandler {"
     assert_includes model, "WheelHandler {"
     assert_includes model, "onDoubleTapped:"
-    assert_includes model, 'renderer.prop("pulse", false)'
+    refute_match(/\b(?:bpm|beatAmount|pulse_scale)\b/, model)
+    refute_includes OmarchyUI::COMPONENTS.fetch(:model_view_3d).first, :bpm
+    refute_includes OmarchyUI::COMPONENTS.fetch(:model_view_3d).first, :pulse
+    refute_includes OmarchyUI::COMPONENTS.fetch(:model_view_3d).first, :pulse_scale
+    assert_includes model, "temporalAAEnabled: false"
   end
 
   def test_font_loader_has_a_specific_native_resource_renderer
@@ -460,6 +469,8 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "id: avatarImage"
     assert_includes renderer, "Image.PreserveAspectCrop"
     assert_includes renderer, ").toUpperCase()"
+    assert_includes renderer, 'visible: avatarRoot.avatarSource === ""'
+    assert_includes renderer, 'root.componentError("avatar_image_failed"'
   end
 
   def test_badge_has_a_specific_value_and_dot_renderer
@@ -1319,7 +1330,7 @@ class QmlContractTest < Minitest::Test
     assert_includes image, 'renderer.prop("horizontal_alignment", "center")'
     assert_includes image, 'renderer.prop("vertical_alignment", "center")'
     assert_includes image, 'send("loaded", payload)'
-    assert_includes image, 'send("error", payload)'
+    assert_includes image, 'renderer.componentError("image_load_failed"'
   end
 
   def test_message_dialog_has_a_specific_platform_native_renderer

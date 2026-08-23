@@ -92,6 +92,11 @@ QQC.SwipeDelegate {
       visible: source.toString().length > 0
       source: String(renderer.prop("icon_source", ""))
       fillMode: Image.PreserveAspectFit
+      onStatusChanged: {
+        if (status === Image.Error)
+          renderer.componentError("swipe_delegate_icon_failed",
+            "Unable to load the declared swipe delegate icon image", { source: String(source) })
+      }
     }
 
     Text {

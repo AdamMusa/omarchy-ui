@@ -25,7 +25,7 @@ BorderImage {
       onStatusChanged: {
         if (renderer.subscribed("status")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "status", { value: status })
         if (status === BorderImage.Ready && renderer.subscribed("loaded")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "loaded", { width: sourceSize.width, height: sourceSize.height })
-        if (status === BorderImage.Error && renderer.subscribed("error")) renderer.bridge.sendEvent(renderer.surfaceName, renderer.controlId, "error", {})
+        if (status === BorderImage.Error) renderer.componentError("border_image_load_failed", "Unable to load the declared border image", { source: String(source) })
       }
       Item {
         anchors.fill: parent
