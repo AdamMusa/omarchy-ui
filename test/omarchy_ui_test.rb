@@ -680,6 +680,22 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_radio_group_is_a_typed_mutually_exclusive_options_control
+    application = OmarchyUI::Application.new do
+      app { radio_group :ruby, options: [{ label: "Ruby", value: :ruby }, { label: "QML", value: :qml }], orientation: :horizontal }
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "radio_group", node.fetch("type")
+    assert_equal "ruby", node.dig("props", "value")
+    assert_equal "Ruby", node.dig("props", "options", 0, "label")
+    assert_equal "horizontal", node.dig("props", "orientation")
+  ensure
+    application&.stop
+  end
+
   def test_line_chart_is_a_specific_reactive_data_component
     application = OmarchyUI::Application.new do
       state :samples, [12, 18, 15, 27]

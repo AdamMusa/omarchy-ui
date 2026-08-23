@@ -461,6 +461,16 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, 'option: root.prop("value", null)'
   end
 
+  def test_radio_group_has_a_specific_native_exclusive_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "radio_group"'
+    assert_includes renderer, "id: radioGroupComponent"
+    assert_includes renderer, "QQC.ButtonGroup { id: exclusiveRadioGroup }"
+    assert_includes renderer, "QQC.ButtonGroup.group: exclusiveRadioGroup"
+    assert_includes renderer, '"change", { value: optionValue, index: index }'
+  end
+
   def test_line_chart_has_a_specific_canvas_renderer_and_events
     renderer = source("ControlNode.qml")
 

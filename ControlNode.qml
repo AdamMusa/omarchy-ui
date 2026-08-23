@@ -22,7 +22,7 @@ Loader {
 
   readonly property bool builtIn: ["text", "label", "rich_text", "markdown", "selectable_text", "icon", "tooltip", "button", "round_button", "tool_button", "delay_button", "row", "column", "container", "image", "vector_image", "font_loader", "text_metrics", "animated_image", "video", "audio", "avatar", "badge", "chip", "spacer",
     "grid", "row_layout", "column_layout", "grid_layout", "flow", "center", "card", "border_overlay", "aspect_ratio", "constrained_box", "fitted_box", "wrap", "split_view", "stack_layout", "loader", "flickable", "focus_scope", "flipable", "border_image",
-    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "toggle_switch", "text_field",
+    "stack", "scroll", "rectangle", "action_button", "bar_icon_button", "bar_indicator", "toggle", "checkbox", "radio_button", "radio_group", "toggle_switch", "text_field",
     "number_field", "slider", "dropdown", "multi_select", "button_group", "progress", "line_chart", "area_chart", "bar_chart", "separator", "divider",
     "section_header", "searchable_dropdown", "confirm_dialog", "panel_hero", "optical_glyph",
     "cursor_surface", "widget_button", "list_view", "key_catcher"].indexOf(node ? node.type : "") >= 0
@@ -113,6 +113,14 @@ Loader {
 
   function nativeDefinition() {
     return bridge && node ? bridge.componentDefinition(node.type) : null
+  }
+
+  function optionValue(option) {
+    return option !== null && typeof option === "object" && option.value !== undefined ? option.value : option
+  }
+
+  function optionLabel(option) {
+    return option !== null && typeof option === "object" && option.label !== undefined ? option.label : optionValue(option)
   }
 
   function syncNativeProperties() {
@@ -247,6 +255,7 @@ Loader {
     if (node.type === "toggle") return toggleComponent
     if (node.type === "checkbox") return checkboxComponent
     if (node.type === "radio_button") return radioButtonComponent
+    if (node.type === "radio_group") return radioGroupComponent
     if (node.type === "toggle_switch") return toggleSwitchComponent
     if (node.type === "text_field") return textFieldComponent
     if (node.type === "number_field") return numberFieldComponent
@@ -1719,6 +1728,59 @@ Loader {
       onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "click", { value: root.prop("value", null) })
       onToggled: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: checked, option: root.prop("value", null) })
       onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: hovered })
+    }
+  }
+
+  Component {
+    id: radioGroupComponent
+    Grid {
+      id: nativeRadioGroup
+      readonly property bool horizontal: String(root.prop("orientation", "vertical")) === "horizontal"
+      columns: horizontal ? Math.max(1, radioOptions.count) : 1
+      rows: horizontal ? 1 : Math.max(1, radioOptions.count)
+      spacing: Number(root.prop("spacing", 10))
+      QQC.ButtonGroup { id: exclusiveRadioGroup }
+      Repeater {
+        id: radioOptions
+        model: root.prop("options", [])
+        delegate: QQC.RadioButton {
+          id: groupedRadioButton
+          required property var modelData
+          readonly property var optionValue: root.optionValue(modelData)
+          text: String(root.optionLabel(modelData))
+          checked: String(optionValue) === String(root.prop("value", ""))
+          enabled: root.prop("enabled", true) !== false
+          spacing: Number(root.prop("item_spacing", 8))
+          QQC.ButtonGroup.group: exclusiveRadioGroup
+          indicator: Rectangle {
+            implicitWidth: Number(root.prop("indicator_size", 20))
+            implicitHeight: implicitWidth
+            radius: width / 2
+            color: root.prop("background", "transparent")
+            border.width: Style.normalBorderWidth
+            border.color: groupedRadioButton.checked ? root.prop("accent", Color.accent) : root.prop("foreground", root.foreground)
+            Rectangle {
+              anchors.centerIn: parent
+              width: parent.width * 0.5
+              height: width
+              radius: width / 2
+              visible: groupedRadioButton.checked
+              color: root.prop("accent", Color.accent)
+            }
+          }
+          contentItem: Text {
+            leftPadding: groupedRadioButton.indicator.width + groupedRadioButton.spacing
+            text: groupedRadioButton.text
+            textFormat: Text.PlainText
+            color: root.prop("foreground", root.foreground)
+            font.family: String(root.prop("font_family", root.fontFamily))
+            font.pixelSize: Number(root.prop("font_size", Style.font.body))
+            verticalAlignment: Text.AlignVCenter
+          }
+          onClicked: root.bridge.sendEvent(root.surfaceName, root.controlId, "change", { value: optionValue, index: index })
+          onHoveredChanged: root.bridge.sendEvent(root.surfaceName, root.controlId, "hover", { value: optionValue, index: index, hovered: hovered })
+        }
+      }
     }
   }
 

@@ -13,7 +13,8 @@ module OmarchyUI
       slider: :value,
       dropdown: :value,
       multi_select: :values,
-      button_group: :value
+      button_group: :value,
+      radio_group: :value
     }.freeze
 
     def initialize(application)
