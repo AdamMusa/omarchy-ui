@@ -169,6 +169,7 @@ catalog. Generic custom adapters are intentionally excluded from its completion 
 | `rectangle` | `color`, `radius`, `border_color`, `border_width`, `padding` | `click` | yes |
 | `border_overlay` | `color`, `width_spec`, `gradient_colors`, `gradient_angle`, `radius` | — | no |
 | `aspect_ratio` | `ratio`, optional `width`/`height`, `clip` | `click` | yes |
+| `constrained_box` | dimensions plus `min_width`, `min_height`, `max_width`, `max_height`, `clip` | `click` | yes |
 | `text` | `text`, `style`, `size`, `bold`, `color`, `wrap` | — | no |
 | `icon` | `name`, `text`, `size`, `color` | — | no |
 | `tooltip` | `text`, `delay`, `timeout`, foreground/background/border colors, font family/size | — | no |

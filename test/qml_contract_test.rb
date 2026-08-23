@@ -93,6 +93,15 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, "Repeater { model: root.node.children || []; delegate: childDelegate }"
   end
 
+  def test_constrained_box_has_a_specific_bounded_container_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "constrained_box"'
+    assert_includes renderer, "id: constrainedBoxComponent"
+    assert_includes renderer, 'root.prop("min_width", 0)'
+    assert_includes renderer, 'root.prop("max_height", Number.MAX_VALUE)'
+  end
+
   def test_service_validates_structural_child_patches
     service = source("Service.qml")
     assert_includes service, 'message.op === "replace_children"'

@@ -75,6 +75,26 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_constrained_box_is_a_typed_container
+    application = OmarchyUI::Application.new do
+      app do
+        constrained_box min_width: 200, max_width: 600, min_height: 100 do
+          text "Bounded content"
+        end
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }.dig("surfaces", "main", "children", 0)
+
+    assert_equal "constrained_box", node.fetch("type")
+    assert_equal 200, node.dig("props", "min_width")
+    assert_equal 600, node.dig("props", "max_width")
+    assert_equal "text", node.dig("children", 0, "type")
+  ensure
+    application&.stop
+  end
+
   def test_tooltip_is_a_typed_builtin_component
     application = OmarchyUI::Application.new do
       app do
