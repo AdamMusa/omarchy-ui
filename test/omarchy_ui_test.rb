@@ -1496,6 +1496,29 @@ class OmarchyUITest < Minitest::Test
     application&.stop
   end
 
+  def test_date_picker_is_a_typed_native_calendar_input
+    application = OmarchyUI::Application.new do
+      app do
+        date_picker "2026-08-22", label: "Due date", format: "MMM d, yyyy",
+                    minimum: "2026-01-01", maximum: "2026-12-31", close_on_select: true
+      end
+    end
+    output = StringIO.new
+    application.start(output: output, error: StringIO.new)
+    node = messages(output).find { |message| message["type"] == "render" }
+      .dig("surfaces", "main", "children", 0)
+
+    assert_equal "date_picker", node.fetch("type")
+    assert_equal "2026-08-22", node.dig("props", "date")
+    assert_equal "Due date", node.dig("props", "label")
+    assert_equal "MMM d, yyyy", node.dig("props", "format")
+    assert_equal "2026-01-01", node.dig("props", "minimum")
+    assert_equal "2026-12-31", node.dig("props", "maximum")
+    assert_equal true, node.dig("props", "close_on_select")
+  ensure
+    application&.stop
+  end
+
   def test_animation_sequences_accumulate_track_delays
     app = OmarchyUI::Application.new do
       panel :main do

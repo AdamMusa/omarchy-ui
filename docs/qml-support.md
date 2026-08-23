@@ -37,6 +37,11 @@ Its color, label, title, opened state, alpha-channel mode, button mode, native-d
 dimensions, and visual styling remain reactive. Preview changes emit `input`; completion and
 lifecycle changes emit `change`, `accept`, `reject`, `open`, and `close`.
 
+`date_picker(date, ...)` renders a button and an interactive Qt `MonthGrid` popup. Ruby dates use
+the stable `YYYY-MM-DD` form while the visible text can use any `Qt.formatDate` format. Minimum and
+maximum dates, popup state and sizing, close-on-select behavior, and styling are reactive. Selection
+emits `input` and `change`; popup lifecycle and month navigation emit `open`, `close`, and `navigate`.
+
 ## Portable `qs.Ui` controls
 
 | Omarchy QML | Ruby component | Properties | Events |

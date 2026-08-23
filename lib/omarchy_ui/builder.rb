@@ -17,6 +17,7 @@ module OmarchyUI
       spin_box: :value,
       double_spin_box: :value,
       color_picker: :color,
+      date_picker: :date,
       dropdown: :value,
       multi_select: :values,
       button_group: :value,

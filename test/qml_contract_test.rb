@@ -26,7 +26,7 @@ class QmlContractTest < Minitest::Test
     router = File.read(File.join(ROOT, "ControlNode.qml"))
     renderer_names = router.scan(/Builtins\.(\w+) \{ renderer: root \}/).flatten
 
-    assert_equal 87, renderer_names.length
+    assert_equal 88, renderer_names.length
     assert_equal renderer_names.uniq.sort, renderer_names.sort
     renderer_names.each do |name|
       path = File.join(ROOT, "Components", "Builtins", "#{name}.qml")
@@ -651,5 +651,18 @@ class QmlContractTest < Minitest::Test
     assert_includes renderer, '"change", { value: value }'
     assert_includes renderer, '"accept", { value: value }'
     assert_includes renderer, '"reject", {'
+  end
+
+  def test_date_picker_has_a_specific_native_calendar_renderer
+    renderer = source("ControlNode.qml")
+
+    assert_includes renderer, 'node.type === "date_picker"'
+    assert_includes renderer, "id: datePickerComponent"
+    assert_includes renderer, "Basic.MonthGrid {"
+    assert_includes renderer, 'root.prop("minimum", "")'
+    assert_includes renderer, 'root.prop("maximum", "")'
+    assert_includes renderer, '"input", { value: value }'
+    assert_includes renderer, '"change", { value: value }'
+    assert_includes renderer, '"navigate", {'
   end
 end
