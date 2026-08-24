@@ -11,7 +11,7 @@ class QuantumMarketTerminalTest < Minitest::Test
   end
 
   def event(id, name = "activate", payload = {})
-    JSON.generate("v" => OmarchyUI::PROTOCOL_VERSION, "type" => "event", "surface" => "main",
+    JSON.generate("v" => Zui::PROTOCOL_VERSION, "type" => "event", "surface" => "main",
                   "id" => id, "event" => name, "seq" => 1, "payload" => payload)
   end
 

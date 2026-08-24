@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require "omarchy_ui"
+require "zui"
 require_relative "components/dashboard"
 
 module FuturisticDashboard
   def self.build
-    OmarchyUI::Application.new do
+    Zui::Application.new(ui: UI) do
       state :tick, 0
       state :active_section, "Overview"
       state :boost, false
@@ -65,4 +65,6 @@ module FuturisticDashboard
       end
     end
   end
+
+  def self.run = build.run
 end

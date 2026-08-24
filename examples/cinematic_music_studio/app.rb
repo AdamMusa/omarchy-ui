@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "omarchy_ui"
+require "zui"
 
 module CinematicMusicStudio
   INK = "#05050b"
@@ -382,7 +382,7 @@ module CinematicMusicStudio
   end
 
   def self.build
-    OmarchyUI::Application.new do
+    Zui::Application.new(ui: UI) do
       state :playing, true
       state :position, 0.0
       state :track, TRACKS.first.fetch(:label)
@@ -463,6 +463,6 @@ module CinematicMusicStudio
       end
     end
   end
-end
 
-OmarchyUI::Builder.include(CinematicMusicStudio::UI)
+  def self.run = build.run
+end

@@ -1,6 +1,6 @@
 # Nebula Command
 
-A futuristic orbital-operations dashboard written entirely in Ruby with the Omarchy UI DSL. It
+A futuristic orbital-operations dashboard written entirely in Ruby with the Zui DSL. It
 combines reactive state, scheduled telemetry, GPU particles/effects, SVG image assets, charts,
 gauges, navigation, controls, and an image-backed result dialog without application-owned QML.
 
@@ -9,13 +9,13 @@ gauges, navigation, controls, and an image-backed result dialog without applicat
 From this directory with the development checkout:
 
 ```bash
-../../bin/omarchy_ui run main.rb
+../../bin/zui run main.rb
 ```
 
 Or with the installed gem:
 
 ```bash
-omarchy_ui run main.rb
+zui run main.rb
 ```
 
 Try **Initiate scan**, **Engage overdrive**, the navigation rail, and the neural-copilot switch.

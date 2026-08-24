@@ -414,5 +414,3 @@ module FuturisticDashboard
     end
   end
 end
-
-OmarchyUI::Builder.include(FuturisticDashboard::UI)

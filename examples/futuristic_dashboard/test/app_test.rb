@@ -16,7 +16,7 @@ class FuturisticDashboardAppTest < Minitest::Test
 
   def event(id, name = "click", payload = {}, sequence = 1)
     JSON.generate(
-      "v" => OmarchyUI::PROTOCOL_VERSION,
+      "v" => Zui::PROTOCOL_VERSION,
       "type" => "event",
       "surface" => "main",
       "id" => id,

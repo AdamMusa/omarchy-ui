@@ -11,7 +11,7 @@ class OrbitalWeatherConsoleTest < Minitest::Test
   end
 
   def event(id, name = "click", payload = {})
-    JSON.generate("v" => OmarchyUI::PROTOCOL_VERSION, "type" => "event", "surface" => "main",
+    JSON.generate("v" => Zui::PROTOCOL_VERSION, "type" => "event", "surface" => "main",
                   "id" => id, "event" => name, "seq" => 1, "payload" => payload)
   end
 

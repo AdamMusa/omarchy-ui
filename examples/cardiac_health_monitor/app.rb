@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "omarchy_ui"
+require "zui"
 
 module CardiacHealthMonitor
   INK = "#050a11"
@@ -247,7 +247,7 @@ module CardiacHealthMonitor
   end
 
   def self.build
-    OmarchyUI::Application.new do
+    Zui::Application.new(ui: UI) do
       state :tick, 0
       state :bpm, 68
       state :spo2, 98
@@ -291,6 +291,6 @@ module CardiacHealthMonitor
       end
     end
   end
-end
 
-OmarchyUI::Builder.include(CardiacHealthMonitor::UI)
+  def self.run = build.run
+end

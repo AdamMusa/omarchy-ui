@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "omarchy_ui"
+require "zui"
 
 module SmartHomeEnergy
   INK = "#040a0d"
@@ -278,7 +278,7 @@ module SmartHomeEnergy
   end
 
   def self.build
-    OmarchyUI::Application.new do
+    Zui::Application.new(ui: UI) do
       state :tick, 0
       state :scene, "Focus"
       state :secure, true
@@ -319,6 +319,6 @@ module SmartHomeEnergy
       end
     end
   end
-end
 
-OmarchyUI::Builder.include(SmartHomeEnergy::UI)
+  def self.run = build.run
+end

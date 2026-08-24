@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "omarchy_ui"
+require "zui"
 
 module QuantumMarketTerminal
   INK = "#05080b"
@@ -386,7 +386,7 @@ module QuantumMarketTerminal
   end
 
   def self.build
-    OmarchyUI::Application.new do
+    Zui::Application.new(ui: UI) do
       state :symbol, "NVDA"
       state :price, "132.44"
       state :range, "1D"
@@ -448,6 +448,6 @@ module QuantumMarketTerminal
       end
     end
   end
-end
 
-OmarchyUI::Builder.include(QuantumMarketTerminal::UI)
+  def self.run = build.run
+end

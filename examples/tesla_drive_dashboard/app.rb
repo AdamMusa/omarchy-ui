@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "omarchy_ui"
+require "zui"
 
 module TeslaDriveDashboard
   INK = "#050608"
@@ -709,7 +709,7 @@ module TeslaDriveDashboard
   end
 
   def self.build
-    OmarchyUI::Application.new do
+    Zui::Application.new(ui: UI) do
       state :speed, 0
       state :charge, 82
       state :range, 286
@@ -787,6 +787,6 @@ module TeslaDriveDashboard
       end
     end
   end
-end
 
-OmarchyUI::Builder.include(TeslaDriveDashboard::UI)
+  def self.run = build.run
+end

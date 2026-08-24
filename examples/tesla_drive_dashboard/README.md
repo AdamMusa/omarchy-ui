@@ -14,5 +14,5 @@ This is an unofficial framework showcase and is not affiliated with Tesla or MDI
 Design reference: https://dribbble.com/shots/23396081-Tesla-Car-UI-Dashboard
 
 ```bash
-omarchy_ui run main.rb
+zui run main.rb
 ```
