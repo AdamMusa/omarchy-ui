@@ -6,10 +6,10 @@ MRuby::Build.new do |conf|
   conf.gembox "math"
   conf.gembox "metaprog"
   conf.gem core: "mruby-bin-mruby"
-  conf.gem github: "mattn/mruby-json"
-  conf.gem github: "iij/mruby-regexp-pcre"
-  conf.gem github: "iij/mruby-env"
-  conf.gem github: "iij/mruby-process"
+  conf.gem github: "mattn/mruby-json", checksum_hash: ENV.fetch("MRUBY_JSON_REVISION")
+  conf.gem github: "iij/mruby-regexp-pcre", checksum_hash: ENV.fetch("MRUBY_REGEXP_PCRE_REVISION")
+  conf.gem github: "iij/mruby-env", checksum_hash: ENV.fetch("MRUBY_ENV_REVISION")
+  conf.gem github: "iij/mruby-process", checksum_hash: ENV.fetch("MRUBY_PROCESS_REVISION")
   conf.gem core: "mruby-sleep"
   conf.gem File.expand_path("mrbgem", __dir__)
 end

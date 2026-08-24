@@ -1,0 +1,103 @@
+name: Attested runtime release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "runtime-v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+  artifact-metadata: write
+
+jobs:
+  build-runtime:
+    name: Build and attest x86-64 Linux runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out reviewed Omarchy UI source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Check out pinned Zui source
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source runtime/inputs.env
+          set +a
+          zui_source_dir="$RUNNER_TEMP/zui-source"
+          git clone --filter=blob:none https://github.com/AdamMusa/zui.git "$zui_source_dir"
+          git -C "$zui_source_dir" fetch --depth 1 origin "$ZUI_REVISION"
+          git -C "$zui_source_dir" checkout --detach "$ZUI_REVISION"
+          echo "ZUI_SOURCE_DIR=$zui_source_dir" >> "$GITHUB_ENV"
+
+      - name: Build twice and require byte-identical outputs
+        shell: bash
+        env:
+          OMARCHY_UI_SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          first_cache="$RUNNER_TEMP/runtime-build-one"
+          second_cache="$RUNNER_TEMP/runtime-build-two"
+          XDG_CACHE_HOME="$first_cache" scripts/build-mruby-runtime.sh
+          install -D -m755 build/runtime/omarchy-ui-runtime "$RUNNER_TEMP/omarchy-ui-runtime.first"
+          XDG_CACHE_HOME="$second_cache" scripts/build-mruby-runtime.sh
+          cmp "$RUNNER_TEMP/omarchy-ui-runtime.first" build/runtime/omarchy-ui-runtime
+          install -D -m755 build/runtime/omarchy-ui-runtime dist/omarchy-ui-runtime
+          (cd dist && sha256sum omarchy-ui-runtime > omarchy-ui-runtime.sha256)
+          dist/omarchy-ui-runtime -e 'puts "runtime smoke: #{OmarchyUI::VERSION}, zui #{Zui::VERSION}, mruby #{MRUBY_VERSION}"'
+
+      - name: Create signed build provenance
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: dist/omarchy-ui-runtime
+
+      - name: Record immutable provenance links
+        shell: bash
+        env:
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+        run: |
+          set -euo pipefail
+          set -a
+          source runtime/inputs.env
+          set +a
+          ruby -rjson -e '
+            digest = File.read("dist/omarchy-ui-runtime.sha256").split.first
+            provenance = {
+              schema_version: 1,
+              subject: "omarchy-ui-runtime",
+              sha256: digest,
+              target: "x86_64-linux",
+              omarchy_ui_repository: ENV.fetch("GITHUB_SERVER_URL") + "/" + ENV.fetch("GITHUB_REPOSITORY"),
+              omarchy_ui_revision: ENV.fetch("GITHUB_SHA"),
+              zui_revision: ENV.fetch("ZUI_REVISION"),
+              mruby_revision: ENV.fetch("MRUBY_REVISION"),
+              workflow_run: ENV.fetch("GITHUB_SERVER_URL") + "/" + ENV.fetch("GITHUB_REPOSITORY") + "/actions/runs/" + ENV.fetch("GITHUB_RUN_ID"),
+              attestation: ENV.fetch("ATTESTATION_URL")
+            }
+            File.write("dist/runtime-provenance.json", JSON.pretty_generate(provenance) + "\n")
+          '
+
+      - name: Upload verified runtime artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: omarchy-ui-runtime-${{ github.sha }}
+          if-no-files-found: error
+          path: dist/*
+
+      - name: Publish tagged runtime release
+        if: startsWith(github.ref, 'refs/tags/runtime-v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes \
+              --title "Omarchy UI runtime $GITHUB_REF_NAME"
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber

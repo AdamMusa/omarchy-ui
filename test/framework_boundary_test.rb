@@ -22,6 +22,24 @@ class FrameworkBoundaryTest < Minitest::Test
     assert_empty specification.files.grep(%r{\Alib/omarchy_ui/(?:animation|application|builder|node)\.rb\z})
   end
 
+  def test_runtime_build_inputs_and_remote_attestation_are_pinned
+    inputs = File.read(File.join(ROOT, "runtime", "inputs.env"))
+    config = File.read(File.join(ROOT, "runtime", "build_config.rb"))
+    workflow = File.read(File.join(ROOT, ".github", "workflows", "runtime-release.yml"))
+
+    assert_match(/^ZUI_REVISION=[0-9a-f]{40}$/, inputs)
+    %w[MRUBY_JSON_REVISION MRUBY_REGEXP_PCRE_REVISION MRUBY_ENV_REVISION MRUBY_PROCESS_REVISION].each do |name|
+      assert_match(/^#{name}=[0-9a-f]{40}$/, inputs)
+      assert_includes config, %(ENV.fetch("#{name}"))
+    end
+    assert_includes workflow, "Build twice and require byte-identical outputs"
+    assert_includes workflow, "cmp \"$RUNNER_TEMP/omarchy-ui-runtime.first\" build/runtime/omarchy-ui-runtime"
+    assert_includes workflow, "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6"
+    assert_includes workflow, "subject-path: dist/omarchy-ui-runtime"
+    assert_includes File.read(File.join(ROOT, "scripts", "build-mruby-runtime.sh")),
+                    "strip --remove-section=.note.gnu.build-id"
+  end
+
   def test_ruby_api_delegates_to_the_same_zui_core_objects
     assert_same Zui::Application, OmarchyUI::Application
     assert_same Zui::Builder, OmarchyUI::Builder

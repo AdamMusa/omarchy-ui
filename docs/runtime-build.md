@@ -1,34 +1,61 @@
 # Runtime build and verification
 
-Omarchy UI bundles an x86-64 mruby executable so installed plugins do not need a
-system Ruby. The executable embeds Zui's Ruby core and the small Omarchy adapter;
-it does not contain a second framework implementation.
+Omarchy UI's x86-64 Linux mruby runtime is released by a pinned GitHub Actions
+workflow. The workflow performs two clean builds, requires byte-identical
+outputs, publishes the executable and checksum, and creates a signed GitHub
+artifact attestation that binds the executable digest to the tagged source
+revision and workflow run.
 
-## Pinned release inputs
+## Pinned inputs
 
-- Omarchy UI revision: `33ee34c3baf676517b66af7ab27342c111ec5709`
-- Zui revision: `6b4bc277fe4dc78ebd10017ab35662df70fcd4c7`
-- mruby revision: `831da26b9021de0369d17b71b5667e2941a1a32d`
-- build configuration: `runtime/build_config.rb`
-- target: x86-64 Linux
+The complete machine-readable input set is committed in
+[`runtime/inputs.env`](../runtime/inputs.env):
 
-## Rebuild
+- Zui revision `514bd4a84b5785d5909c2d28664849b1d77c804f` (`0.0.5`)
+- mruby revision `831da26b9021de0369d17b71b5667e2941a1a32d` (`4.0.0`)
+- exact revisions for `mruby-json`, `mruby-regexp-pcre`, `mruby-env`, and
+  `mruby-process`
+- build configuration `runtime/build_config.rb`
+- target `x86-64 Linux`
 
-Clone the two repositories as siblings, check out the pinned revisions, and run
-the build on x86-64 Linux with Git, a C toolchain, Ruby, and Rake installed:
+The build script rejects a Zui checkout whose Git revision does not match the
+committed input. Release CI also binds the Omarchy UI checkout to the workflow's
+exact source revision.
+
+## Rebuild from reviewed source
+
+Check out the Omarchy UI revision recorded by the release attestation and the
+pinned Zui revision, then build:
 
 ```bash
-git clone https://github.com/AdamMusa/zui.git
 git clone https://github.com/AdamMusa/omarchy-ui.git
-git -C zui checkout 6b4bc277fe4dc78ebd10017ab35662df70fcd4c7
-git -C omarchy-ui checkout 33ee34c3baf676517b66af7ab27342c111ec5709
+git clone https://github.com/AdamMusa/zui.git
+git -C omarchy-ui checkout <omarchy-ui-source-sha>
+git -C zui checkout 514bd4a84b5785d5909c2d28664849b1d77c804f
 cd omarchy-ui
-ZUI_SOURCE_DIR=../zui scripts/build-mruby-runtime.sh
+OMARCHY_UI_SOURCE_REVISION=$(git rev-parse HEAD) \
+  ZUI_SOURCE_DIR=../zui scripts/build-mruby-runtime.sh
 sha256sum build/runtime/omarchy-ui-runtime
 ```
 
-The expected SHA-256 is
-`0d628ffc059551d85de1668ab611d3105ef560c842e40fe4ffd3d24c7946cf7e`.
-The build script checks out the exact mruby revision, uses the committed Zui
-sources, applies `SOURCE_DATE_EPOCH`, strips the executable, and writes it to
-`build/runtime/omarchy-ui-runtime`.
+The script checks out every external mruby input at its committed digest, sets
+`SOURCE_DATE_EPOCH` from the Omarchy UI source commit, strips the executable,
+removes the linker-generated build ID (whose value otherwise varies with the
+temporary build directory), and writes it to `build/runtime/omarchy-ui-runtime`.
+
+## Verify a published runtime
+
+Download the release artifacts and verify both checksum and signed provenance:
+
+```bash
+gh release download runtime-v0.1.0 \
+  --repo AdamMusa/omarchy-ui \
+  --pattern 'omarchy-ui-runtime*'
+sha256sum --check omarchy-ui-runtime.sha256
+gh attestation verify omarchy-ui-runtime \
+  --repo AdamMusa/omarchy-ui
+```
+
+The attestation verification result identifies the exact repository, source
+revision, release workflow, and digest used by the remote build. The release
+also includes `runtime-provenance.json` with immutable input and workflow links.
