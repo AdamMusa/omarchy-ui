@@ -40,6 +40,16 @@ class FrameworkBoundaryTest < Minitest::Test
                     "strip --remove-section=.note.gnu.build-id"
   end
 
+  def test_omarchy_bridge_accepts_bounded_property_patch_batches
+    service = File.read(File.join(ROOT, "Service.qml"))
+
+    assert_includes service, 'message.op === "batch"'
+    assert_includes service, "message.patches.length > maxCollectionItems"
+    assert_includes service, 'batchPatch.op !== "set"'
+    assert_includes service, "if (!applyPatch({"
+    assert_match(/nodeIndex = nextIndex\n\s+revision \+= 1\n\s+return true/, service)
+  end
+
   def test_ruby_api_delegates_to_the_same_zui_core_objects
     assert_same Zui::Application, OmarchyUI::Application
     assert_same Zui::Builder, OmarchyUI::Builder
