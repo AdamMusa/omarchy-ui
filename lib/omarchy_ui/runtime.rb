@@ -8,7 +8,7 @@ module OmarchyUI
 
     BUNDLED = File.expand_path("../../vendor/runtime/x86_64-linux/omarchy-ui-runtime", __dir__)
     ADAPTER_FILES = %w[Service.qml Panel.qml BarWidget.qml App.qml].freeze
-    CORE_FILES = %w[ControlNode.qml Components Controls Theme].freeze
+    CORE_FILES = %w[ControlNode.qml Components Controls Theme Fonts].freeze
     FILES = (ADAPTER_FILES + ["ControlNode.qml"]).freeze
     AUDIT_FILES = %w[omarchy-ui-runtime.sha256 RUNTIME_PROVENANCE.md].freeze
     GENERATED_ENTRIES = (ADAPTER_FILES + CORE_FILES + %w[Desktop.qml omarchy-ui-runtime]).freeze

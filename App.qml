@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Commons
 import qs.Ui as OmarchyUi
+import "Theme" as ZuiTheme
 
 ShellRoot {
   id: root
@@ -91,7 +92,7 @@ ShellRoot {
           bottom: parent.bottom
           margins: Style.space(24)
         }
-        visible: root.activeSurface !== "" && service.rootId(root.activeSurface) !== ""
+        visible: ZuiTheme.Fonts.ready && root.activeSurface !== "" && service.rootId(root.activeSurface) !== ""
         bridge: service
         surfaceName: root.activeSurface
         controlId: service.rootId(surfaceName)
@@ -102,7 +103,8 @@ ShellRoot {
       Text {
         anchors.centerIn: parent
         visible: !renderer.visible
-        text: service.lastError !== "" ? service.lastError : "Starting Ruby UI…"
+        text: service.lastError !== "" ? service.lastError
+          : (ZuiTheme.Fonts.failed ? "Omarchy UI could not load Zui's bundled fonts" : "Starting Ruby UI…")
         color: Color.foreground
         font.family: Style.font.family
         font.pixelSize: Style.font.body

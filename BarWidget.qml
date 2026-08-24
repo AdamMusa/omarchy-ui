@@ -1,6 +1,7 @@
 import QtQuick
 import qs.Commons
 import qs.Ui
+import "Theme" as ZuiTheme
 
 BarWidget {
   id: root
@@ -19,7 +20,7 @@ BarWidget {
   ControlNode {
     id: renderer
     anchors.centerIn: parent
-    visible: root.rubyService && root.rootControlId !== ""
+    visible: ZuiTheme.Fonts.ready && root.rubyService && root.rootControlId !== ""
     bridge: root.rubyService
     surfaceName: root.surfaceName
     controlId: root.rootControlId
