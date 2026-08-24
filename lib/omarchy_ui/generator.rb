@@ -14,6 +14,8 @@ module OmarchyUI
       created = true
       FileUtils.mkdir_p(File.join(@path, "components"))
       File.write(File.join(@path, "main.rb"), main_program)
+      File.write(File.join(@path, "omarchy.rb"), omarchy_program)
+      File.write(File.join(@path, "app.rb"), application_program)
       File.write(File.join(@path, "components", "welcome.rb"), welcome_component)
       File.write(File.join(@path, "README.md"), readme)
       @path
@@ -28,24 +30,44 @@ module OmarchyUI
       <<~RUBY
         # frozen_string_literal: true
 
+        require_relative "app"
+
+        #{constant_name}.run
+      RUBY
+    end
+
+    def omarchy_program
+      <<~RUBY
+        # frozen_string_literal: true
+
         require "omarchy_ui"
+        require_relative "app"
+
+        OmarchyUI.run(#{constant_name})
+      RUBY
+    end
+
+    def application_program
+      <<~RUBY
+        # frozen_string_literal: true
+
+        require "zui"
         require_relative "components/welcome"
 
         module #{constant_name}
           def self.build
-            OmarchyUI::Application.new(ui: WelcomeComponent) do
+            Zui::Application.new(ui: UI) do
               app :main, title: "#{@name}", width: 760, height: 520 do
                 welcome_card(
                   title: "Welcome to #{@name}",
-                  message: "This Omarchy app is powered by the Zui framework."
+                  message: "This app is powered by the Zui framework."
                 )
               end
             end
           end
 
+          def self.run = build.run
         end
-
-        OmarchyUI.run(#{constant_name})
       RUBY
     end
 
@@ -53,12 +75,14 @@ module OmarchyUI
       <<~RUBY
         # frozen_string_literal: true
 
-        module WelcomeComponent
-          def welcome_card(title:, message:)
-            container padding: 24, bordered: true do
-              column spacing: 12 do
-                text title, style: :heading
-                text message, wrap: true
+        module #{constant_name}
+          module UI
+            def welcome_card(title:, message:)
+              container padding: 24, bordered: true do
+                column spacing: 12 do
+                  text title, style: :heading
+                  text message, wrap: true
+                end
               end
             end
           end
@@ -70,12 +94,19 @@ module OmarchyUI
       <<~MARKDOWN
         # #{@name}
 
-        A pure Ruby Omarchy application built with Zui through the Omarchy UI adapter.
+        A pure Ruby Zui application that can use either the standard cross-platform host
+        or the Omarchy UI adapter without changing its application code.
 
-        ## Run
+        ## Standard Zui host
 
         ```bash
-        omarchy_ui run main.rb
+        zui run main.rb
+        ```
+
+        ## Omarchy host
+
+        ```bash
+        omarchy_ui run omarchy.rb
         ```
 
         Reusable Ruby UI components live in `components/` and load with ordinary Ruby

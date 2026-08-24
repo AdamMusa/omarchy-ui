@@ -36,13 +36,15 @@ Quick 3D, WebEngine, or Multimedia must also install those system modules.
 Missing modules and invalid resources are reported as component errors; the
 framework does not silently replace one component with another.
 
-For a normal Linux or macOS desktop app without Omarchy integration, install
+For a normal Linux, macOS, or Windows desktop app without Omarchy integration, install
 and use [`zui`](https://github.com/AdamMusa/zui) directly.
 
 ## Pure Ruby application
 
+The application itself imports only Zui:
+
 ```ruby
-require "omarchy_ui"
+require "zui"
 
 module Counter
   module UI
@@ -55,13 +57,29 @@ module Counter
   end
 
   def self.build
-    OmarchyUI::Application.new(ui: UI) do
+    Zui::Application.new(ui: UI) do
       state :count, 0
       app(:main, title: "Counter", width: 640, height: 420) { counter_screen }
     end
   end
 
+  def self.run = build.run
 end
+```
+
+Its normal `main.rb` stays platform-neutral:
+
+```ruby
+require_relative "app"
+
+Counter.run
+```
+
+Omarchy adds a separate `omarchy.rb` entrypoint; `app.rb` is unchanged:
+
+```ruby
+require "omarchy_ui"
+require_relative "app"
 
 OmarchyUI.run(Counter)
 ```
@@ -71,7 +89,7 @@ Create and run it:
 ```bash
 omarchy_ui new Counter
 cd counter
-omarchy_ui run main.rb
+omarchy_ui run omarchy.rb
 ```
 
 The generated project contains Ruby and assets only. Adapter and renderer QML

@@ -4,23 +4,18 @@ set -euo pipefail
 
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 cd -- "$repo_dir"
+zui_source_dir=${ZUI_SOURCE_DIR:-$repo_dir/../zui}
+zui_lib=$zui_source_dir/lib
 
-ruby -Ilib test/adapter_test.rb
-ruby -Ilib test/cli_test.rb
-ruby -Ilib test/framework_boundary_test.rb
-ruby -Ilib examples/restaurant_drinks/test/app_test.rb
-ruby -Ilib examples/futuristic_dashboard/test/app_test.rb
-showcase_apps=(
-  tesla_drive_dashboard
-  shader_studio
-  cardiac_health_monitor
-  orbital_weather_console
-  quantum_market_terminal
-  smart_home_energy
-  cinematic_music_studio
-)
-for showcase_app in "${showcase_apps[@]}"; do
-  ruby -Ilib "examples/$showcase_app/test/app_test.rb"
+ruby -I"$zui_lib" -Ilib test/adapter_test.rb
+ruby -I"$zui_lib" -Ilib test/cli_test.rb
+ruby -I"$zui_lib" -Ilib test/framework_boundary_test.rb
+scripts/sync-zui-examples.rb --check
+
+mapfile -t showcase_apps < <(find examples -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/app.rb' \; -print | sort)
+for showcase_dir in "${showcase_apps[@]}"; do
+  showcase_app=${showcase_dir#examples/}
+  ruby -I"$zui_lib" -Ilib "$showcase_dir/test/app_test.rb"
   if find "examples/$showcase_app" -type f \( -name '*.qml' -o -name '*.qmltypes' \) -print -quit | grep -q .; then
     echo "Application-owned QML found in examples/$showcase_app" >&2
     exit 1
@@ -35,13 +30,12 @@ if [[ -x $runtime ]]; then
     cd vendor/runtime/x86_64-linux
     sha256sum --check omarchy-ui-runtime.sha256
   )
-  OMARCHY_UI_PROJECT_DIR="$repo_dir/examples/restaurant_drinks" \
-    "$runtime" "$repo_dir/examples/restaurant_drinks/test/runtime_check.rb"
-  OMARCHY_UI_PROJECT_DIR="$repo_dir/examples/futuristic_dashboard" \
-    "$runtime" "$repo_dir/examples/futuristic_dashboard/test/runtime_check.rb"
-  for showcase_app in "${showcase_apps[@]}"; do
-    OMARCHY_UI_PROJECT_DIR="$repo_dir/examples/$showcase_app" \
-      "$runtime" "$repo_dir/examples/$showcase_app/test/runtime_check.rb"
+  "$runtime" "$repo_dir/test/runtime_adapter_check.rb"
+  for showcase_dir in "${showcase_apps[@]}"; do
+    runtime_check="$repo_dir/$showcase_dir/test/runtime_check.rb"
+    [[ -f $runtime_check ]] || continue
+    OMARCHY_UI_PROJECT_DIR="$repo_dir/$showcase_dir" \
+      "$runtime" "$runtime_check"
   done
 fi
 

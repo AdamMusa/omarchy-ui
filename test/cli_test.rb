@@ -78,23 +78,36 @@ class CLITest < Minitest::Test
         assert_equal 0, status
       end
       project = File.join(directory, "weather-board")
-      assert_equal %w[README.md components main.rb], Dir.children(project).sort
+      assert_equal %w[README.md app.rb components main.rb omarchy.rb], Dir.children(project).sort
       assert_equal ["welcome.rb"], Dir.children(File.join(project, "components"))
       refute File.exist?(File.join(project, "manifest.json"))
-      assert_includes File.read(File.join(project, "main.rb")), "welcome_card("
-      assert_includes File.read(File.join(project, "main.rb")), 'require "omarchy_ui"'
-      refute_includes File.read(File.join(project, "main.rb")), "Object.const_defined?"
-      assert_includes File.read(File.join(project, "main.rb")), 'require_relative "components/welcome"'
-      assert_includes File.read(File.join(project, "main.rb")), "module WeatherBoard"
-      assert_includes File.read(File.join(project, "main.rb")), "OmarchyUI::Application.new(ui: WelcomeComponent)"
-      assert_includes File.read(File.join(project, "main.rb")), "OmarchyUI.run(WeatherBoard)"
-      refute_includes File.read(File.join(project, "main.rb")), "eval("
+      application = File.read(File.join(project, "app.rb"))
+      zui_entrypoint = File.read(File.join(project, "main.rb"))
+      omarchy_entrypoint = File.read(File.join(project, "omarchy.rb"))
+      assert_includes application, "welcome_card("
+      assert_includes application, 'require "zui"'
+      assert_includes application, 'require_relative "components/welcome"'
+      assert_includes application, "module WeatherBoard"
+      assert_includes application, "Zui::Application.new(ui: UI)"
+      refute_includes application, "OmarchyUI"
+      assert_includes zui_entrypoint, "WeatherBoard.run"
+      refute_includes zui_entrypoint, "OmarchyUI"
+      assert_includes omarchy_entrypoint, 'require "omarchy_ui"'
+      assert_includes omarchy_entrypoint, "OmarchyUI.run(WeatherBoard)"
+      refute_includes application, "eval("
       refute_includes File.read(File.join(project, "components", "welcome.rb")), "Builder.include"
       refute Dir.glob(File.join(project, "**", "*.qml")).any?
-      assert_includes File.read(File.join(project, "README.md")), "omarchy_ui run main.rb"
+      assert_includes File.read(File.join(project, "README.md")), "zui run main.rb"
+      assert_includes File.read(File.join(project, "README.md")), "omarchy_ui run omarchy.rb"
 
       stdout, stderr, status = Open3.capture3(
         RbConfig.ruby, "-I", File.join(ROOT, "lib"), File.join(project, "main.rb")
+      )
+      assert status.success?, stderr
+      assert_equal %w[ready render], stdout.lines.map { |line| JSON.parse(line).fetch("type") }
+
+      stdout, stderr, status = Open3.capture3(
+        RbConfig.ruby, "-I", File.join(ROOT, "lib"), File.join(project, "omarchy.rb")
       )
       assert status.success?, stderr
       assert_equal %w[ready render], stdout.lines.map { |line| JSON.parse(line).fetch("type") }
@@ -164,6 +177,22 @@ class CLITest < Minitest::Test
       stdout, stderr, process = Open3.capture3(RbConfig.ruby, File.join(source, "dist", "demo", "main.rb"))
       assert process.success?, stderr
       assert_equal "welcome\n", stdout
+    end
+  end
+
+  def test_bundle_prefers_the_explicit_omarchy_adapter_entrypoint
+    Dir.mktmpdir do |directory|
+      source = File.join(directory, "demo")
+      FileUtils.mkdir_p(source)
+      File.write(File.join(source, "main.rb"), "puts \"zui host\"\n")
+      File.write(File.join(source, "omarchy.rb"), "puts \"omarchy host\"\n")
+
+      status = OmarchyUI::CLI.run(["bundle", source], out: StringIO.new, err: StringIO.new)
+      bundled_main = File.read(File.join(source, "dist", "demo", "main.rb"))
+
+      assert_equal 0, status
+      assert_includes bundled_main, 'puts "omarchy host"'
+      refute_includes bundled_main, 'puts "zui host"'
     end
   end
 
