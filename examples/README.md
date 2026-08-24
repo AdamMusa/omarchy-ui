@@ -1,28 +1,21 @@
 # Zui showcases on Omarchy
 
-This catalog is synchronized from the standalone
-[Zui examples](https://github.com/AdamMusa/zui/tree/main/examples). Each application,
-test, asset, and normal `main.rb` launcher is byte-for-byte identical to its Zui source.
-Omarchy UI adds only `omarchy.rb`, the distribution adapter entrypoint.
+The Omarchy showcase catalog is synchronized from the standalone
+[Zui examples](https://github.com/AdamMusa/zui/tree/main/examples). Application code,
+tests, and assets remain byte-for-byte identical to Zui. Each `main.rb` selects the
+Omarchy UI host without changing the application module.
 
-Run the same application as an ordinary cross-platform Zui desktop app:
-
-```bash
-zui run examples/tesla_drive_dashboard/main.rb
-```
-
-Run it with the Omarchy integration layer:
+Run an application:
 
 ```bash
-omarchy_ui run examples/tesla_drive_dashboard/omarchy.rb
+omarchy_ui run examples/tesla_drive_dashboard/main.rb
 ```
 
-The adapter entrypoint contains no application implementation. Its only behavioral
-line is:
+The launcher contains no application implementation:
 
 ```ruby
 OmarchyUI.run(TeslaDriveDashboard)
 ```
 
 Use `ZUI_SOURCE_DIR=/path/to/zui scripts/sync-zui-examples.rb --sync` after a
-Zui showcase changes. `scripts/test.sh` checks the complete catalog for drift.
+Zui showcase changes. The repository test suite checks the complete catalog for drift.

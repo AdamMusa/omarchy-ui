@@ -7,5 +7,5 @@ It also exercises live solar/battery/load gauges, room automation, stacked energ
 heatmaps, scheduled balancing, security state, and an energy-report dialog.
 
 ```bash
-zui run main.rb
+omarchy_ui run main.rb
 ```

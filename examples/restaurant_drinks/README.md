@@ -22,13 +22,13 @@ Orange Juice, and Iced Tea, with:
 From this directory with an installed gem:
 
 ```bash
-zui run main.rb
+omarchy_ui run main.rb
 ```
 
 From the framework checkout:
 
 ```bash
-../../bin/zui run main.rb
+omarchy_ui run main.rb
 ```
 
 Run its interaction tests with:

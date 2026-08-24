@@ -8,5 +8,5 @@ watchlists, allocation, risk, histograms, dialogs, and the framework legend adap
 demo data.
 
 ```bash
-zui run main.rb
+omarchy_ui run main.rb
 ```

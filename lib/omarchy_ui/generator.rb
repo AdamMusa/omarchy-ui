@@ -14,7 +14,6 @@ module OmarchyUI
       created = true
       FileUtils.mkdir_p(File.join(@path, "components"))
       File.write(File.join(@path, "main.rb"), main_program)
-      File.write(File.join(@path, "omarchy.rb"), omarchy_program)
       File.write(File.join(@path, "app.rb"), application_program)
       File.write(File.join(@path, "components", "welcome.rb"), welcome_component)
       File.write(File.join(@path, "README.md"), readme)
@@ -27,16 +26,6 @@ module OmarchyUI
     private
 
     def main_program
-      <<~RUBY
-        # frozen_string_literal: true
-
-        require_relative "app"
-
-        #{constant_name}.run
-      RUBY
-    end
-
-    def omarchy_program
       <<~RUBY
         # frozen_string_literal: true
 
@@ -94,19 +83,12 @@ module OmarchyUI
       <<~MARKDOWN
         # #{@name}
 
-        A pure Ruby Zui application that can use either the standard cross-platform host
-        or the Omarchy UI adapter without changing its application code.
+        A pure Ruby desktop application built with Zui and the Omarchy UI host.
 
-        ## Standard Zui host
-
-        ```bash
-        zui run main.rb
-        ```
-
-        ## Omarchy host
+        ## Run
 
         ```bash
-        omarchy_ui run omarchy.rb
+        omarchy_ui run main.rb
         ```
 
         Reusable Ruby UI components live in `components/` and load with ordinary Ruby

@@ -12,5 +12,5 @@ Every library entry retains its author, original Shadertoy URL, and license in t
 in [`assets/shaders/README.md`](assets/shaders/README.md).
 
 ```bash
-zui run main.rb
+omarchy_ui run main.rb
 ```

@@ -1,47 +1,54 @@
 # Omarchy UI
 
-Omarchy UI is the official Omarchy adapter for
-[Zui](https://github.com/AdamMusa/zui), the platform-neutral Ruby desktop UI
-framework powered by Qt and QML.
+The native Ruby application and plugin adapter for Omarchy, powered by the
+[Zui](https://github.com/AdamMusa/zui) desktop UI framework.
 
-Applications remain pure Ruby. Zui owns the component catalog, renderer,
-state, events, bindings, animations, tasks, commands, and JSON protocol.
-Omarchy UI adds only the desktop integration needed for an app or shell
-plugin to feel native on Omarchy: Quickshell surfaces, bar and panel hosts,
-plugin validation, atomic installation, shell activation, and an embedded
-mruby runtime.
+Omarchy UI provides the Omarchy host, Quickshell integration, plugin lifecycle,
+packaging, and embedded Ruby runtime. Zui provides the Ruby DSL, component catalog,
+state, events, bindings, animation, tasks, commands, rendering protocol, and Qt runtime.
 
-```text
-Ruby app or plugin
-  -> omarchy_ui adapter and Omarchy lifecycle
-  -> zui DSL, state, events, and complete component catalog
-  -> Omarchy/Quickshell host
-  -> Qt Quick renderer
-```
+Applications contain Ruby and assets only. Application-owned QML is not required.
 
-Zui never depends on Omarchy UI. Omarchy UI declares `zui` as a gem dependency
-and delegates its core constants directly, so `OmarchyUI::Builder` and
-`Zui::Builder` are the same class rather than competing implementations.
+## Requirements
 
-## Install
+- Omarchy on x86-64 Linux
+- Ruby 3.1 or newer for development
+- Optional Qt modules for features such as Quick 3D, WebEngine, and Multimedia
 
-On Omarchy x86-64:
+Components fail with an explicit error when a required Qt module or resource is
+unavailable. Omarchy UI does not substitute fallback components.
+
+## Installation
 
 ```bash
 gem install omarchy-ui
 ```
 
-RubyGems installs Zui automatically. Apps using optional Qt modules such as Qt
-Quick 3D, WebEngine, or Multimedia must also install those system modules.
-Missing modules and invalid resources are reported as component errors; the
-framework does not silently replace one component with another.
+The gem installs Zui as a dependency.
 
-For a normal Linux, macOS, or Windows desktop app without Omarchy integration, install
-and use [`zui`](https://github.com/AdamMusa/zui) directly.
+## Create an application
 
-## Pure Ruby application
+```bash
+omarchy_ui new Counter
+cd counter
+omarchy_ui run main.rb
+```
 
-The application itself imports only Zui:
+Generated projects use a host-independent Zui application module and one Omarchy
+launcher:
+
+```text
+counter/
+├── app.rb
+├── components/
+│   └── welcome.rb
+├── main.rb
+└── README.md
+```
+
+### Application module
+
+`app.rb` contains the reusable application implementation:
 
 ```ruby
 require "zui"
@@ -67,15 +74,9 @@ module Counter
 end
 ```
 
-Its normal `main.rb` stays platform-neutral:
+### Omarchy launcher
 
-```ruby
-require_relative "app"
-
-Counter.run
-```
-
-Omarchy adds a separate `omarchy.rb` entrypoint; `app.rb` is unchanged:
+`main.rb` selects the Omarchy host:
 
 ```ruby
 require "omarchy_ui"
@@ -84,21 +85,15 @@ require_relative "app"
 OmarchyUI.run(Counter)
 ```
 
-Create and run it:
+`OmarchyUI.run` accepts an application module whose `build` method returns a
+`Zui::Application`, or an already-built `Zui::Application` instance.
 
-```bash
-omarchy_ui new Counter
-cd counter
-omarchy_ui run omarchy.rb
-```
+The same `app.rb` can be used in a standalone Zui project on Linux, macOS, or
+Windows. See [Zui platform support](https://github.com/AdamMusa/zui/blob/main/docs/platforms.md).
 
-The generated project contains Ruby and assets only. Adapter and renderer QML
-are installed into a temporary runtime directory; developers do not write or
-copy QML into their application.
+## Create an Omarchy plugin
 
-## Omarchy shell plugin
-
-A plugin uses the same Ruby DSL and adds an Omarchy `manifest.json`:
+Plugins use the same Ruby DSL and add an Omarchy `manifest.json`:
 
 ```ruby
 require "omarchy_ui"
@@ -117,15 +112,26 @@ OmarchyUI.plugin do
 end
 ```
 
+Validate and install a plugin:
+
 ```bash
 omarchy_ui validate path/to/plugin
 omarchy_ui push path/to/plugin
 ```
 
-`push` stages the project, adds Zui plus the Omarchy host, validates it with
-Omarchy, backs up an existing installation, installs atomically, optionally
-enables it, and restarts the shell. `--no-enable` and `--no-restart` are
-available for development.
+`push` stages and validates the plugin, installs it atomically, enables it, and
+restarts the shell. Use `--no-enable` or `--no-restart` during development.
+
+## Commands
+
+| Command | Purpose |
+| --- | --- |
+| `omarchy_ui new NAME` | Generate a Ruby application |
+| `omarchy_ui run FILE` | Run an application through the Omarchy host |
+| `omarchy_ui bundle [DIRECTORY]` | Build a self-contained Omarchy bundle |
+| `omarchy_ui validate [DIRECTORY]` | Validate an Omarchy plugin |
+| `omarchy_ui push [DIRECTORY]` | Install and activate an Omarchy plugin |
+| `omarchy_ui version` | Print the installed version |
 
 ## Packaging
 
@@ -134,33 +140,25 @@ omarchy_ui bundle
 ./dist/myapp/run
 ```
 
-An Omarchy application bundle includes the Zui catalog, neutral controls and
-theme, the Omarchy host QML, and the Zui-backed embedded mruby runtime. The
-destination Omarchy computer does not need Ruby or either gem installed.
-
-For Linux application directories and native macOS `.app` bundles, use
-`zui bundle`; see [Zui platform support](https://github.com/AdamMusa/zui/blob/main/docs/platforms.md).
+Application bundles include the Zui catalog, Qt controls and theme, Omarchy host,
+and embedded mruby runtime. Ruby and the framework gems are not required on the
+destination Omarchy system.
 
 ## Component catalog
 
-The catalog is versioned and tested in Zui. It includes 242 Ruby-first Qt
-Quick, Controls, Layouts, Dialogs, Multimedia, WebEngine, Quick 3D, shader,
-chart, animation, state, input, navigation, and data components.
+The Zui catalog includes 242 Ruby-first Qt Quick, Controls, Layouts, Dialogs,
+Multimedia, WebEngine, Quick 3D, shader, chart, animation, state, input,
+navigation, and data components.
 
-- [Complete catalog](https://github.com/AdamMusa/zui/blob/main/docs/component-coverage.md)
+- [Complete component catalog](https://github.com/AdamMusa/zui/blob/main/docs/component-coverage.md)
 - [Platform support](https://github.com/AdamMusa/zui/blob/main/docs/platforms.md)
-- [Adapter QML boundary](docs/qml-support.md)
+- [Omarchy QML boundary](docs/qml-support.md)
 - [Embedded runtime provenance](docs/runtime-build.md)
+- [Showcase applications](examples/)
 
-The showcase applications under `examples/` remain pure Ruby and exercise
-images, media, shaders, GPU/3D, state, events, drag interaction, simulation,
-charts, and Omarchy window/plugin integration.
+## Development
 
-## Developing both repositories
-
-Clone the repositories as siblings. During local development, Omarchy UI finds
-`../zui` automatically; an explicit source tree can be selected with
-`ZUI_SOURCE_DIR`:
+Clone Zui and Omarchy UI as sibling repositories:
 
 ```bash
 git clone https://github.com/AdamMusa/zui.git
@@ -169,8 +167,9 @@ cd omarchy-ui
 ZUI_SOURCE_DIR=../zui scripts/test.sh
 ```
 
-Core changes belong in Zui. This repository should contain only Omarchy
-adapter behavior and Omarchy-specific examples.
+Framework and component changes belong in Zui. This repository contains the
+Omarchy adapter, lifecycle tooling, host files, and synchronized showcase
+distributions.
 
 ## License
 

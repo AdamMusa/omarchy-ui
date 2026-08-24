@@ -91,7 +91,7 @@ module OmarchyUI
     def bundle_project(arguments)
       source = File.expand_path(arguments.shift || Dir.pwd)
       raise ArgumentError, "bundle accepts one directory" unless arguments.empty?
-      entrypoint_for(source)
+      raise ArgumentError, "main.rb not found: #{source}" unless File.file?(File.join(source, "main.rb"))
       destination = File.join(source, "dist", File.basename(source))
       raise ArgumentError, "bundle destination already exists: #{destination}" if File.exist?(destination)
       FileUtils.mkdir_p(destination)
@@ -187,7 +187,7 @@ module OmarchyUI
       staging = parent ? Dir.mktmpdir(prefix, parent) : Dir.mktmpdir(prefix)
       entries = application_entries(source)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging) unless entries.empty?
-      if %w[omarchy.rb main.rb].any? { |entrypoint| File.file?(File.join(staging, entrypoint)) }
+      if File.file?(File.join(staging, "main.rb"))
         bundle_ruby_entrypoint(source, staging)
         Runtime.install_package(staging)
       end
@@ -198,18 +198,8 @@ module OmarchyUI
     end
 
     def bundle_ruby_entrypoint(source, destination)
-      entrypoint = entrypoint_for(source)
+      entrypoint = File.join(source, "main.rb")
       File.write(File.join(destination, "main.rb"), SourceBundle.new(entrypoint, root: source).call)
-    end
-
-    def entrypoint_for(source)
-      adapter = File.join(source, "omarchy.rb")
-      return adapter if File.file?(adapter)
-
-      main = File.join(source, "main.rb")
-      return main if File.file?(main)
-
-      raise ArgumentError, "omarchy.rb or main.rb not found: #{source}"
     end
 
     def activate_plugin(plugin_id)

@@ -11,5 +11,5 @@ image-backed mastering dialog.
 Preview audio and artwork are provided courtesy of iTunes. An internet connection is required.
 
 ```bash
-zui run main.rb
+omarchy_ui run main.rb
 ```

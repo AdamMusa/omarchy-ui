@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "omarchy_ui"
 require_relative "app"
 
-ShaderStudio.run
+OmarchyUI.run(ShaderStudio)
