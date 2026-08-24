@@ -28,6 +28,8 @@ class FrameworkBoundaryTest < Minitest::Test
     assert_same Zui::StateStore, OmarchyUI::StateStore
     assert_same Zui::COMPONENTS, OmarchyUI::COMPONENTS
     assert_operator OmarchyUI::SourceBundle, :<, Zui::SourceBundle
+    assert_equal Zui::Application.instance_method(:initialize).parameters,
+                 OmarchyUI::Application.instance_method(:initialize).parameters
   end
 
   def test_repository_contains_only_the_omarchy_adapter_surface

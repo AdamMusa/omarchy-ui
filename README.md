@@ -44,16 +44,26 @@ and use [`zui`](https://github.com/AdamMusa/zui) directly.
 ```ruby
 require "omarchy_ui"
 
-OmarchyUI.app do
-  state :count, 0
-
-  app :main, title: "Counter", width: 640, height: 420 do
-    column spacing: 16, padding: 24 do
-      text { "Count: #{state.count}" }, style: :heading
-      button("Increment") { state.count += 1 }
+module Counter
+  module UI
+    def counter_screen
+      column spacing: 16, padding: 24 do
+        text { "Count: #{state.count}" }, style: :heading
+        button("Increment") { state.count += 1 }
+      end
     end
   end
+
+  def self.build
+    OmarchyUI::Application.new(ui: UI) do
+      state :count, 0
+      app(:main, title: "Counter", width: 640, height: 420) { counter_screen }
+    end
+  end
+
 end
+
+OmarchyUI.run(Counter)
 ```
 
 Create and run it:

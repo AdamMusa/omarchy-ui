@@ -31,14 +31,21 @@ module OmarchyUI
         require "omarchy_ui"
         require_relative "components/welcome"
 
-        OmarchyUI.app do
-          app :main, title: "#{@name}", width: 760, height: 520 do
-            welcome_card(
-              title: "Welcome to #{@name}",
-              message: "This Omarchy app is powered by the Zui framework."
-            )
+        module #{constant_name}
+          def self.build
+            OmarchyUI::Application.new(ui: WelcomeComponent) do
+              app :main, title: "#{@name}", width: 760, height: 520 do
+                welcome_card(
+                  title: "Welcome to #{@name}",
+                  message: "This Omarchy app is powered by the Zui framework."
+                )
+              end
+            end
           end
+
         end
+
+        OmarchyUI.run(#{constant_name})
       RUBY
     end
 
@@ -56,8 +63,6 @@ module OmarchyUI
             end
           end
         end
-
-        OmarchyUI::Builder.include(WelcomeComponent)
       RUBY
     end
 
@@ -76,6 +81,12 @@ module OmarchyUI
         Reusable Ruby UI components live in `components/` and load with ordinary Ruby
         `require_relative`. Run `omarchy_ui bundle` to create a self-contained distribution.
       MARKDOWN
+    end
+
+    def constant_name
+      @name.gsub(/[^a-zA-Z0-9]+/, " ").split.map(&:capitalize).join.then do |name|
+        name.empty? || name.match?(/\A\d/) ? "OmarchyApplication" : name
+      end
     end
   end
 end

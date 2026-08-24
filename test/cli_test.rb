@@ -85,8 +85,11 @@ class CLITest < Minitest::Test
       assert_includes File.read(File.join(project, "main.rb")), 'require "omarchy_ui"'
       refute_includes File.read(File.join(project, "main.rb")), "Object.const_defined?"
       assert_includes File.read(File.join(project, "main.rb")), 'require_relative "components/welcome"'
+      assert_includes File.read(File.join(project, "main.rb")), "module WeatherBoard"
+      assert_includes File.read(File.join(project, "main.rb")), "OmarchyUI::Application.new(ui: WelcomeComponent)"
+      assert_includes File.read(File.join(project, "main.rb")), "OmarchyUI.run(WeatherBoard)"
       refute_includes File.read(File.join(project, "main.rb")), "eval("
-      assert_includes File.read(File.join(project, "components", "welcome.rb")), "OmarchyUI::Builder.include"
+      refute_includes File.read(File.join(project, "components", "welcome.rb")), "Builder.include"
       refute Dir.glob(File.join(project, "**", "*.qml")).any?
       assert_includes File.read(File.join(project, "README.md")), "omarchy_ui run main.rb"
 
