@@ -405,19 +405,20 @@ The synchronized [showcase catalog](examples/) demonstrates complete Ruby applic
 isolated component previews.
 
 <p align="center">
-  <a href="examples/nova_pour/">
-    <img src="examples/nova_pour/preview.png" width="760" alt="Nova Pour application running through Omarchy UI">
-  </a>
+  <a href="examples/futuristic_dashboard/">
+    <img src="docs/assets/nebula-command-preview.png" width="900" alt="Nebula Command futuristic dashboard running through Omarchy UI">
+  </a><br>
+  <sub><strong>Nebula Command</strong> · A complete orbital-operations dashboard written in Ruby.</sub>
 </p>
 
 | Showcase | What it demonstrates |
 | --- | --- |
+| **[Nebula Command](examples/futuristic_dashboard/)** | **Featured:** telemetry, effects, SVG assets, navigation, controls, and charts |
 | [Tesla Drive Lab](examples/tesla_drive_dashboard/) | Vehicle state, canvas maps, gauges, charts, media, and scheduled telemetry |
 | [Nova Pour](examples/nova_pour/) | Image-backed ordering, live status, dialog flows, and responsive composition |
 | [Lumen Forge](examples/lumen_forge/) | GPU shaders, reactive uniforms, pointer input, and Qt 6's graphics pipeline |
 | [Pulse Atlas](examples/cardiac_health_monitor/) | Health visualization, charts, gauges, particles, heatmaps, and scheduled state |
 | [Nocturne](examples/cinematic_music_studio/) | Qt Multimedia playback, seeking, track navigation, mixing controls, and reordering |
-| [Nebula Command](examples/futuristic_dashboard/) | Telemetry, effects, SVG assets, navigation, controls, and charts |
 | [Stratos](examples/orbital_weather_console/) | Reactive image effects, radar data, area charts, heatmaps, and briefing dialogs |
 | [Quantum Market](examples/quantum_market_terminal/) | Tables, candlesticks, simulated orders, positions, allocation, and risk state |
 | [Habitat One](examples/smart_home_energy/) | Smart-home simulation, scenes, energy charts, comfort heatmaps, and automation |
