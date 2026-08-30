@@ -79,9 +79,14 @@ class CLITest < Minitest::Test
         assert_equal 0, status
       end
       project = File.join(directory, "weather-board")
-      assert_equal %w[LICENSE README.md app.rb components main.rb], Dir.children(project).sort
+      assert_equal %w[LICENSE README.md app.rb components config.rb main.rb], Dir.children(project).sort
       assert_equal ["welcome.rb"], Dir.children(File.join(project, "components"))
       refute File.exist?(File.join(project, "manifest.json"))
+      config = OmarchyUI::ProjectConfig.load(project)
+      assert config.application?
+      assert_equal "Weather Board", config.name
+      assert_equal "weather-board", config.slug
+      assert_equal "main.rb", config.entrypoint
       application = File.read(File.join(project, "app.rb"))
       entrypoint = File.read(File.join(project, "main.rb"))
       assert_includes application, "welcome_card("
@@ -128,8 +133,14 @@ class CLITest < Minitest::Test
         end
 
         project = File.join(directory, "system-status")
-        assert_equal %w[LICENSE README.md components main.rb manifest.json], Dir.children(project).sort
-        manifest = JSON.parse(File.read(File.join(project, "manifest.json")))
+        assert_equal %w[LICENSE README.md components config.rb main.rb], Dir.children(project).sort
+        refute File.exist?(File.join(project, "manifest.json"))
+        config = OmarchyUI::ProjectConfig.load(project)
+        assert config.plugin?
+        assert_equal "system-status", config.slug
+        assert_equal "main.rb", config.entrypoint
+        assert_equal "0.1.0", config.to_h.fetch(:version)
+        manifest = config.manifest
         assert_equal 1, manifest.fetch("schemaVersion")
         assert_equal "local.system-status", manifest.fetch("id")
         assert_equal "System Status", manifest.fetch("name")
@@ -150,10 +161,18 @@ class CLITest < Minitest::Test
         assert_includes File.read(File.join(project, "README.md")),
                         "complete Omarchy-compatible plugin package"
 
+        config_path = File.join(project, "config.rb")
+        configured = File.read(config_path).sub('slug "system-status"', 'slug "system-monitor"')
+        File.write(config_path, configured)
         status = OmarchyUI::CLI.run(["bundle", project], out: output, err: StringIO.new)
-        bundle = File.join(project, "dist", "system-status")
+        bundle = File.join(project, "dist", "system-monitor")
         assert_equal 0, status
         assert File.file?(File.join(bundle, "manifest.json"))
+        refute File.exist?(File.join(bundle, "config.rb"))
+        bundled_manifest = JSON.parse(File.read(File.join(bundle, "manifest.json")))
+        assert_equal "local.system-status", bundled_manifest.fetch("id")
+        assert_equal "System Status", bundled_manifest.fetch("name")
+        assert_equal "0.1.0", bundled_manifest.fetch("version")
         assert File.file?(File.join(bundle, "Service.qml"))
         assert File.file?(File.join(bundle, "Panel.qml"))
         assert File.file?(File.join(bundle, "BarWidget.qml"))
@@ -173,13 +192,21 @@ class CLITest < Minitest::Test
       tools = File.join(directory, "bin")
       inspected = File.join(directory, "inspected")
       FileUtils.mkdir_p([source, tools])
-      File.write(File.join(source, "manifest.json"), JSON.generate("id" => "test.validate"))
+      File.write(File.join(source, "config.rb"), OmarchyUI::ProjectConfig.generate(
+        name: "Validation Test",
+        slug: "validation-test",
+        kind: :plugin,
+        author: "Test Developer",
+        plugin_id: "test.validate"
+      ))
       File.write(File.join(source, "main.rb"), "require \"omarchy_ui\"\n")
       omarchy = File.join(tools, "omarchy")
       File.write(omarchy, <<~SH)
         #!/bin/sh
         test -f "$3/Service.qml" || exit 2
         test ! -e "$3/vendor" || exit 3
+        test -f "$3/manifest.json" || exit 4
+        test ! -e "$3/config.rb" || exit 5
         cp "$3/Service.qml" #{inspected}
       SH
       FileUtils.chmod(0o755, omarchy)
@@ -190,6 +217,7 @@ class CLITest < Minitest::Test
         assert File.file?(inspected)
       end
       refute File.exist?(File.join(source, "Service.qml")), "validation must not mutate source"
+      refute File.exist?(File.join(source, "manifest.json")), "manifest must only be generated while staging"
     end
   end
 

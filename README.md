@@ -97,6 +97,10 @@ Both commands create a ready-to-run Ruby project. Omarchy UI generates the compl
 application or plugin package; developers do not write QML, shell entry points, or an Omarchy
 manifest by hand.
 
+Each project includes a Ruby-native `config.rb` containing its type, identity, release version,
+entry point, and—for plugins—public marketplace metadata. `bundle`, `validate`, and `push` read this
+single configuration when assembling the complete package.
+
 The generator creates a small, host-independent project:
 
 ```text
@@ -105,6 +109,7 @@ counter/
 ├── app.rb                  # reusable Zui application
 ├── components/
 │   └── welcome.rb          # application-owned Ruby UI module
+├── config.rb               # project identity and build settings
 ├── main.rb                 # Omarchy launcher
 └── README.md
 ```
@@ -333,6 +338,8 @@ assets, Omarchy metadata and entry points, native host, checksummed runtime prov
 Zui QML components used by the project. Application packages receive a direct launcher; plugin
 packages are validated against Omarchy's requirements before the command succeeds. Omarchy UI pins
 Zui 0.0.10 so generated QML exactly matches the Zui core embedded in the deterministic mruby runtime.
+The source `config.rb` remains the authoritative build configuration; plugin manifests are generated
+from it in the distributable package and are never maintained separately by the developer.
 
 ## Component catalog
 

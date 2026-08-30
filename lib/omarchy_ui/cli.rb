@@ -99,6 +99,10 @@ module OmarchyUI
 
     def validate(arguments)
       source = File.expand_path(arguments.shift || Dir.pwd)
+      raise ArgumentError, "validate accepts one directory" unless arguments.empty?
+      config = ProjectConfig.load(source)
+      raise ArgumentError, "validate requires a plugin project" if config&.application?
+
       with_staged_project(source) do |staging|
         system("omarchy", "plugin", "validate", staging) ? 0 : 1
       end
@@ -107,15 +111,19 @@ module OmarchyUI
     def bundle_project(arguments)
       source = File.expand_path(arguments.shift || Dir.pwd)
       raise ArgumentError, "bundle accepts one directory" unless arguments.empty?
-      raise ArgumentError, "main.rb not found: #{source}" unless File.file?(File.join(source, "main.rb"))
-      destination = File.join(source, "dist", File.basename(source))
+      config = ProjectConfig.load(source)
+      entrypoint = config&.entrypoint || "main.rb"
+      raise ArgumentError, "#{entrypoint} not found: #{source}" unless File.file?(File.join(source, entrypoint))
+      destination = File.join(source, "dist", config&.slug || File.basename(source))
       raise ArgumentError, "bundle destination already exists: #{destination}" if File.exist?(destination)
       FileUtils.mkdir_p(destination)
-      entries = application_entries(source)
+      entries = application_entries(source, config:)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, destination)
-      bundle_ruby_entrypoint(source, destination)
+      config.write_manifest(destination) if config&.plugin?
+      bundle_ruby_entrypoint(source, destination, entrypoint:)
       Runtime.install_package(destination)
-      if File.file?(File.join(destination, "manifest.json"))
+      plugin = config ? config.plugin? : File.file?(File.join(destination, "manifest.json"))
+      if plugin
         raise ArgumentError, "bundled plugin validation failed" unless system("omarchy", "plugin", "validate", destination)
         @out.puts("Bundled plugin in #{destination}")
         return 0
@@ -131,7 +139,7 @@ module OmarchyUI
         app_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
         export OMARCHY_UI_RUNTIME="$app_dir/omarchy-ui-runtime"
         export OMARCHY_UI_PROJECT_DIR="$app_dir"
-        export OMARCHY_UI_RUBY_PROGRAM="$app_dir/main.rb"
+        export OMARCHY_UI_RUBY_PROGRAM="$app_dir/#{entrypoint}"
         export QT_LOGGING_RULES="${QT_LOGGING_RULES:+$QT_LOGGING_RULES;}qt.qpa.services.warning=false"
         exec quickshell --path "$app_dir/App.qml"
       SH
@@ -147,8 +155,9 @@ module OmarchyUI
       [ENV["QT_LOGGING_RULES"], "qt.qpa.services.warning=false"].compact.reject(&:empty?).join(";")
     end
 
-    def application_entries(source)
+    def application_entries(source, config: ProjectConfig.load(source))
       generated = Runtime::GENERATED_ENTRIES + Runtime::AUDIT_FILES + %w[run Commons Ui]
+      generated.concat([ProjectConfig::FILE_NAME, "manifest.json"]) if config
       Dir.children(source).reject { |entry| %w[.git dist].include?(entry) || generated.include?(entry) }
     end
 
@@ -156,8 +165,11 @@ module OmarchyUI
       enable = !arguments.delete("--no-enable")
       restart = !arguments.delete("--no-restart")
       source = File.expand_path(arguments.shift || Dir.pwd)
+      raise ArgumentError, "push accepts one directory" unless arguments.empty?
+      config = ProjectConfig.load(source)
+      raise ArgumentError, "push requires a plugin project" if config&.application?
       manifest_path = File.join(source, "manifest.json")
-      manifest = JSON.parse(File.read(manifest_path))
+      manifest = config ? config.manifest : JSON.parse(File.read(manifest_path))
       plugin_id = manifest.fetch("id")
       raise ArgumentError, "invalid plugin id" unless VALID_ID.match?(plugin_id)
       plugin_root = File.expand_path("~/.config/omarchy/plugins")
@@ -200,11 +212,14 @@ module OmarchyUI
 
     def stage_project(source, parent: nil, prefix: ".omarchy-ui-staging-")
       raise ArgumentError, "project directory not found: #{source}" unless File.directory?(source)
+      config = ProjectConfig.load(source)
       staging = parent ? Dir.mktmpdir(prefix, parent) : Dir.mktmpdir(prefix)
-      entries = application_entries(source)
+      entries = application_entries(source, config:)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging) unless entries.empty?
-      if File.file?(File.join(staging, "main.rb"))
-        bundle_ruby_entrypoint(source, staging)
+      config.write_manifest(staging) if config&.plugin?
+      entrypoint = config&.entrypoint || "main.rb"
+      if File.file?(File.join(staging, entrypoint))
+        bundle_ruby_entrypoint(source, staging, entrypoint:)
         Runtime.install_package(staging)
       end
       staging
@@ -213,9 +228,11 @@ module OmarchyUI
       raise
     end
 
-    def bundle_ruby_entrypoint(source, destination)
-      entrypoint = File.join(source, "main.rb")
-      File.write(File.join(destination, "main.rb"), SourceBundle.new(entrypoint, root: source).call)
+    def bundle_ruby_entrypoint(source, destination, entrypoint: "main.rb")
+      source_entrypoint = File.join(source, entrypoint)
+      destination_entrypoint = File.join(destination, entrypoint)
+      FileUtils.mkdir_p(File.dirname(destination_entrypoint))
+      File.write(destination_entrypoint, SourceBundle.new(source_entrypoint, root: source).call)
     end
 
     def activate_plugin(plugin_id)
