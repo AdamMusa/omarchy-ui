@@ -128,4 +128,5 @@ end
 
 require_relative "omarchy_ui/project_config"
 require_relative "omarchy_ui/generator"
+require_relative "omarchy_ui/qml_compiler"
 require_relative "omarchy_ui/runtime"

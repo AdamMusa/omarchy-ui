@@ -70,6 +70,63 @@ class CLITest < Minitest::Test
     end
   end
 
+  def test_push_preserves_a_verified_precompiled_package
+    Dir.mktmpdir do |directory|
+      home = File.join(directory, "home")
+      source = File.join(directory, "source")
+      tools = File.join(directory, "bin")
+      module_path = "OmarchyUI/Bundles/Btest"
+      module_directory = File.join(source, module_path)
+      FileUtils.mkdir_p([home, source, tools, module_directory])
+      File.write(File.join(source, "manifest.json"), JSON.generate("id" => "test.compiled"))
+      File.write(File.join(source, "main.rb"), "# compiled plugin\n")
+      OmarchyUI::QmlCompiler::ENTRY_TYPES.each_key do |entry|
+        File.write(File.join(source, entry), "import QtQuick\nItem {}\n")
+      end
+      File.write(File.join(module_directory, "qmldir"), "module OmarchyUI.Bundles.Btest\n")
+      artifacts = %w[libbundle.so libbundleplugin.so].map do |name|
+        path = File.join(module_path, name)
+        absolute = File.join(source, path)
+        File.binwrite(absolute, "compiled artifact: #{name}\n")
+        {
+          "path" => path,
+          "sha256" => Digest::SHA256.file(absolute).hexdigest,
+          "bytes" => File.size(absolute)
+        }
+      end
+      report = {
+        "format" => "qt-aot-qml-module",
+        "format_version" => OmarchyUI::QmlCompiler::FORMAT_VERSION,
+        "module_path" => module_path,
+        "artifacts" => artifacts
+      }
+      File.write(File.join(source, OmarchyUI::QmlCompiler::REPORT), JSON.generate(report))
+      File.write(File.join(source, OmarchyUI::QmlCompiler::CHECKSUM), "package checksum marker\n")
+
+      omarchy = File.join(tools, "omarchy")
+      File.write(omarchy, <<~SH)
+        #!/bin/sh
+        test -f "$3/#{OmarchyUI::QmlCompiler::REPORT}" || exit 2
+        test -f "$3/#{module_path}/libbundle.so" || exit 3
+        test ! -e "$3/ControlNode.qml" || exit 4
+      SH
+      FileUtils.chmod(0o755, omarchy)
+
+      with_environment("HOME" => home, "PATH" => "#{tools}:#{ENV.fetch('PATH')}") do
+        status = OmarchyUI::CLI.run(
+          ["push", "--no-enable", "--no-restart", source],
+          out: StringIO.new,
+          err: StringIO.new
+        )
+        destination = File.join(home, ".config/omarchy/plugins/test.compiled")
+        assert_equal 0, status
+        assert_equal report, JSON.parse(File.read(File.join(destination, OmarchyUI::QmlCompiler::REPORT)))
+        assert File.file?(File.join(destination, module_path, "libbundleplugin.so"))
+        refute File.exist?(File.join(destination, "ControlNode.qml"))
+      end
+    end
+  end
+
   def test_new_scaffolds_only_application_owned_files
     Dir.mktmpdir do |directory|
       output = StringIO.new
@@ -176,10 +233,45 @@ class CLITest < Minitest::Test
         assert File.file?(File.join(bundle, "Service.qml"))
         assert File.file?(File.join(bundle, "Panel.qml"))
         assert File.file?(File.join(bundle, "BarWidget.qml"))
+        assert File.file?(File.join(bundle, "App.qml"))
+        assert_equal %w[App.qml BarWidget.qml Panel.qml Service.qml],
+          Dir.glob(File.join(bundle, "**", "*.qml")).map { |path| path.delete_prefix("#{bundle}/") }.sort
+        refute File.exist?(File.join(bundle, "ControlNode.qml"))
+        refute File.exist?(File.join(bundle, "Components"))
+        refute File.exist?(File.join(bundle, "Controls"))
+        refute File.exist?(File.join(bundle, "Theme"))
+        refute File.exist?(File.join(bundle, "Fonts"))
         assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
         report = JSON.parse(File.read(File.join(bundle, OmarchyUI::Runtime::TREE_SHAKE_REPORT)))
         assert_includes report.fetch("components"), "text"
         assert_operator report.fetch("saved_bytes"), :>, 0
+        compiled = JSON.parse(File.read(File.join(bundle, OmarchyUI::QmlCompiler::REPORT)))
+        assert_equal "qt-aot-qml-module", compiled.fetch("format")
+        assert_equal OmarchyUI::QmlCompiler::FORMAT_VERSION, compiled.fetch("format_version")
+        assert_match(/\A6\./, compiled.fetch("qt_version"))
+        assert_equal %w[App.qml BarWidget.qml Panel.qml Service.qml], compiled.fetch("entry_shims").sort
+        assert_operator compiled.fetch("source_files"), :>, 4
+        module_path = File.join(bundle, compiled.fetch("module_path"))
+        assert File.file?(File.join(module_path, "qmldir"))
+        assert_equal 2, compiled.fetch("artifacts").length
+        compiled.fetch("artifacts").each do |artifact|
+          artifact_path = File.join(bundle, artifact.fetch("path"))
+          assert File.file?(artifact_path)
+          assert_equal artifact.fetch("sha256"), Digest::SHA256.file(artifact_path).hexdigest
+          assert_equal artifact.fetch("bytes"), File.size(artifact_path)
+        end
+        checksum = File.read(File.join(bundle, OmarchyUI::QmlCompiler::CHECKSUM))
+        compiled.fetch("artifacts").each { |artifact| assert_includes checksum, artifact.fetch("sha256") }
+        provenance = File.read(File.join(bundle, OmarchyUI::QmlCompiler::PROVENANCE))
+        assert_includes provenance, compiled.fetch("module_uri")
+        assert_includes provenance, "sha256sum --check #{OmarchyUI::QmlCompiler::CHECKSUM}"
+        OmarchyUI::QmlCompiler::ENTRY_TYPES.each do |entry, type|
+          shim = File.read(File.join(bundle, entry))
+          assert_operator shim.bytesize, :<, 160
+          expected_import = type == "App" ? compiled.fetch("module_uri") : %Q("#{compiled.fetch('module_path')}")
+          assert_includes shim, "import #{expected_import} as Compiled"
+          assert_includes shim, "Compiled.#{type} {}"
+        end
         assert_includes output.string, "Created Omarchy-compliant plugin"
         assert_includes output.string, "Bundled plugin"
       end
@@ -238,6 +330,8 @@ class CLITest < Minitest::Test
       assert File.symlink?(File.join(bundle, "Commons"))
       launcher = File.read(File.join(bundle, "run"))
       assert_includes launcher, "exec quickshell"
+      assert_includes launcher, "QML2_IMPORT_PATH"
+      assert_includes launcher, "QML_IMPORT_PATH"
       assert_includes launcher, "qt.qpa.services.warning=false"
     end
   end

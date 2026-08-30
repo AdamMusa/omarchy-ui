@@ -139,7 +139,8 @@ module OmarchyUI
         omarchy_ui bundle
         ```
 
-        Omarchy UI generates the complete self-contained application package required by Omarchy.
+        Omarchy UI tree-shakes and compiles the UI, then generates the complete self-contained
+        application package required by Omarchy.
       MARKDOWN
     end
 
@@ -168,8 +169,8 @@ module OmarchyUI
         ```
 
         Write the plugin interface and behavior in Ruby under `main.rb` and `components/`.
-        Public plugin identity and release metadata live in `config.rb`. Omarchy UI uses it to
-        generate and validate the complete Omarchy-compatible plugin package.
+        Public plugin identity and release metadata live in `config.rb`. Omarchy UI tree-shakes and
+        compiles the UI, then generates and validates the complete Omarchy-compatible plugin package.
       MARKDOWN
     end
 

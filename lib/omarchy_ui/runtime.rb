@@ -16,8 +16,14 @@ module OmarchyUI
     AUDIT_FILES = %w[
       omarchy-ui-runtime.sha256 runtime-provenance.json RUNTIME_PROVENANCE.md
     ].freeze
-    GENERATED_ENTRIES = (ADAPTER_FILES + ZUI_GENERATED_ENTRIES +
-      [TREE_SHAKE_REPORT, "omarchy-ui-runtime"]).freeze
+    GENERATED_ENTRIES = (ADAPTER_FILES + ZUI_GENERATED_ENTRIES + [
+      TREE_SHAKE_REPORT,
+      QmlCompiler::COMPILED_ROOT,
+      QmlCompiler::REPORT,
+      QmlCompiler::CHECKSUM,
+      QmlCompiler::PROVENANCE,
+      "omarchy-ui-runtime"
+    ]).freeze
 
     def executable
       override = ENV["OMARCHY_UI_RUNTIME"]
@@ -39,7 +45,7 @@ module OmarchyUI
       FileUtils.rm_f(temporary) if temporary && File.exist?(temporary)
     end
 
-    def install_package(path, framework_root: FRAMEWORK_ROOT, project: path)
+    def install_package(path, framework_root: FRAMEWORK_ROOT, project: path, compiled: false)
       FileUtils.mkdir_p(path)
       GENERATED_ENTRIES.each do |entry|
         generated = File.join(path, entry)
@@ -67,6 +73,7 @@ module OmarchyUI
         source = File.join(framework_root, "vendor", "runtime", "x86_64-linux", file)
         FileUtils.cp(source, File.join(path, file)) if File.file?(source)
       end
+      QmlCompiler.compile!(path) if compiled
       path
     end
 

@@ -61,12 +61,14 @@ and the Omarchy adapter.
 
 - Omarchy on x86-64 Linux
 - Ruby 3.1 or newer for installation and development
+- Qt 6 development tools, CMake, Ninja, and a C++ compiler for `bundle`, `validate`, and `push`
 - Optional Qt modules for components that use features such as Quick 3D or Multimedia
 
 Omarchy UI turns Ruby and assets into an Omarchy-compatible application or plugin. It owns the
-metadata, entry points, adapter, validation, tree-shaken Zui QML, and embedded mruby runtime. The
-finished package does not require Ruby or framework gems. Components report a clear error when a
-required Qt module or resource is unavailable.
+metadata, entry points, adapter, validation, tree-shaken and AOT-compiled Zui QML, and embedded mruby
+runtime. Omarchy UI invokes the build tools; projects do not contain CMake files or distribution
+scripts. The finished package does not require Ruby or framework gems. Components report a clear
+error when a required Qt module or resource is unavailable.
 
 ## Quick start
 
@@ -327,9 +329,19 @@ omarchy_ui bundle
 ```
 
 Omarchy UI assembles the Ruby source and assets, Omarchy entry points, native host, checksummed
-runtime, and only the Zui QML components used by the project. Applications receive a direct launcher;
-plugins must pass Omarchy validation before the command succeeds. Omarchy UI pins Zui 0.0.10 so the
-generated QML matches the Zui core embedded in the deterministic mruby runtime.
+runtime, and only the Zui components used by the project. It then AOT-compiles the generated QML into
+a content-addressed Qt module and discards the generated component, control, theme, and font source
+tree. Applications receive a direct launcher; plugins must pass Omarchy validation before the
+command succeeds. Omarchy UI pins Zui 0.0.10 so the compiled UI matches the Zui core embedded in the
+deterministic mruby runtime.
+
+Current Omarchy manifests resolve entry points by filename, so a package retains four minimal loader
+files: `App.qml`, `Service.qml`, `Panel.qml`, and `BarWidget.qml`. They contain only an import and a
+compiled type instance; the application interface is stored in native `.so` artifacts. The package
+also includes `omarchy-ui-qml-bundle.json` with the module URI and exact Qt version, plus
+`omarchy-ui-qml-bundle.sha256` for artifact verification. `QML_PROVENANCE.md` explains the native
+artifacts for package reviewers. Compiled packages should be built against the Qt version shipped by
+their target Omarchy release.
 
 The source `config.rb` is the build configuration. Omarchy UI generates plugin manifests from it;
 developers never maintain a separate manifest.
@@ -399,10 +411,12 @@ Zui DSL · state · events · bindings · scheduler
           │
           │ versioned JSON render, patch, event, and effect protocol
           ▼
-Omarchy Service.qml process bridge ───── embedded mruby runtime
+Omarchy process bridge ───────────────── embedded mruby runtime
           │
           ▼
-Zui ControlNode + native component catalog
+Tree-shaken Zui host + component catalog
+          │
+          │ bundle: Qt AOT module + four loader shims
           │
           ▼
 App window · Omarchy panel · Omarchy bar widget
@@ -420,8 +434,9 @@ The dependency direction is deliberate:
 - **Applications own** Ruby source, assets, state, behavior, and reusable UI modules.
 
 At bundle, validation, and push time, Omarchy UI asks Zui to analyze the bundled Ruby syntax and
-generate only the required component adapters plus their renderer dependencies. The four Omarchy
-host files then replace Zui's generic desktop host. Read the full [QML ownership and adapter
+generate only the required component adapters plus their renderer dependencies. Omarchy UI overlays
+its host, compiles the complete generated QML graph into a content-addressed Qt module, and emits the
+minimal loader files required by Omarchy. Read the full [QML ownership and adapter
 boundary](docs/qml-support.md).
 
 ## Runtime integrity

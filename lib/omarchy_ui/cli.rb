@@ -114,14 +114,17 @@ module OmarchyUI
       config = ProjectConfig.load(source)
       entrypoint = config&.entrypoint || "main.rb"
       raise ArgumentError, "#{entrypoint} not found: #{source}" unless File.file?(File.join(source, entrypoint))
+      precompiled = config.nil? && compiled_package?(source)
       destination = File.join(source, "dist", config&.slug || File.basename(source))
       raise ArgumentError, "bundle destination already exists: #{destination}" if File.exist?(destination)
       FileUtils.mkdir_p(destination)
-      entries = application_entries(source, config:)
+      entries = precompiled ? package_entries(source) : application_entries(source, config:)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, destination)
-      config.write_manifest(destination) if config&.plugin?
-      bundle_ruby_entrypoint(source, destination, entrypoint:)
-      Runtime.install_package(destination)
+      unless precompiled
+        config.write_manifest(destination) if config&.plugin?
+        bundle_ruby_entrypoint(source, destination, entrypoint:)
+        Runtime.install_package(destination, compiled: !config.nil?)
+      end
       plugin = config ? config.plugin? : File.file?(File.join(destination, "manifest.json"))
       if plugin
         raise ArgumentError, "bundled plugin validation failed" unless system("omarchy", "plugin", "validate", destination)
@@ -140,6 +143,8 @@ module OmarchyUI
         export OMARCHY_UI_RUNTIME="$app_dir/omarchy-ui-runtime"
         export OMARCHY_UI_PROJECT_DIR="$app_dir"
         export OMARCHY_UI_RUBY_PROGRAM="$app_dir/#{entrypoint}"
+        export QML2_IMPORT_PATH="$app_dir${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
+        export QML_IMPORT_PATH="$app_dir${QML_IMPORT_PATH:+:$QML_IMPORT_PATH}"
         export QT_LOGGING_RULES="${QT_LOGGING_RULES:+$QT_LOGGING_RULES;}qt.qpa.services.warning=false"
         exec quickshell --path "$app_dir/App.qml"
       SH
@@ -159,6 +164,18 @@ module OmarchyUI
       generated = Runtime::GENERATED_ENTRIES + Runtime::AUDIT_FILES + %w[run Commons Ui]
       generated.concat([ProjectConfig::FILE_NAME, "manifest.json"]) if config
       Dir.children(source).reject { |entry| %w[.git dist].include?(entry) || generated.include?(entry) }
+    end
+
+    def package_entries(source)
+      Dir.children(source).reject { |entry| %w[.git dist].include?(entry) }
+    end
+
+    def compiled_package?(source)
+      report = File.join(source, QmlCompiler::REPORT)
+      return false unless File.file?(report)
+
+      QmlCompiler.verify!(source)
+      true
     end
 
     def push(arguments)
@@ -213,14 +230,17 @@ module OmarchyUI
     def stage_project(source, parent: nil, prefix: ".omarchy-ui-staging-")
       raise ArgumentError, "project directory not found: #{source}" unless File.directory?(source)
       config = ProjectConfig.load(source)
+      precompiled = config.nil? && compiled_package?(source)
       staging = parent ? Dir.mktmpdir(prefix, parent) : Dir.mktmpdir(prefix)
-      entries = application_entries(source, config:)
+      entries = precompiled ? package_entries(source) : application_entries(source, config:)
       FileUtils.cp_r(entries.map { |entry| File.join(source, entry) }, staging) unless entries.empty?
-      config.write_manifest(staging) if config&.plugin?
-      entrypoint = config&.entrypoint || "main.rb"
-      if File.file?(File.join(staging, entrypoint))
-        bundle_ruby_entrypoint(source, staging, entrypoint:)
-        Runtime.install_package(staging)
+      unless precompiled
+        config.write_manifest(staging) if config&.plugin?
+        entrypoint = config&.entrypoint || "main.rb"
+        if File.file?(File.join(staging, entrypoint))
+          bundle_ruby_entrypoint(source, staging, entrypoint:)
+          Runtime.install_package(staging, compiled: !config.nil?)
+        end
       end
       staging
     rescue StandardError
