@@ -253,6 +253,7 @@ class CLITest < Minitest::Test
         assert_operator compiled.fetch("source_files"), :>, 4
         module_path = File.join(bundle, compiled.fetch("module_path"))
         assert File.file?(File.join(module_path, "qmldir"))
+        refute File.read(File.join(module_path, "qmldir")).end_with?("\n\n")
         assert_equal 2, compiled.fetch("artifacts").length
         compiled.fetch("artifacts").each do |artifact|
           artifact_path = File.join(bundle, artifact.fetch("path"))

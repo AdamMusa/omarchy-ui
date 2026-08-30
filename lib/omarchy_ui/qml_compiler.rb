@@ -300,6 +300,8 @@ module OmarchyUI
       destination = File.join(@path, module_path)
       FileUtils.mkdir_p(destination)
       artifact_names.each { |name| FileUtils.cp(File.join(built_module, name), destination) }
+      qmldir = File.join(destination, "qmldir")
+      File.write(qmldir, File.read(qmldir).rstrip + "\n")
 
       SOURCE_ENTRIES.each { |entry| remove_generated(File.join(@path, entry)) }
       ENTRY_TYPES.each do |entry, type|
