@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Omarchy UI 0.0.7" src="https://img.shields.io/badge/Omarchy_UI-0.0.7-b7ff5a?style=flat-square&labelColor=111711">
+  <img alt="Omarchy UI 0.0.8" src="https://img.shields.io/badge/Omarchy_UI-0.0.8-b7ff5a?style=flat-square&labelColor=111711">
   <img alt="Ruby 3.1 or newer" src="https://img.shields.io/badge/Ruby-3.1%2B-cc342d?style=flat-square&logo=ruby&logoColor=white">
   <img alt="Zui 0.0.10" src="https://img.shields.io/badge/Zui-0.0.10-7ee14b?style=flat-square&labelColor=111711">
   <img alt="241 components" src="https://img.shields.io/badge/components-241-75d943?style=flat-square&labelColor=111711">
@@ -53,8 +53,8 @@ and the Omarchy adapter.
 
 | Build | Use it for | Primary surface | Delivery |
 | --- | --- | --- | --- |
-| Omarchy application | Full desktop tools and standalone interfaces | `app :main` | `omarchy_ui run` or `omarchy_ui bundle` |
-| Omarchy plugin | Bar widgets, panels, and shell-integrated tools | `bar_widget` and `panel` | `omarchy_ui validate` and `omarchy_ui push` |
+| Omarchy application | Full desktop tools and standalone interfaces | `app :main` | `omarchy_ui new NAME`, then `run` or `bundle` |
+| Omarchy plugin | Bar widgets, panels, and shell-integrated tools | `bar_widget` and `panel` | `omarchy_ui new NAME --plugin`, then `push` or `bundle` |
 | Portable Zui application | The same application UI outside Omarchy | `app :main` | The platform-neutral [Zui toolchain](https://github.com/AdamMusa/zui#developer-workflow) |
 
 ## Requirements
@@ -63,10 +63,11 @@ and the Omarchy adapter.
 - Ruby 3.1 or newer while installing the gem and developing applications;
 - optional Qt modules for components that use features such as Quick 3D or Multimedia.
 
-The finished Omarchy bundle includes the Omarchy adapter, mruby executable, and a Zui-generated QML
-runtime tree-shaken to the components referenced by that application. The destination does not need
-Ruby or framework gems. A component fails with an explicit error when its required Qt module or
-resource is unavailable; Omarchy UI never substitutes a different component.
+Omarchy UI generates a complete Omarchy-compatible application or plugin package from the
+developer's Ruby and assets. It owns the Omarchy metadata, entry points, adapter, validation,
+tree-shaken Zui QML, and embedded mruby runtime. The finished package does not need Ruby or framework
+gems. A component fails with an explicit error when its required Qt module or resource is unavailable;
+Omarchy UI never substitutes a different component.
 
 ## Quick start
 
@@ -78,17 +79,29 @@ gem install omarchy-ui
 
 The gem installs the compatible Zui version as a dependency.
 
-### 2. Generate an application
+### 2. Generate a complete project
 
 ```bash
 omarchy_ui new Counter
 cd counter
 ```
 
+For an integrated Omarchy plugin instead:
+
+```bash
+omarchy_ui new "System Status" --plugin
+cd system-status
+```
+
+Both commands create a ready-to-run Ruby project. Omarchy UI generates the complete compliant
+application or plugin package; developers do not write QML, shell entry points, or an Omarchy
+manifest by hand.
+
 The generator creates a small, host-independent project:
 
 ```text
 counter/
+├── LICENSE
 ├── app.rb                  # reusable Zui application
 ├── components/
 │   └── welcome.rb          # application-owned Ruby UI module
@@ -228,48 +241,18 @@ QML is not required.
 
 ## Omarchy plugins
 
-A Ruby-powered plugin is an ordinary Omarchy plugin repository with `manifest.json` and `main.rb`
-at its root. Omarchy UI adds the generated service, panel, bar-widget, framework, and runtime files
-while staging the plugin; do not commit generated copies to the application source.
+Generate a complete plugin project with one command:
 
-```text
-system-status/
-├── manifest.json
-├── main.rb
-└── assets/
+```bash
+omarchy_ui new "System Status" --plugin
+cd system-status
 ```
 
-### Manifest
+The generated project already satisfies Omarchy's structural requirements. Developers work in Ruby
+and add their own assets; Omarchy UI owns the required plugin metadata, shell surfaces, native host,
+tree-shaken Zui package, validation, and install lifecycle.
 
-This complete manifest declares the adapter surfaces used by the Ruby definition below:
-
-```json
-{
-  "schemaVersion": 1,
-  "id": "example.system-status",
-  "name": "System Status",
-  "version": "0.1.0",
-  "author": "Example Author",
-  "license": "MIT",
-  "description": "A Ruby-powered status panel for Omarchy.",
-  "kinds": ["service", "bar-widget", "panel"],
-  "keepLoaded": true,
-  "entryPoints": {
-    "service": "Service.qml",
-    "barWidget": "BarWidget.qml",
-    "panel": "Panel.qml"
-  },
-  "barWidget": {
-    "displayName": "System Status",
-    "description": "Open the current system status.",
-    "category": "System",
-    "allowMultiple": false,
-    "defaultSection": "right"
-  }
-}
-```
-
-### Ruby entry point
+The Ruby entry point uses ordinary Zui components:
 
 ```ruby
 # main.rb
@@ -294,35 +277,29 @@ OmarchyUI.plugin do
 end
 ```
 
-`bar_widget` declares the shell-owned bar surface. `panel :status` declares the panel opened by
-`open_panel :status`. The manifest must declare the corresponding entry points.
+`bar_widget` and `panel :status` are the complete developer-facing surface declarations. Omarchy UI
+maps them to the required Omarchy shell entry points when it builds or stages the plugin.
 
 ### Validate and install
 
 ```bash
-omarchy_ui validate path/to/system-status
-omarchy_ui push path/to/system-status
+omarchy_ui validate
+omarchy_ui push
 ```
 
-`validate` checks a fully staged copy, including the bundled Ruby entry point and generated adapter.
-`push` then:
-
-1. stages and validates the complete plugin;
-2. backs up an existing installation when present;
-3. installs it atomically under `~/.config/omarchy/plugins/<plugin-id>`;
-4. enables the plugin; and
-5. restarts the Omarchy shell.
+`validate` generates and checks the complete plugin without mutating the Ruby project. `push` safely
+builds, validates, installs, enables, and reloads the plugin for development.
 
 During development, suppress either lifecycle action when needed:
 
 ```bash
-omarchy_ui push path/to/system-status --no-enable
-omarchy_ui push path/to/system-status --no-restart
+omarchy_ui push --no-enable
+omarchy_ui push --no-restart
 ```
 
 > [!WARNING]
 > Omarchy plugins execute as unsandboxed user code inside the shell environment. Review the Ruby,
-> assets, manifest, generated package, and provenance before installing a third-party plugin.
+> assets, generated package, and provenance before installing a third-party plugin.
 
 ## Command-line reference
 
@@ -332,9 +309,10 @@ omarchy_ui <command> [arguments]
 
 | Command | Arguments | Result |
 | --- | --- | --- |
-| `omarchy_ui new NAME` | One application name | Creates a new application directory using a URL-safe form of the name |
+| `omarchy_ui new NAME` | One project name | Creates a complete Omarchy application project |
+| `omarchy_ui new NAME --plugin` | One project name and `--plugin` | Creates a complete Omarchy-compliant plugin project |
 | `omarchy_ui run FILE` | One Ruby entry point | Runs an application through the Omarchy/Quickshell host |
-| `omarchy_ui bundle [DIRECTORY]` | Zero or one project directory | Creates `dist/<project-name>` with the application, Omarchy adapter, runtime, and tree-shaken Zui QML |
+| `omarchy_ui bundle [DIRECTORY]` | Zero or one project directory | Generates the complete distributable package and prints its location |
 | `omarchy_ui validate [DIRECTORY]` | Zero or one plugin directory | Stages the complete plugin and delegates validation to `omarchy plugin validate` |
 | `omarchy_ui push [DIRECTORY]` | Optional `--no-enable` and `--no-restart` | Atomically installs and activates a validated plugin |
 | `omarchy_ui version` | None | Prints the installed Omarchy UI version |
@@ -344,38 +322,17 @@ not forward arbitrary Ruby arguments.
 
 ## Packaging
 
-Create a distributable application from the project root:
+Create the complete distributable package from the project root:
 
 ```bash
 omarchy_ui bundle
-./dist/my-application/run
 ```
 
-The bundle contains:
-
-```text
-dist/my-application/
-├── main.rb                     # bundled application source
-├── assets/                     # application-owned resources
-├── App.qml                     # Omarchy host entry point
-├── Service.qml                 # process and surface bridge
-├── Panel.qml                   # shell panel adapter
-├── BarWidget.qml               # shell bar adapter
-├── ControlNode.qml             # generated Zui protocol renderer
-├── Components/Builtins/        # only component adapters selected by Zui
-├── Controls/ Theme/ Fonts/     # generated renderer dependencies
-├── zui-tree-shake.json         # auditable selected-component report
-├── Commons@ Ui@                # links to Omarchy's shell modules
-├── omarchy-ui-runtime          # embedded mruby executable
-├── omarchy-ui-runtime.sha256
-├── RUNTIME_PROVENANCE.md
-└── run
-```
-
-Plugin bundles use the same runtime package and are validated against their manifest before the
-bundle command succeeds. Generated packages exclude `.git`, previous `dist` output, and stale
-adapter/runtime files before regenerating the minimal QML package. Omarchy UI pins Zui 0.0.10 so the
-tree-shaken QML exactly matches the Zui core embedded in the deterministic mruby runtime.
+Omarchy UI prints the generated package location. It automatically assembles the bundled Ruby and
+assets, Omarchy metadata and entry points, native host, checksummed runtime provenance, and only the
+Zui QML components used by the project. Application packages receive a direct launcher; plugin
+packages are validated against Omarchy's requirements before the command succeeds. Omarchy UI pins
+Zui 0.0.10 so generated QML exactly matches the Zui core embedded in the deterministic mruby runtime.
 
 ## Component catalog
 
@@ -504,11 +461,11 @@ bodies are never recorded. Per-plugin logs rotate at 128 KiB under
 | `Ruby file not found` | Pass an existing entry point to `omarchy_ui run`, normally `main.rb` |
 | `Omarchy QML module not found` | Confirm the Omarchy shell installation provides `/usr/share/omarchy/shell/Commons` and `Ui` |
 | A component reports a missing module | Install or enable the Qt module required by that declared component |
-| Plugin validation fails | Run `omarchy_ui validate` and correct the manifest or staged project error before pushing |
+| Plugin validation fails | Run `omarchy_ui validate` and correct the reported Ruby, asset, or generated-metadata error before pushing |
 | A pushed plugin is installed but inactive | Run `omarchy plugin enable <id>` and `omarchy restart shell` after resolving the reported shell error |
-| The bundle destination already exists | Review or move the existing `dist/<project-name>` directory before bundling again |
+| The bundle destination already exists | Review or move the previously generated package before bundling again |
 
-Omarchy UI reports unsupported properties, components, events, paths, manifests, and runtime
+Omarchy UI reports unsupported properties, components, events, paths, generated metadata, and runtime
 resources directly. Preserve the original error when opening an issue.
 
 ## Development

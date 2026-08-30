@@ -27,7 +27,7 @@ module OmarchyUI
       when "validate" then validate(arguments)
       when "version", "--version", "-v" then @out.puts(OmarchyUI::VERSION); 0
       else
-        @err.puts("Usage: omarchy_ui <new NAME|run FILE|bundle [DIRECTORY]|push [DIRECTORY]|validate [DIRECTORY]|version>")
+        @err.puts("Usage: omarchy_ui <new NAME [--plugin]|run FILE|bundle [DIRECTORY]|push [DIRECTORY]|validate [DIRECTORY]|version>")
         command.nil? ? 0 : 64
       end
     rescue Interrupt
@@ -67,12 +67,28 @@ module OmarchyUI
     end
 
     def new_project(arguments)
+      plugin = !arguments.delete("--plugin").nil?
       name = arguments.shift || raise(ArgumentError, "new requires a project name")
-      raise ArgumentError, "new accepts only an application name" unless arguments.empty?
+      raise ArgumentError, "new accepts a name and optional --plugin" unless arguments.empty?
       destination = File.expand_path(slug(name))
-      Generator.new(path: destination, name: name).create
-      @out.puts("Created standalone Omarchy UI app in #{destination}")
+      kind = plugin ? :plugin : :application
+      Generator.new(path: destination, name: name, kind:, author: default_author).create
+      label = plugin ? "Omarchy-compliant plugin" : "self-contained Omarchy application"
+      @out.puts("Created #{label} in #{destination}")
       0
+    end
+
+    def default_author
+      configured = ENV["OMARCHY_UI_AUTHOR"].to_s.strip
+      return configured unless configured.empty?
+
+      output, _error, status = Open3.capture3("git", "config", "--get", "user.name")
+      git_author = output.to_s.strip
+      return git_author if status.success? && !git_author.empty?
+
+      ENV["USER"].to_s.strip.then { |user| user.empty? ? "Omarchy UI Developer" : user }
+    rescue SystemCallError
+      "Omarchy UI Developer"
     end
 
     def slug(value)

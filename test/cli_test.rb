@@ -79,7 +79,7 @@ class CLITest < Minitest::Test
         assert_equal 0, status
       end
       project = File.join(directory, "weather-board")
-      assert_equal %w[README.md app.rb components main.rb], Dir.children(project).sort
+      assert_equal %w[LICENSE README.md app.rb components main.rb], Dir.children(project).sort
       assert_equal ["welcome.rb"], Dir.children(File.join(project, "components"))
       refute File.exist?(File.join(project, "manifest.json"))
       application = File.read(File.join(project, "app.rb"))
@@ -105,6 +105,65 @@ class CLITest < Minitest::Test
       assert_equal "ready", message_types.first
       assert_equal "render", message_types.last
       assert_includes message_types, "component_catalog"
+    end
+  end
+
+  def test_new_plugin_generates_and_bundles_a_complete_omarchy_plugin
+    Dir.mktmpdir do |directory|
+      output = StringIO.new
+      tools = File.join(directory, "bin")
+      FileUtils.mkdir_p(tools)
+      omarchy = File.join(tools, "omarchy")
+      File.write(omarchy, "#!/bin/sh\nexit 0\n")
+      FileUtils.chmod(0o755, omarchy)
+
+      with_environment(
+        "OMARCHY_UI_AUTHOR" => "Example Developer",
+        "PATH" => "#{tools}:#{ENV.fetch('PATH')}"
+      ) do
+        Dir.chdir(directory) do
+          status = OmarchyUI::CLI.run(["new", "--plugin", "System Status"],
+                                      out: output, err: StringIO.new)
+          assert_equal 0, status
+        end
+
+        project = File.join(directory, "system-status")
+        assert_equal %w[LICENSE README.md components main.rb manifest.json], Dir.children(project).sort
+        manifest = JSON.parse(File.read(File.join(project, "manifest.json")))
+        assert_equal 1, manifest.fetch("schemaVersion")
+        assert_equal "local.system-status", manifest.fetch("id")
+        assert_equal "System Status", manifest.fetch("name")
+        assert_equal "Example Developer", manifest.fetch("author")
+        assert_equal ["service", "bar-widget", "panel"], manifest.fetch("kinds")
+        assert_equal({
+          "service" => "Service.qml",
+          "barWidget" => "BarWidget.qml",
+          "panel" => "Panel.qml"
+        }, manifest.fetch("entryPoints"))
+        refute File.exist?(File.join(project, "app.rb"))
+        refute Dir.glob(File.join(project, "**", "*.qml")).any?
+
+        entrypoint = File.read(File.join(project, "main.rb"))
+        assert_includes entrypoint, "OmarchyUI.plugin(ui: SystemStatus::UI)"
+        assert_includes entrypoint, "bar_widget do"
+        assert_includes entrypoint, "panel :system_status do"
+        assert_includes File.read(File.join(project, "README.md")),
+                        "complete Omarchy-compatible plugin package"
+
+        status = OmarchyUI::CLI.run(["bundle", project], out: output, err: StringIO.new)
+        bundle = File.join(project, "dist", "system-status")
+        assert_equal 0, status
+        assert File.file?(File.join(bundle, "manifest.json"))
+        assert File.file?(File.join(bundle, "Service.qml"))
+        assert File.file?(File.join(bundle, "Panel.qml"))
+        assert File.file?(File.join(bundle, "BarWidget.qml"))
+        assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
+        report = JSON.parse(File.read(File.join(bundle, OmarchyUI::Runtime::TREE_SHAKE_REPORT)))
+        assert_includes report.fetch("components"), "text"
+        assert_operator report.fetch("saved_bytes"), :>, 0
+        assert_includes output.string, "Created Omarchy-compliant plugin"
+        assert_includes output.string, "Bundled plugin"
+      end
     end
   end
 
