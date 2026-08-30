@@ -23,6 +23,31 @@ module OmarchyUI
   ].freeze
   CORE_CONSTANTS.each { |name| const_set(name, Zui.const_get(name)) }
 
+  # Quickshell's line parser has a practical ceiling below Zui's protocol
+  # maximum. Identity property/event mappings are implicit in the Omarchy
+  # bridge, so omit those duplicates from the initial component catalog while
+  # preserving every custom mapping and all validation metadata.
+  def self.component_protocol_schema(component)
+    property_map = {}
+    component.property_map.each do |source, target|
+      property_map[source.to_s] = target.to_s unless source.to_s == target.to_s
+    end
+    event_map = {}
+    component.event_map.each do |source, target|
+      event_map[source.to_s] = target.to_s unless source.to_s == target.to_s
+    end
+    schema = {
+      "qml" => component.qml,
+      "properties" => component.properties.map(&:to_s),
+      "events" => component.events.map(&:to_s),
+      "container" => component.container
+    }
+    schema["property_map"] = property_map unless property_map.empty?
+    schema["event_map"] = event_map unless event_map.empty?
+    schema["auto_bind"] = false unless component.auto_bind
+    schema
+  end
+
   class SourceBundle < Zui::SourceBundle
     def initialize(entrypoint, root: File.dirname(entrypoint))
       super(entrypoint, root:, embedded_frameworks: %w[zui omarchy_ui])
@@ -58,6 +83,12 @@ module OmarchyUI
   class << self
     alias application plugin
     alias app plugin
+  end
+end
+
+module Zui
+  class Component
+    def to_h = OmarchyUI.component_protocol_schema(self)
   end
 end
 

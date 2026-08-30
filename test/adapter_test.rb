@@ -58,4 +58,21 @@ class AdapterTest < Minitest::Test
     assert_raises(ArgumentError) { OmarchyUI.run(Object.new) }
     assert_raises(ArgumentError) { OmarchyUI.run(invalid_domain) }
   end
+
+  def test_component_catalog_omits_only_identity_mappings_for_quickshell
+    button = OmarchyUI::DEFAULT_COMPONENTS.fetch(:button).to_h
+
+    refute button.key?("property_map")
+    refute button.key?("event_map")
+    assert button.fetch("properties").include?("text")
+
+    registry = Zui::ComponentRegistry.new
+    registry.register(:mapped, qml: "Mapped.qml", properties: [:value], events: [:change],
+                      property_map: { value: :model_data }, event_map: { change: :changed })
+    mapped = registry.fetch(:mapped).to_h
+
+    assert_equal({ "value" => "model_data" }, mapped.fetch("property_map"))
+    assert_equal({ "change" => "changed" }, mapped.fetch("event_map"))
+    assert_operator JSON.generate(OmarchyUI::DEFAULT_COMPONENTS.protocol_schema).bytesize, :<, 131_072
+  end
 end
