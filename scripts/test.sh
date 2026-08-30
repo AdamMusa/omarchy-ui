@@ -24,7 +24,7 @@ done
 ruby -c lib/omarchy_ui.rb
 ruby -e 'abort "invalid gemspec" unless Gem::Specification.load("omarchy-ui.gemspec")'
 
-runtime=vendor/runtime/x86_64-linux/omarchy-ui-runtime
+runtime=${OMARCHY_UI_RUNTIME:-vendor/runtime/x86_64-linux/omarchy-ui-runtime}
 if [[ -x $runtime ]]; then
   (
     cd vendor/runtime/x86_64-linux

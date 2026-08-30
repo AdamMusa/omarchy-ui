@@ -13,8 +13,12 @@ SOURCE_ROOT = File.join(ZUI_ROOT, "examples")
 TARGET_ROOT = File.join(REPOSITORY_ROOT, "examples")
 REVISION_FILE = File.join(TARGET_ROOT, "ZUI_SOURCE_REVISION")
 IGNORED_SEGMENTS = %w[dist tmp].freeze
+ZUI_HOST_ONLY_FILES = %w[
+  .DS_Store Gemfile Gemfile.lock config.rb ruby.icns ruby.ico ruby.jpg ruby.png
+].freeze
 ADAPTER_ENTRYPOINT = "main.rb"
 ADAPTER_README = "README.md"
+ADAPTER_RUNTIME_CHECK = "test/runtime_check.rb"
 ADAPTER_FILES = [ADAPTER_ENTRYPOINT, ADAPTER_README].freeze
 
 abort "Zui examples not found at #{SOURCE_ROOT}; set ZUI_SOURCE_DIR" unless File.directory?(SOURCE_ROOT)
@@ -30,6 +34,7 @@ def application_files(root, application)
   Dir.glob("**/*", File::FNM_DOTMATCH, base: base).sort.select do |relative|
     next false if relative == "." || relative == ".."
     next false if relative.split(File::SEPARATOR).any? { |segment| IGNORED_SEGMENTS.include?(segment) }
+    next false if ZUI_HOST_ONLY_FILES.include?(File.basename(relative))
 
     File.file?(File.join(base, relative))
   end
@@ -56,9 +61,23 @@ def adapter_source(source_root, application)
 end
 
 def adapter_readme_source(source_root, application)
-  File.read(File.join(source_root, application, ADAPTER_README))
+  source = File.read(File.join(source_root, application, ADAPTER_README))
       .gsub("../../bin/zui run main.rb", "omarchy_ui run main.rb")
       .gsub("zui run main.rb", "omarchy_ui run main.rb")
+      .sub(/\n## Distribution\n.*\z/m, "")
+  "#{source.rstrip}\n"
+end
+
+def adapter_runtime_check_source(source_root, application)
+  File.read(File.join(source_root, application, ADAPTER_RUNTIME_CHECK))
+      .gsub('require_relative "../app"', 'require_relative "app"')
+end
+
+def adapter_files(source_root, application)
+  files = ADAPTER_FILES.dup
+  runtime_check = File.join(source_root, application, ADAPTER_RUNTIME_CHECK)
+  files << ADAPTER_RUNTIME_CHECK if File.file?(runtime_check)
+  files
 end
 
 def git_revision(root)
@@ -77,8 +96,9 @@ if MODE == "--sync"
   abort "Zui examples have uncommitted changes; commit them before synchronizing" unless dirty.empty?
 
   source_apps.each do |application|
+    application_adapter_files = adapter_files(SOURCE_ROOT, application)
     application_files(SOURCE_ROOT, application).each do |relative|
-      next if ADAPTER_FILES.include?(relative)
+      next if application_adapter_files.include?(relative)
 
       source = File.join(SOURCE_ROOT, application, relative)
       target = File.join(TARGET_ROOT, application, relative)
@@ -94,6 +114,12 @@ if MODE == "--sync"
       File.join(TARGET_ROOT, application, ADAPTER_README),
       adapter_readme_source(SOURCE_ROOT, application)
     )
+    if application_adapter_files.include?(ADAPTER_RUNTIME_CHECK)
+      File.write(
+        File.join(TARGET_ROOT, application, ADAPTER_RUNTIME_CHECK),
+        adapter_runtime_check_source(SOURCE_ROOT, application)
+      )
+    end
   end
 
   File.write(REVISION_FILE, "#{git_revision(ZUI_ROOT)}\n")
@@ -104,10 +130,11 @@ target_apps = applications(TARGET_ROOT)
 errors << "application catalog differs: Zui=#{source_apps.inspect}, Omarchy=#{target_apps.inspect}" unless target_apps == source_apps
 
 source_apps.each do |application|
+  application_adapter_files = adapter_files(SOURCE_ROOT, application)
   source_files = application_files(SOURCE_ROOT, application)
-  shared_files = source_files - ADAPTER_FILES
+  shared_files = source_files - application_adapter_files
   target_files = application_files(TARGET_ROOT, application)
-  expected_files = shared_files + ADAPTER_FILES
+  expected_files = shared_files + application_adapter_files
   unexpected = target_files - expected_files
   missing = expected_files - target_files
   errors << "#{application}: unexpected adapter files: #{unexpected.join(', ')}" unless unexpected.empty?
@@ -126,6 +153,10 @@ source_apps.each do |application|
   errors << "#{application}/#{ADAPTER_ENTRYPOINT} is missing or stale" unless File.file?(adapter) && File.read(adapter) == adapter_source(SOURCE_ROOT, application)
   readme = File.join(TARGET_ROOT, application, ADAPTER_README)
   errors << "#{application}/#{ADAPTER_README} is missing or stale" unless File.file?(readme) && File.read(readme) == adapter_readme_source(SOURCE_ROOT, application)
+  if application_adapter_files.include?(ADAPTER_RUNTIME_CHECK)
+    runtime_check = File.join(TARGET_ROOT, application, ADAPTER_RUNTIME_CHECK)
+    errors << "#{application}/#{ADAPTER_RUNTIME_CHECK} is missing or stale" unless File.file?(runtime_check) && File.read(runtime_check) == adapter_runtime_check_source(SOURCE_ROOT, application)
+  end
 end
 
 expected_revision = git_revision(ZUI_ROOT)

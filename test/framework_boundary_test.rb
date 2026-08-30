@@ -17,7 +17,9 @@ class FrameworkBoundaryTest < Minitest::Test
     dependency = specification.dependencies.find { |candidate| candidate.name == "zui" }
 
     refute_nil dependency
+    assert_equal Gem::Requirement.new("~> 0.0.10"), dependency.requirement
     assert dependency.requirement.satisfied_by?(Gem::Version.new(Zui::VERSION))
+    refute dependency.requirement.satisfied_by?(Gem::Version.new("0.0.9"))
     assert_empty specification.files.grep(%r{\AComponents/})
     assert_empty specification.files.grep(%r{\Alib/omarchy_ui/(?:animation|application|builder|node)\.rb\z})
   end
