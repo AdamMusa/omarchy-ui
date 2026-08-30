@@ -13,6 +13,9 @@ Item {
   property var service: null
   property bool opened: false
   property string surfaceName: "counter"
+  readonly property string layerNamespace: manifest && manifest.id
+    ? String(manifest.id)
+    : "omarchy-ui"
 
   readonly property string rootControlId: service ? service.rootId(surfaceName) : ""
 
@@ -41,7 +44,7 @@ Item {
     anchors { top: true; right: true; bottom: true; left: true }
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "omarchy-ruby-ui-poc"
+    WlrLayershell.namespace: root.layerNamespace
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 

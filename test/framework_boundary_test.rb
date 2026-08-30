@@ -55,6 +55,14 @@ class FrameworkBoundaryTest < Minitest::Test
     assert_match(/nodeIndex = nextIndex\n\s+revision \+= 1\n\s+return true/, service)
   end
 
+  def test_panel_uses_the_plugin_identity_as_its_layer_namespace
+    panel = File.read(File.join(ROOT, "Panel.qml"))
+
+    assert_includes panel, "readonly property string layerNamespace: manifest && manifest.id"
+    assert_includes panel, "WlrLayershell.namespace: root.layerNamespace"
+    refute_includes panel, 'WlrLayershell.namespace: "omarchy-ruby-ui-poc"'
+  end
+
   def test_ruby_api_delegates_to_the_same_zui_core_objects
     assert_same Zui::Application, OmarchyUI::Application
     assert_same Zui::Builder, OmarchyUI::Builder
