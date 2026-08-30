@@ -477,7 +477,7 @@ The x86-64 Linux mruby runtime is produced by a pinned GitHub Actions workflow t
 Verify a published runtime independently:
 
 ```bash
-gh release download runtime-v0.1.0 \
+gh release download runtime-v0.1.1 \
   --repo AdamMusa/omarchy-ui \
   --pattern 'omarchy-ui-runtime*'
 

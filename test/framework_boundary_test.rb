@@ -75,6 +75,8 @@ class FrameworkBoundaryTest < Minitest::Test
 
       assert_equal File.read(File.join(ROOT, "Service.qml")), File.read(File.join(directory, "Service.qml"))
       assert_equal File.read(File.join(Zui::FRAMEWORK_ROOT, "ControlNode.qml")), File.read(File.join(directory, "ControlNode.qml"))
+      assert_equal File.read(File.join(ROOT, "vendor", "runtime", "x86_64-linux", "runtime-provenance.json")),
+                   File.read(File.join(directory, "runtime-provenance.json"))
       assert File.file?(File.join(directory, "Components", "Builtins", "ModelView3d.qml"))
       assert File.file?(File.join(directory, "Controls", "Button.qml"))
       assert File.file?(File.join(directory, "Theme", "Style.qml"))

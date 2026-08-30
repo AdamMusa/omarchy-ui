@@ -48,7 +48,7 @@ temporary build directory), and writes it to `build/runtime/omarchy-ui-runtime`.
 Download the release artifacts and verify both checksum and signed provenance:
 
 ```bash
-gh release download runtime-v0.1.0 \
+gh release download runtime-v0.1.1 \
   --repo AdamMusa/omarchy-ui \
   --pattern 'omarchy-ui-runtime*'
 sha256sum --check omarchy-ui-runtime.sha256

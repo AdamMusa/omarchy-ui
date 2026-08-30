@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "subject": "omarchy-ui-runtime",
+  "sha256": "ccf010017a5f6d2ae06def4357e6bce2b344e6f245f195c5dbee92cd048017b0",
+  "target": "x86_64-linux",
+  "omarchy_ui_repository": "https://github.com/AdamMusa/omarchy-ui",
+  "omarchy_ui_revision": "eec479d6974db46dcc6fc4246219e5e326be8e92",
+  "zui_revision": "74b48f047d5811b53667e5cc0fb7f0bb63548764",
+  "mruby_revision": "831da26b9021de0369d17b71b5667e2941a1a32d",
+  "workflow_run": "https://github.com/AdamMusa/omarchy-ui/actions/runs/33294299488",
+  "attestation": "https://github.com/AdamMusa/omarchy-ui/attestations/43924917"
+}
