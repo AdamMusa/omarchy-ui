@@ -24,10 +24,12 @@ type or report an explicit error. Images are images, Quick 3D models are Quick
 - `Panel.qml` and `BarWidget.qml`, shell-owned plugin surfaces;
 - lifecycle commands for Omarchy validation, activation, and restart.
 
-At launch, bundle, validation, or push time, `OmarchyUI::Runtime` installs the
-versioned QML package from `Zui::Runtime`, removes Zui's ordinary desktop entry
-point, and overlays these four Omarchy host files. The adapter does not copy or
-fork Zui's component implementations in source control.
+At launch, the Omarchy service resolves the exact compatible `zui` Ruby gem and
+loads `ControlNode.qml`, the component catalog, controls, theme, and fonts from
+`Zui::FRAMEWORK_ROOT`. Bundle, validation, and push copy only the five Omarchy
+host files (`App.qml`, `Service.qml`, `Panel.qml`, `BarWidget.qml`, and
+`ZuiRenderer.qml`). They never copy Zui's shared QML package into an application
+or plugin.
 
 This separation lets the same Ruby component tree run through a conventional
 Qt host on Linux/macOS or through the Omarchy/Quickshell host without placing

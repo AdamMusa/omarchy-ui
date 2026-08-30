@@ -20,5 +20,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   spec.bindir = "bin"
   spec.executables = ["omarchy_ui"]
-  spec.add_dependency "zui", "~> 0.0.10"
+  spec.add_dependency "zui", "= 0.0.10"
 end

@@ -6,7 +6,7 @@ require_relative "../lib/omarchy_ui"
 
 class FrameworkBoundaryTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
-  ADAPTER_QML = %w[App.qml BarWidget.qml Panel.qml Service.qml].freeze
+  ADAPTER_QML = %w[App.qml BarWidget.qml Panel.qml Service.qml ZuiRenderer.qml].freeze
   REMOVED_CORE_FILES = %w[
     animation application builder command component_registry components node protocol
     scheduler source_bundle state_store value
@@ -17,9 +17,10 @@ class FrameworkBoundaryTest < Minitest::Test
     dependency = specification.dependencies.find { |candidate| candidate.name == "zui" }
 
     refute_nil dependency
-    assert_equal Gem::Requirement.new("~> 0.0.10"), dependency.requirement
+    assert_equal Gem::Requirement.new("= 0.0.10"), dependency.requirement
     assert dependency.requirement.satisfied_by?(Gem::Version.new(Zui::VERSION))
     refute dependency.requirement.satisfied_by?(Gem::Version.new("0.0.9"))
+    refute dependency.requirement.satisfied_by?(Gem::Version.new("0.0.11"))
     assert_empty specification.files.grep(%r{\AComponents/})
     assert_empty specification.files.grep(%r{\Alib/omarchy_ui/(?:animation|application|builder|node)\.rb\z})
   end
@@ -80,19 +81,29 @@ class FrameworkBoundaryTest < Minitest::Test
     assert_equal ADAPTER_QML, Dir[File.join(ROOT, "*.qml")].map { |path| File.basename(path) }.sort
   end
 
-  def test_adapter_runtime_installs_zui_catalog_and_omarchy_host
+  def test_adapter_runtime_installs_only_the_omarchy_host
     Dir.mktmpdir do |directory|
       OmarchyUI::Runtime.install_package(directory)
 
       assert_equal File.read(File.join(ROOT, "Service.qml")), File.read(File.join(directory, "Service.qml"))
-      assert_equal File.read(File.join(Zui::FRAMEWORK_ROOT, "ControlNode.qml")), File.read(File.join(directory, "ControlNode.qml"))
+      assert_equal File.read(File.join(ROOT, "ZuiRenderer.qml")), File.read(File.join(directory, "ZuiRenderer.qml"))
       assert_equal File.read(File.join(ROOT, "vendor", "runtime", "x86_64-linux", "runtime-provenance.json")),
                    File.read(File.join(directory, "runtime-provenance.json"))
-      assert File.file?(File.join(directory, "Components", "Builtins", "ModelView3d.qml"))
-      assert File.file?(File.join(directory, "Controls", "Button.qml"))
-      assert File.file?(File.join(directory, "Theme", "Style.qml"))
-      refute File.exist?(File.join(directory, "Desktop.qml"))
+      OmarchyUI::Runtime::ZUI_GENERATED_ENTRIES.each do |entry|
+        refute File.exist?(File.join(directory, entry)), "#{entry} must be resolved from the Zui gem"
+      end
     end
+  end
+
+  def test_adapter_locates_the_exact_zui_gem_at_runtime
+    service = File.read(File.join(ROOT, "Service.qml"))
+    renderer = File.read(File.join(ROOT, "ZuiRenderer.qml"))
+
+    assert_includes service, 'gem "zui", "= '
+    assert_includes service, "Zui::FRAMEWORK_ROOT"
+    assert_includes service, 'zuiRoot + "/Components/Builtins/"'
+    assert_includes renderer, 'bridge.zuiRoot + "/ControlNode.qml"'
+    refute_includes service, 'pluginDir + "/Components/Builtins/"'
   end
 
   def test_application_code_is_not_present_in_adapter_sources

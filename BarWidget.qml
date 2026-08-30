@@ -1,7 +1,6 @@
 import QtQuick
 import qs.Commons
 import qs.Ui
-import "Theme" as ZuiTheme
 
 BarWidget {
   id: root
@@ -17,10 +16,10 @@ BarWidget {
   implicitWidth: Math.max(Style.bar.iconSlot, renderer.implicitWidth + Style.space(12))
   implicitHeight: barSize
 
-  ControlNode {
+  ZuiRenderer {
     id: renderer
     anchors.centerIn: parent
-    visible: ZuiTheme.Fonts.ready && root.rubyService && root.rootControlId !== ""
+    visible: renderReady
     bridge: root.rubyService
     surfaceName: root.surfaceName
     controlId: root.rootControlId

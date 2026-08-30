@@ -57,9 +57,10 @@ class CLITest < Minitest::Test
         assert_equal 0, status
         assert File.file?(File.join(destination, "main.rb"))
         assert File.file?(File.join(destination, "Service.qml"))
-        assert File.file?(File.join(destination, "Components", "Builtins", "Button.qml"))
-        assert File.file?(File.join(destination, "Theme", "Color.qml"))
-        refute File.exist?(File.join(destination, "Desktop.qml"))
+        assert File.file?(File.join(destination, "ZuiRenderer.qml"))
+        OmarchyUI::Runtime::ZUI_GENERATED_ENTRIES.each do |entry|
+          refute File.exist?(File.join(destination, entry)), "#{entry} must not be copied into a plugin"
+        end
         assert File.executable?(File.join(destination, "omarchy-ui-runtime"))
         refute File.exist?(File.join(destination, "vendor")), "plugins use the shared native runtime"
         refute File.exist?(File.join(destination, ".git"))
@@ -202,8 +203,10 @@ class CLITest < Minitest::Test
         bundle = File.join(source, "dist", "sample-plugin")
         assert_equal 0, status
         assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
-        assert_equal File.read(File.join(Zui::FRAMEWORK_ROOT, "ControlNode.qml")), File.read(File.join(bundle, "ControlNode.qml"))
-        assert_equal File.read(File.join(Zui::FRAMEWORK_ROOT, "Components", "Builtins", "Button.qml")), File.read(File.join(bundle, "Components", "Builtins", "Button.qml"))
+        assert File.file?(File.join(bundle, "ZuiRenderer.qml"))
+        OmarchyUI::Runtime::ZUI_GENERATED_ENTRIES.each do |entry|
+          refute File.exist?(File.join(bundle, entry)), "#{entry} must come from the Zui gem"
+        end
         refute File.exist?(File.join(bundle, "run"))
         refute File.exist?(File.join(bundle, "Commons"))
       end

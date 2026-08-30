@@ -7,13 +7,13 @@ module OmarchyUI
     module_function
 
     BUNDLED = File.expand_path("../../vendor/runtime/x86_64-linux/omarchy-ui-runtime", __dir__)
-    ADAPTER_FILES = %w[Service.qml Panel.qml BarWidget.qml App.qml].freeze
-    CORE_FILES = %w[ControlNode.qml Components Controls Theme Fonts].freeze
-    FILES = (ADAPTER_FILES + ["ControlNode.qml"]).freeze
+    ADAPTER_FILES = %w[Service.qml Panel.qml BarWidget.qml App.qml ZuiRenderer.qml].freeze
+    ZUI_GENERATED_ENTRIES = %w[Desktop.qml ControlNode.qml Components Controls Theme Fonts].freeze
+    FILES = ADAPTER_FILES.freeze
     AUDIT_FILES = %w[
       omarchy-ui-runtime.sha256 runtime-provenance.json RUNTIME_PROVENANCE.md
     ].freeze
-    GENERATED_ENTRIES = (ADAPTER_FILES + CORE_FILES + %w[Desktop.qml omarchy-ui-runtime]).freeze
+    GENERATED_ENTRIES = (ADAPTER_FILES + ZUI_GENERATED_ENTRIES + %w[omarchy-ui-runtime]).freeze
 
     def executable
       override = ENV["OMARCHY_UI_RUNTIME"]
@@ -36,8 +36,11 @@ module OmarchyUI
     end
 
     def install_package(path, framework_root: FRAMEWORK_ROOT)
-      Zui::Runtime.install_qml(path)
-      FileUtils.rm_f(File.join(path, "Desktop.qml"))
+      FileUtils.mkdir_p(path)
+      ZUI_GENERATED_ENTRIES.each do |entry|
+        generated = File.join(path, entry)
+        File.directory?(generated) ? FileUtils.remove_entry(generated) : FileUtils.rm_f(generated)
+      end
       ADAPTER_FILES.each do |file|
         FileUtils.cp(File.join(framework_root, file), File.join(path, file))
       end
@@ -55,9 +58,7 @@ module OmarchyUI
     end
 
     def install_components(path, **)
-      Zui::Runtime.install_qml(path)
-      FileUtils.rm_f(File.join(path, "Desktop.qml"))
-      path
+      install_package(path)
     end
   end
 end
