@@ -17,4 +17,4 @@ The workflow checks out every external input at a full commit digest, performs t
 builds, requires byte-identical executables, and signs the resulting SHA through GitHub's
 artifact attestation service. Machine-readable provenance is included in
 `runtime-provenance.json`; independent verification instructions are in
-[`docs/runtime-build.md`](../../../docs/runtime-build.md).
+the [runtime build documentation](https://github.com/AdamMusa/omarchy-ui/blob/main/docs/runtime-build.md).
