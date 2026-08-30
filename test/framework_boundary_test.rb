@@ -36,6 +36,7 @@ class FrameworkBoundaryTest < Minitest::Test
     end
     assert_includes workflow, "Build twice and require byte-identical outputs"
     assert_includes workflow, "cmp \"$RUNNER_TEMP/omarchy-ui-runtime.first\" build/runtime/omarchy-ui-runtime"
+    assert_includes workflow, "runtime_http_audit_check.rb"
     assert_includes workflow, "actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6"
     assert_includes workflow, "subject-path: dist/omarchy-ui-runtime"
     assert_includes File.read(File.join(ROOT, "scripts", "build-mruby-runtime.sh")),

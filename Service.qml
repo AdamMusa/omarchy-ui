@@ -216,7 +216,7 @@ Item {
         var batchNode = nodeIndex[batchPatch.id]
         if (!batchNode || !allowedProperties[batchNode.type][batchPatch.property]
             || !boundedValue(batchPatch.value, 0))
-          return reject("patch batch target rejected")
+          return reject("patch batch target rejected: " + String(batchPatch.id) + "/" + String(batchPatch.property))
         if (batchPatch.animation !== undefined && !validAnimation(batchPatch.animation))
           return reject("patch batch animation rejected")
       }

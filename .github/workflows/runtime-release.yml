@@ -50,6 +50,12 @@ jobs:
           install -D -m755 build/runtime/omarchy-ui-runtime dist/omarchy-ui-runtime
           (cd dist && sha256sum omarchy-ui-runtime > omarchy-ui-runtime.sha256)
           dist/omarchy-ui-runtime -e 'puts "runtime smoke: #{OmarchyUI::VERSION}, zui #{Zui::VERSION}, mruby #{MRUBY_VERSION}"'
+          audit_fixture="$RUNNER_TEMP/http-audit-fixture"
+          audit_home="$RUNNER_TEMP/http-audit-home"
+          mkdir -p "$audit_fixture" "$audit_home"
+          printf '#!/bin/sh\nprintf "fixture response\\n"\n' > "$audit_fixture/curl"
+          chmod 0755 "$audit_fixture/curl"
+          dist/omarchy-ui-runtime test/runtime_http_audit_check.rb "$audit_fixture/curl" "$audit_fixture" "$audit_home"
 
       - name: Create signed build provenance
         id: attest

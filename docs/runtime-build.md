@@ -48,7 +48,7 @@ temporary build directory), and writes it to `build/runtime/omarchy-ui-runtime`.
 Download the release artifacts and verify both checksum and signed provenance:
 
 ```bash
-gh release download runtime-v0.1.1 \
+gh release download runtime-v0.1.4 \
   --repo AdamMusa/omarchy-ui \
   --pattern 'omarchy-ui-runtime*'
 sha256sum --check omarchy-ui-runtime.sha256
@@ -59,3 +59,16 @@ gh attestation verify omarchy-ui-runtime \
 The attestation verification result identifies the exact repository, source
 revision, release workflow, and digest used by the remote build. The release
 also includes `runtime-provenance.json` with immutable input and workflow links.
+
+## Local HTTP audit boundary
+
+The mruby host records bounded audit metadata when a plugin uses `curl` or
+`wget` through `Zui::Command`. It stores only the inferred method, a redacted
+URL without credentials/query/fragment, process exit result, response byte
+count, duration, and timestamp. It never stores request headers, request data,
+cookies, authorization values, or response bodies. Logs are local, scoped by a
+validated manifest ID, refuse symlink targets, and rotate at 128 KiB under
+`~/.local/state/omarchy-ui-audit/`.
+
+This audit is an observation channel for tools such as Plugin Pulse. It does
+not decrypt arbitrary HTTPS traffic and it is not a malware-free verdict.

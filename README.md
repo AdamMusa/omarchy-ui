@@ -477,7 +477,7 @@ The x86-64 Linux mruby runtime is produced by a pinned GitHub Actions workflow t
 Verify a published runtime independently:
 
 ```bash
-gh release download runtime-v0.1.1 \
+gh release download runtime-v0.1.4 \
   --repo AdamMusa/omarchy-ui \
   --pattern 'omarchy-ui-runtime*'
 
@@ -487,6 +487,12 @@ gh attestation verify omarchy-ui-runtime --repo AdamMusa/omarchy-ui
 
 See [runtime build and verification](docs/runtime-build.md) for the pinned source revisions,
 reproduction steps, and provenance contract.
+
+The mruby host records a bounded local audit event when an Omarchy UI plugin launches `curl` or
+`wget` through `Zui::Command`. Each event contains the method, a URL with credentials, query, and
+fragment removed, the process exit result, response byte count, and duration. Headers and response
+bodies are never recorded. Per-plugin logs rotate at 128 KiB under
+`~/.local/state/omarchy-ui-audit/`; this is local observability for Plugin Pulse, not telemetry.
 
 ## Troubleshooting
 
