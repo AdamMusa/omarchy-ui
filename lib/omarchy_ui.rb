@@ -11,7 +11,7 @@ rescue LoadError
 end
 
 module OmarchyUI
-  VERSION = "0.0.6"
+  VERSION = "0.0.7"
   ZUI_VERSION = Zui::VERSION
   FRAMEWORK_ROOT = File.expand_path("..", __dir__)
 

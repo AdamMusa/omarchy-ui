@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Omarchy UI 0.0.6" src="https://img.shields.io/badge/Omarchy_UI-0.0.6-b7ff5a?style=flat-square&labelColor=111711">
+  <img alt="Omarchy UI 0.0.7" src="https://img.shields.io/badge/Omarchy_UI-0.0.7-b7ff5a?style=flat-square&labelColor=111711">
   <img alt="Ruby 3.1 or newer" src="https://img.shields.io/badge/Ruby-3.1%2B-cc342d?style=flat-square&logo=ruby&logoColor=white">
   <img alt="Zui 0.0.10" src="https://img.shields.io/badge/Zui-0.0.10-7ee14b?style=flat-square&labelColor=111711">
   <img alt="241 components" src="https://img.shields.io/badge/components-241-75d943?style=flat-square&labelColor=111711">
@@ -63,11 +63,10 @@ and the Omarchy adapter.
 - Ruby 3.1 or newer while installing the gem and developing applications;
 - optional Qt modules for components that use features such as Quick 3D or Multimedia.
 
-The finished Omarchy bundle includes the Omarchy adapter and mruby executable. Shared renderers,
-controls, theme, and fonts stay in the compatible Zui gem instead of being duplicated into every
-plugin. The destination therefore needs Ruby and `omarchy-ui` installed. A component fails with an
-explicit error when its gem, required Qt module, or resource is unavailable; Omarchy UI never
-substitutes a different component.
+The finished Omarchy bundle includes the Omarchy adapter, mruby executable, and a Zui-generated QML
+runtime tree-shaken to the components referenced by that application. The destination does not need
+Ruby or framework gems. A component fails with an explicit error when its required Qt module or
+resource is unavailable; Omarchy UI never substitutes a different component.
 
 ## Quick start
 
@@ -103,7 +102,7 @@ counter/
 omarchy_ui run main.rb
 ```
 
-`run` bundles the project's Ruby entry point, prepares the Omarchy host, resolves the exact Zui gem,
+`run` bundles the project's Ruby entry point, asks Zui to tree-shake the QML runtime, prepares the Omarchy host,
 then launches it through Quickshell.
 
 ## Application model
@@ -335,7 +334,7 @@ omarchy_ui <command> [arguments]
 | --- | --- | --- |
 | `omarchy_ui new NAME` | One application name | Creates a new application directory using a URL-safe form of the name |
 | `omarchy_ui run FILE` | One Ruby entry point | Runs an application through the Omarchy/Quickshell host |
-| `omarchy_ui bundle [DIRECTORY]` | Zero or one project directory | Creates `dist/<project-name>` with the application, Omarchy adapter, and runtime; shared UI comes from Zui |
+| `omarchy_ui bundle [DIRECTORY]` | Zero or one project directory | Creates `dist/<project-name>` with the application, Omarchy adapter, runtime, and tree-shaken Zui QML |
 | `omarchy_ui validate [DIRECTORY]` | Zero or one plugin directory | Stages the complete plugin and delegates validation to `omarchy plugin validate` |
 | `omarchy_ui push [DIRECTORY]` | Optional `--no-enable` and `--no-restart` | Atomically installs and activates a validated plugin |
 | `omarchy_ui version` | None | Prints the installed Omarchy UI version |
@@ -362,7 +361,10 @@ dist/my-application/
 ├── Service.qml                 # process and surface bridge
 ├── Panel.qml                   # shell panel adapter
 ├── BarWidget.qml               # shell bar adapter
-├── ZuiRenderer.qml             # resolves Zui's shared protocol renderer
+├── ControlNode.qml             # generated Zui protocol renderer
+├── Components/Builtins/        # only component adapters selected by Zui
+├── Controls/ Theme/ Fonts/     # generated renderer dependencies
+├── zui-tree-shake.json         # auditable selected-component report
 ├── Commons@ Ui@                # links to Omarchy's shell modules
 ├── omarchy-ui-runtime          # embedded mruby executable
 ├── omarchy-ui-runtime.sha256
@@ -371,10 +373,9 @@ dist/my-application/
 ```
 
 Plugin bundles use the same runtime package and are validated against their manifest before the
-bundle command succeeds. Generated packages exclude `.git`, previous `dist` output, stale
-adapter/runtime files, and every Zui-owned QML directory. Install `omarchy-ui` on the destination so
-RubyGems supplies the exact Zui 0.0.10 catalog once for every plugin. The exact pin intentionally
-matches the Zui core embedded in the deterministic mruby runtime.
+bundle command succeeds. Generated packages exclude `.git`, previous `dist` output, and stale
+adapter/runtime files before regenerating the minimal QML package. Omarchy UI pins Zui 0.0.10 so the
+tree-shaken QML exactly matches the Zui core embedded in the deterministic mruby runtime.
 
 ## Component catalog
 
@@ -461,10 +462,10 @@ The dependency direction is deliberate:
   integration, plugin lifecycle commands, and Omarchy packaging.
 - **Applications own** Ruby source, assets, state, behavior, and reusable UI modules.
 
-At runtime, the adapter locates the compatible Zui gem and loads its protocol renderer, components,
-controls, theme, and fonts directly from `Zui::FRAMEWORK_ROOT`. Bundle, validation, and push install
-only the Omarchy host files and never copy Zui component implementations into an application or
-plugin. Read the full [QML ownership and adapter boundary](docs/qml-support.md).
+At bundle, validation, and push time, Omarchy UI asks Zui to analyze the bundled Ruby syntax and
+generate only the required component adapters plus their renderer dependencies. The four Omarchy
+host files then replace Zui's generic desktop host. Read the full [QML ownership and adapter
+boundary](docs/qml-support.md).
 
 ## Runtime integrity
 

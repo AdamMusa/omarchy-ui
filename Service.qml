@@ -14,11 +14,6 @@ Item {
   readonly property string rubyProgram: pluginDir + "/main.rb"
   property string program: ""
   readonly property string effectiveRubyProgram: program !== "" ? program : rubyProgram
-  readonly property string requiredZuiVersion: "0.0.10"
-  property string zuiRoot: ""
-  property string zuiVersion: ""
-  readonly property bool zuiReady: zuiRoot !== ""
-
   property bool ready: false
   property bool stopping: false
   property string lastError: ""
@@ -418,7 +413,7 @@ Item {
 
   function componentSource(typeName) {
     var definition = componentDefinitions[String(typeName || "")]
-    return definition && zuiReady ? zuiRoot + "/Components/Builtins/" + definition.qml : ""
+    return definition ? pluginDir + "/Components/Builtins/" + definition.qml : ""
   }
 
   function componentDefinition(typeName) {
@@ -446,7 +441,7 @@ Item {
   }
 
   function startRuby() {
-    if (stopping || pluginDir === "" || !zuiReady || rubyProcess.running) return
+    if (stopping || pluginDir === "" || rubyProcess.running) return
     var configuredRuntime = String(Quickshell.env("OMARCHY_UI_RUNTIME") || "")
     rubyProcess.command = [
       configuredRuntime !== "" ? configuredRuntime : pluginDir + "/omarchy-ui-runtime",
@@ -456,66 +451,12 @@ Item {
     rubyProcess.running = true
   }
 
-  function locateZui() {
-    if (stopping || pluginDir === "" || zuiReady || zuiLocator.running) return
-    zuiLocator.command = [
-      "ruby", "-e",
-      'require "json"; gem "zui", "= ' + requiredZuiVersion
-        + '"; require "zui"; STDOUT.write(JSON.generate({root: Zui::FRAMEWORK_ROOT, version: Zui::VERSION}))'
-    ]
-    zuiLocator.running = true
-  }
-
-  onPluginDirChanged: {
-    zuiRoot = ""
-    zuiVersion = ""
-    Qt.callLater(locateZui)
-  }
-
-  Component.onCompleted: Qt.callLater(locateZui)
+  onPluginDirChanged: Qt.callLater(startRuby)
 
   Component.onDestruction: {
     stopping = true
     restartTimer.stop()
-    if (zuiLocator.running) zuiLocator.running = false
     if (rubyProcess.running) rubyProcess.running = false
-  }
-
-  Process {
-    id: zuiLocator
-
-    stdout: StdioCollector {
-      id: zuiLocatorOutput
-      waitForEnd: true
-    }
-
-    stderr: StdioCollector {
-      id: zuiLocatorError
-      waitForEnd: true
-    }
-
-    onExited: function(exitCode) {
-      if (root.stopping || root.pluginDir === "") return
-      var detail = String(zuiLocatorError.text || "").trim()
-      if (exitCode !== 0) {
-        root.lastError = "Zui " + root.requiredZuiVersion
-          + " is required from the omarchy-ui gem"
-          + (detail !== "" ? ": " + detail.slice(0, 240) : "")
-        return
-      }
-      try {
-        var located = JSON.parse(String(zuiLocatorOutput.text || ""))
-        if (!located || typeof located.root !== "string" || located.root[0] !== "/"
-            || String(located.version || "") !== root.requiredZuiVersion)
-          throw new Error("invalid Zui gem location")
-        root.zuiRoot = String(located.root)
-        root.zuiVersion = String(located.version)
-        root.lastError = ""
-        root.startRuby()
-      } catch (error) {
-        root.lastError = "Could not locate Zui " + root.requiredZuiVersion + " from RubyGems"
-      }
-    }
   }
 
   Process {

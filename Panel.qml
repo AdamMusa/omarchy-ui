@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.Commons
 import qs.Ui as OmarchyUi
+import "Theme" as ZuiTheme
 
 Item {
   id: root
@@ -77,10 +78,10 @@ Item {
           onClicked: {}
         }
 
-        ZuiRenderer {
+        ControlNode {
           id: renderer
           anchors.centerIn: parent
-          visible: renderReady
+          visible: ZuiTheme.Fonts.ready && root.service && root.rootControlId !== ""
           bridge: root.service
           surfaceName: root.surfaceName
           controlId: root.rootControlId
@@ -97,7 +98,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.service && root.service.lastError !== ""
               ? root.service.lastError
-              : "Starting Ruby UI with Zui…"
+              : (ZuiTheme.Fonts.failed ? "Omarchy UI could not load Zui's bundled fonts" : "Starting Ruby UI…")
             color: Color.foreground
             font.family: Style.font.family
             font.pixelSize: Style.font.body
