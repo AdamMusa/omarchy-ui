@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Omarchy UI 0.0.9" src="https://img.shields.io/badge/Omarchy_UI-0.0.9-b7ff5a?style=flat-square&labelColor=111711">
+  <img alt="Omarchy UI 0.0.8" src="https://img.shields.io/badge/Omarchy_UI-0.0.8-b7ff5a?style=flat-square&labelColor=111711">
   <img alt="Ruby 3.1 or newer" src="https://img.shields.io/badge/Ruby-3.1%2B-cc342d?style=flat-square&logo=ruby&logoColor=white">
   <img alt="Zui 0.0.10" src="https://img.shields.io/badge/Zui-0.0.10-7ee14b?style=flat-square&labelColor=111711">
   <img alt="241 components" src="https://img.shields.io/badge/components-241-75d943?style=flat-square&labelColor=111711">
