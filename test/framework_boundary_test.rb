@@ -46,6 +46,8 @@ class FrameworkBoundaryTest < Minitest::Test
     service = File.read(File.join(ROOT, "Service.qml"))
 
     assert_includes service, 'message.op === "batch"'
+    assert_includes service, 'message.type === "component_catalog"'
+    assert_includes service, "installComponentCatalog(message)"
     assert_includes service, "message.patches.length > maxCollectionItems"
     assert_includes service, 'batchPatch.op !== "set"'
     assert_includes service, "if (!applyPatch({"

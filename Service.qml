@@ -106,11 +106,16 @@ Item {
     return true
   }
 
-  function validateComponents(components) {
+  function validateComponents(components, merge) {
     if (!plainObject(components)) return false
     var names = Object.keys(components)
     if (names.length === 0 || names.length > 256) return false
     var validated = ({})
+    if (merge === true) {
+      for (var existingName in componentDefinitions)
+        validated[existingName] = componentDefinitions[existingName]
+      if (Object.keys(validated).length + names.length > 256) return false
+    }
     for (var i = 0; i < names.length; i++) {
       var name = names[i]
       var definition = components[name]
@@ -142,7 +147,11 @@ Item {
     if (!plainObject(message.surfaces)) return reject("render surfaces must be an object")
     if (message.surface_options !== undefined && !validateSurfaceOptions(message.surface_options))
       return reject("invalid surface options")
-    if (!validateComponents(message.components)) return reject("invalid component registry")
+    if (message.components !== undefined) {
+      if (!validateComponents(message.components, false)) return reject("invalid component registry")
+    } else if (Object.keys(componentDefinitions).length === 0) {
+      return reject("missing component registry")
+    }
     var dynamicTypes = ({})
     var dynamicProperties = ({})
     for (var componentName in componentDefinitions) {
@@ -166,6 +175,12 @@ Item {
     nodeIndex = nextIndex
     revision += 1
     lastError = ""
+  }
+
+  function installComponentCatalog(message) {
+    if (message.reset === true) componentDefinitions = ({})
+    if (!validateComponents(message.components, true)) return reject("invalid component catalog chunk")
+    return true
   }
 
   function validateSurfaceOptions(options) {
@@ -345,6 +360,8 @@ Item {
       ready = true
       restartDelayMs = 500
       lastError = ""
+    } else if (message.type === "component_catalog") {
+      installComponentCatalog(message)
     } else if (message.type === "render") {
       installRender(message)
     } else if (message.type === "patch") {

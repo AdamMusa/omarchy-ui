@@ -23,5 +23,11 @@ raise "application module was not adapted" unless OmarchyUI.run(SharedZuiApplica
 catalog = JSON.generate(Zui::DEFAULT_COMPONENTS.protocol_schema)
 raise "component catalog exceeds Quickshell transport budget" unless catalog.bytesize < 131_072
 raise "identity property maps were not compacted" if Zui::DEFAULT_COMPONENTS.fetch(:button).to_h.key?("property_map")
+chunks = OmarchyUI.component_protocol_chunks(Zui::DEFAULT_COMPONENTS)
+raise "component catalog was not chunked" unless chunks.length > 1
+chunks.each_with_index do |components, index|
+  envelope = { "v" => 1, "type" => "component_catalog", "reset" => index.zero?, "components" => components }
+  raise "component catalog chunk exceeds line budget" unless JSON.generate(envelope).bytesize < 65_536
+end
 
 puts "omarchy-ui-runtime adapter: OK"

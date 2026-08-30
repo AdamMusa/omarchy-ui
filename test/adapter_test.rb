@@ -74,5 +74,13 @@ class AdapterTest < Minitest::Test
     assert_equal({ "value" => "model_data" }, mapped.fetch("property_map"))
     assert_equal({ "change" => "changed" }, mapped.fetch("event_map"))
     assert_operator JSON.generate(OmarchyUI::DEFAULT_COMPONENTS.protocol_schema).bytesize, :<, 131_072
+    chunks = OmarchyUI.component_protocol_chunks(OmarchyUI::DEFAULT_COMPONENTS)
+    assert_operator chunks.length, :>, 1
+    chunks.each_with_index do |components, index|
+      envelope = { "v" => 1, "type" => "component_catalog", "reset" => index.zero?, "components" => components }
+      assert_operator JSON.generate(envelope).bytesize, :<, 65_536
+    end
+    assert_equal OmarchyUI::DEFAULT_COMPONENTS.protocol_schema.keys.sort,
+                 chunks.flat_map(&:keys).sort
   end
 end

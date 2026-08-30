@@ -48,6 +48,20 @@ module OmarchyUI
     schema
   end
 
+  def self.component_protocol_chunks(registry, chunk_size: 24)
+    chunks = []
+    chunk = {}
+    registry.protocol_schema.each do |name, definition|
+      chunk[name] = definition
+      if chunk.length >= chunk_size
+        chunks << chunk
+        chunk = {}
+      end
+    end
+    chunks << chunk unless chunk.empty?
+    chunks
+  end
+
   class SourceBundle < Zui::SourceBundle
     def initialize(entrypoint, root: File.dirname(entrypoint))
       super(entrypoint, root:, embedded_frameworks: %w[zui omarchy_ui])
@@ -89,6 +103,26 @@ end
 module Zui
   class Component
     def to_h = OmarchyUI.component_protocol_schema(self)
+  end
+
+  class Application
+    def start(output: $stdout, error: $stderr)
+      @output = output
+      @error = error
+      @output.sync = true if @output.respond_to?(:sync=)
+      @error.sync = true if @error.respond_to?(:sync=)
+      @running = true
+      pid = Object.const_defined?(:Process) && Process.respond_to?(:pid) ? Process.pid : 0
+      emit("v" => PROTOCOL_VERSION, "type" => "ready", "pid" => pid, "surfaces" => @surfaces.keys)
+      OmarchyUI.component_protocol_chunks(@components).each_with_index do |components, index|
+        emit("v" => PROTOCOL_VERSION, "type" => "component_catalog", "reset" => index.zero?,
+             "components" => components)
+      end
+      emit("v" => PROTOCOL_VERSION, "type" => "render", "surfaces" => tree,
+           "surface_options" => @surface_options)
+      @scheduler.start
+      self
+    end
   end
 end
 

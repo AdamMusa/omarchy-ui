@@ -100,7 +100,10 @@ class CLITest < Minitest::Test
         RbConfig.ruby, "-I", File.join(ROOT, "lib"), File.join(project, "main.rb")
       )
       assert status.success?, stderr
-      assert_equal %w[ready render], stdout.lines.map { |line| JSON.parse(line).fetch("type") }
+      message_types = stdout.lines.map { |line| JSON.parse(line).fetch("type") }
+      assert_equal "ready", message_types.first
+      assert_equal "render", message_types.last
+      assert_includes message_types, "component_catalog"
     end
   end
 
