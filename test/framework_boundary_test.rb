@@ -96,14 +96,19 @@ class FrameworkBoundaryTest < Minitest::Test
       OmarchyUI::Runtime.install_package(directory)
 
       assert_equal File.read(File.join(ROOT, "Service.qml")), File.read(File.join(directory, "Service.qml"))
-      assert_equal File.read(File.join(Zui::FRAMEWORK_ROOT, "ControlNode.qml")),
-                   File.read(File.join(directory, "ControlNode.qml"))
+      installed_control_node = File.read(File.join(directory, "ControlNode.qml"))
+      assert_includes installed_control_node, '"desktop_stage", "positioned", "text"'
+      assert_includes installed_control_node, '"desktop_stage", "positioned", "row"'
+      assert_includes installed_control_node,
+                      '"file://" + bridge.projectDir + "/" + source'
       assert_equal File.read(File.join(ROOT, "vendor", "runtime", "x86_64-linux", "runtime-provenance.json")),
                    File.read(File.join(directory, "runtime-provenance.json"))
       assert File.file?(File.join(directory, "Components", "Builtins", "Container.qml"))
       assert File.file?(File.join(directory, "Components", "Builtins", "Column.qml"))
       assert File.file?(File.join(directory, "Components", "Builtins", "Text.qml"))
       assert File.file?(File.join(directory, "Components", "Builtins", "Button.qml"))
+      assert File.file?(File.join(directory, "Components", "Builtins", "DesktopStage.qml"))
+      assert File.file?(File.join(directory, "Components", "Builtins", "Positioned.qml"))
       refute File.exist?(File.join(directory, "Components", "Builtins", "ModelView3d.qml"))
       refute File.exist?(File.join(directory, "Desktop.qml"))
       report = JSON.parse(File.read(File.join(directory, OmarchyUI::Runtime::TREE_SHAKE_REPORT)))
@@ -111,6 +116,14 @@ class FrameworkBoundaryTest < Minitest::Test
       assert_includes report.fetch("components"), "button"
       assert_operator report.fetch("saved_bytes"), :>, 0
     end
+  end
+
+  def test_service_keeps_the_desktop_surface_in_the_shell_process
+    service = File.read(File.join(ROOT, "Service.qml"))
+
+    assert_includes service, 'root.rootId("desktop")'
+    assert_includes service, 'surfaceName: "desktop"'
+    assert_includes service, "ControlNode {"
   end
 
   def test_adapter_uses_the_generated_zui_package_at_runtime

@@ -499,4 +499,15 @@ Item {
     repeat: false
     onTriggered: root.startRuby()
   }
+
+  // A desktop surface is rendered by the same long-lived service that owns
+  // the Ruby runtime. Its DesktopStage adapter creates the layer-shell window;
+  // plugins keep all scene structure, state, and interaction in Ruby.
+  ControlNode {
+    id: desktopRenderer
+    visible: root.ready && root.rootId("desktop") !== ""
+    bridge: root
+    surfaceName: "desktop"
+    controlId: root.rootId(surfaceName)
+  }
 }

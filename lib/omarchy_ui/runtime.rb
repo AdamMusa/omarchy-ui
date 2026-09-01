@@ -12,6 +12,8 @@ module OmarchyUI
     ADAPTER_FILES = %w[Service.qml Panel.qml BarWidget.qml App.qml].freeze
     ZUI_GENERATED_ENTRIES = %w[Desktop.qml ControlNode.qml Components Controls Theme Fonts].freeze
     TREE_SHAKE_REPORT = "zui-tree-shake.json"
+    SHELL_COMPONENT_ROOT = File.expand_path("../../qml", __dir__)
+    SHELL_COMPONENTS = %w[DesktopStage.qml Positioned.qml].freeze
     FILES = (ADAPTER_FILES + %w[ControlNode.qml]).freeze
     AUDIT_FILES = %w[
       omarchy-ui-runtime.sha256 runtime-provenance.json RUNTIME_PROVENANCE.md
@@ -88,11 +90,36 @@ module OmarchyUI
         FileUtils.mkdir_p(native)
         Zui::Runtime.install_qml(qml)
         report = Zui::TreeShaker.new(project:, framework: qml, native:).shake!
+        install_shell_components(qml)
         FileUtils.rm_f([File.join(qml, "Desktop.qml"), File.join(qml, "Service.qml")])
         entries = Dir.children(qml).map { |entry| File.join(qml, entry) }
         FileUtils.cp_r(entries, destination) unless entries.empty?
         return report
       end
+    end
+
+    def install_shell_components(qml)
+      builtins = File.join(qml, "Components", "Builtins")
+      FileUtils.mkdir_p(builtins)
+      SHELL_COMPONENTS.each do |file|
+        FileUtils.cp(File.join(SHELL_COMPONENT_ROOT, file), File.join(builtins, file))
+      end
+
+      control_node = File.join(qml, "ControlNode.qml")
+      source = File.read(control_node)
+      source = source.sub(
+        'readonly property bool builtIn: ["text"',
+        'readonly property bool builtIn: ["desktop_stage", "positioned", "text"'
+      )
+      source = source.sub(
+        'readonly property bool structuralContainer: ["row"',
+        'readonly property bool structuralContainer: ["desktop_stage", "positioned", "row"'
+      )
+      source = source.sub(
+        'return bridge && bridge.projectDir ? bridge.projectDir + "/" + source : Qt.resolvedUrl(source)',
+        'return bridge && bridge.projectDir ? "file://" + bridge.projectDir + "/" + source : Qt.resolvedUrl(source)'
+      )
+      File.write(control_node, source)
     end
   end
 end
