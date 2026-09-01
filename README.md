@@ -294,6 +294,19 @@ omarchy_ui push
 `validate` generates and checks the plugin without modifying the Ruby project. `push` builds,
 validates, installs, enables, and reloads it for development.
 
+To publish, target a separate public distribution repository. Omarchy UI rebuilds the thin package,
+enforces the marketplace contract, pushes it, and prints the complete submission for review:
+
+```bash
+omarchy_ui publish --repo YOUR_GITHUB_NAME/PLUGIN_REPOSITORY \
+  --category System --tags system,quickshell --create
+```
+
+After reviewing the printed title, metadata, and five marketplace attestations, rerun the same
+command with `--submit`. It creates a submission or refreshes an existing open one. This two-step
+flow prevents accidental replacement of the source repository and ensures the ownership statement
+is reviewed before it is posted.
+
 During development, suppress either lifecycle action when needed:
 
 ```bash
@@ -310,9 +323,10 @@ omarchy_ui <command> [arguments]
 | Command | Arguments | Result |
 | --- | --- | --- |
 | `omarchy_ui new NAME` | One project name | Creates an Omarchy application project |
-| `omarchy_ui new NAME --plugin` | One project name and `--plugin` | Creates an Omarchy plugin project |
+| `omarchy_ui new NAME --plugin --github USER` | One project name, `--plugin`, and optional GitHub user | Creates a marketplace-ready Omarchy plugin project |
 | `omarchy_ui run FILE` | One Ruby entry point | Runs an application through the Omarchy/Quickshell host |
 | `omarchy_ui bundle [DIRECTORY]` | Zero or one project directory | Generates the distributable package and prints its location |
+| `omarchy_ui publish [DIRECTORY]` | Required `--repo`, `--category`, `--tags`; optional `--create`, `--submit` | Builds and pushes a thin distribution repository, then previews or submits its marketplace issue |
 | `omarchy_ui validate [DIRECTORY]` | Zero or one plugin directory | Stages the plugin and delegates validation to `omarchy plugin validate` |
 | `omarchy_ui push [DIRECTORY]` | Optional `--no-enable` and `--no-restart` | Atomically installs and activates a validated plugin |
 | `omarchy_ui version` | None | Prints the installed Omarchy UI version |
@@ -328,7 +342,7 @@ Create the distributable package from the project root:
 omarchy_ui bundle
 ```
 
-Omarchy UI assembles the bundled Ruby program and required assets, native runtime, manifest, and only
+Omarchy UI assembles one bundled Ruby program and required assets, native runtime, manifest, and only
 the Zui components used by the project. It AOT-compiles the generated QML into a content-addressed Qt
 module, then discards the generated component, control, theme, and font source tree. Applications
 receive a direct launcher; plugins must pass Omarchy validation before the command succeeds. Omarchy
@@ -340,6 +354,7 @@ loader shims. Applications keep `App.qml`; standard plugins keep `Service.qml`, 
 `BarWidget.qml`. Each shim contains only an import and a compiled type instance. The application
 interface is authored in Ruby and stored in native `.so` artifacts. Distributable packages do not
 include generated QML source, build reports, audit/provenance folders, checksums, tests, or CI files.
+They also omit `config.rb` and Ruby files already folded into `main.rb`.
 Compiled packages should be built against the Qt version shipped by their target Omarchy release.
 
 The source `config.rb` is the build configuration. Omarchy UI generates plugin manifests from it;

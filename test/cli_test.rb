@@ -37,20 +37,25 @@ class CLITest < Minitest::Test
     assert_equal 64, cli.run(["launch", "main.rb"])
   end
 
+  def test_publish_is_a_first_class_command
+    requested = nil
+    cli = OmarchyUI::CLI.new(out: StringIO.new, err: StringIO.new)
+
+    status = cli.stub(:publish, ->(arguments) { requested = arguments; 0 }) do
+      cli.run(["publish", ".", "--repo", "Example/plugin", "--category", "System", "--tags", "system"])
+    end
+
+    assert_equal 0, status
+    assert_equal [".", "--repo", "Example/plugin", "--category", "System", "--tags", "system"], requested
+  end
+
   def test_push_stages_validates_and_installs_without_copying_git_metadata
     Dir.mktmpdir do |directory|
       home = File.join(directory, "home")
       source = File.join(directory, "source")
       tools = File.join(directory, "bin")
       FileUtils.mkdir_p([home, source, tools, File.join(source, ".git")])
-      File.write(File.join(source, "manifest.json"), JSON.generate(
-        "id" => "test.plugin",
-        "entryPoints" => {
-          "service" => "Service.qml",
-          "barWidget" => "BarWidget.qml",
-          "panel" => "Panel.qml"
-        }
-      ))
+      write_plugin_package_metadata(source, id: "test.plugin")
       File.write(File.join(source, "main.rb"), "# plugin\n")
       File.write(File.join(source, ".git", "config"), "secret metadata\n")
       omarchy = File.join(tools, "omarchy")
@@ -89,15 +94,10 @@ class CLITest < Minitest::Test
       module_path = "OmarchyUI/Bundles/Btest"
       module_directory = File.join(source, module_path)
       FileUtils.mkdir_p([home, source, tools, module_directory])
-      File.write(File.join(source, "manifest.json"), JSON.generate(
-        "id" => "test.compiled",
-        "entryPoints" => {
-          "service" => "Service.qml",
-          "barWidget" => "BarWidget.qml",
-          "panel" => "Panel.qml"
-        }
-      ))
+      write_plugin_package_metadata(source, id: "test.compiled")
       File.write(File.join(source, "main.rb"), "# compiled plugin\n")
+      FileUtils.mkdir_p(File.join(source, "lib"))
+      File.write(File.join(source, "lib", "duplicate.rb"), "# already bundled into main.rb\n")
       OmarchyUI::QmlCompiler::ENTRY_TYPES.reject { |entry, _type| entry == "App.qml" }.each do |entry, type|
         File.write(File.join(source, entry), <<~QML)
           import QtQuick
@@ -121,6 +121,8 @@ class CLITest < Minitest::Test
       File.write(File.join(source, OmarchyUI::QmlCompiler::CHECKSUM), "legacy checksum\n")
       FileUtils.mkdir_p(File.join(source, "audit"))
       File.write(File.join(source, "audit", "README.md"), "legacy audit\n")
+      FileUtils.cp(OmarchyUI::Runtime::BUNDLED, File.join(source, "omarchy-ui-runtime"))
+      FileUtils.chmod(0o755, File.join(source, "omarchy-ui-runtime"))
 
       omarchy = File.join(tools, "omarchy")
       File.write(omarchy, <<~SH)
@@ -145,6 +147,7 @@ class CLITest < Minitest::Test
         assert File.file?(File.join(destination, module_path, "libomarchy_ui_bundle_btestplugin.so"))
         refute File.exist?(File.join(destination, "ControlNode.qml"))
         refute File.exist?(File.join(destination, "audit"))
+        refute File.exist?(File.join(destination, "lib"))
         refute File.exist?(File.join(destination, OmarchyUI::QmlCompiler::REPORT))
       end
     end
@@ -204,6 +207,7 @@ class CLITest < Minitest::Test
 
       with_environment(
         "OMARCHY_UI_AUTHOR" => "Example Developer",
+        "OMARCHY_UI_GITHUB_USER" => "ExampleDeveloper",
         "PATH" => "#{tools}:#{ENV.fetch('PATH')}"
       ) do
         Dir.chdir(directory) do
@@ -222,7 +226,7 @@ class CLITest < Minitest::Test
         assert_equal "0.1.0", config.to_h.fetch(:version)
         manifest = config.manifest
         assert_equal 1, manifest.fetch("schemaVersion")
-        assert_equal "local.system-status", manifest.fetch("id")
+        assert_equal "io.github.exampledeveloper.system-status", manifest.fetch("id")
         assert_equal "System Status", manifest.fetch("name")
         assert_equal "Example Developer", manifest.fetch("author")
         assert_equal ["service", "bar-widget", "panel"], manifest.fetch("kinds")
@@ -238,8 +242,12 @@ class CLITest < Minitest::Test
         assert_includes entrypoint, "OmarchyUI.plugin(ui: SystemStatus::UI)"
         assert_includes entrypoint, "bar_widget do"
         assert_includes entrypoint, "panel :system_status do"
-        assert_includes File.read(File.join(project, "README.md")),
-                        "complete Omarchy-compatible plugin package"
+        readme = File.read(File.join(project, "README.md"))
+        assert_includes readme, "complete Omarchy-compatible plugin package"
+        assert_includes readme,
+          "omarchy plugin add https://github.com/ExampleDeveloper/system-status.git --enable"
+        assert_includes readme, "omarchy plugin remove io.github.exampledeveloper.system-status"
+        assert_includes readme, "## Dependencies"
 
         config_path = File.join(project, "config.rb")
         configured = File.read(config_path).sub('slug "system-status"', 'slug "system-monitor"')
@@ -252,13 +260,13 @@ class CLITest < Minitest::Test
         bundle = File.join(project, "dist", "system-monitor")
         assert_equal 0, status
         assert_equal %w[
-          BarWidget.qml LICENSE OmarchyUI Panel.qml README.md Service.qml components main.rb
+          BarWidget.qml LICENSE OmarchyUI Panel.qml README.md Service.qml main.rb
           manifest.json omarchy-ui-runtime
         ].sort, Dir.children(bundle).sort
         assert File.file?(File.join(bundle, "manifest.json"))
         refute File.exist?(File.join(bundle, "config.rb"))
         bundled_manifest = JSON.parse(File.read(File.join(bundle, "manifest.json")))
-        assert_equal "local.system-status", bundled_manifest.fetch("id")
+        assert_equal "io.github.exampledeveloper.system-status", bundled_manifest.fetch("id")
         assert_equal "System Status", bundled_manifest.fetch("name")
         assert_equal "0.1.0", bundled_manifest.fetch("version")
         assert File.file?(File.join(bundle, "Service.qml"))
@@ -317,6 +325,7 @@ class CLITest < Minitest::Test
         plugin_id: "test.validate"
       ))
       File.write(File.join(source, "main.rb"), "require \"omarchy_ui\"\n")
+      write_marketplace_files(source, id: "test.validate")
       omarchy = File.join(tools, "omarchy")
       File.write(omarchy, <<~SH)
         #!/bin/sh
@@ -398,14 +407,7 @@ class CLITest < Minitest::Test
       tools = File.join(directory, "bin")
       FileUtils.mkdir_p([source, tools])
       File.write(File.join(source, "main.rb"), "# app\n")
-      File.write(File.join(source, "manifest.json"), JSON.generate(
-        "id" => "test.sample",
-        "entryPoints" => {
-          "service" => "Service.qml",
-          "barWidget" => "BarWidget.qml",
-          "panel" => "Panel.qml"
-        }
-      ))
+      write_plugin_package_metadata(source, id: "test.sample")
       File.write(File.join(source, "ControlNode.qml"), "stale generated file\n")
       omarchy = File.join(tools, "omarchy")
       File.write(omarchy, "#!/bin/sh\ntest -x \"$3/omarchy-ui-runtime\"\n")
@@ -432,6 +434,43 @@ class CLITest < Minitest::Test
   end
 
   private
+
+  def write_plugin_package_metadata(source, id:)
+    File.write(File.join(source, "manifest.json"), JSON.pretty_generate(
+      "schemaVersion" => 1,
+      "id" => id,
+      "name" => "Test Plugin",
+      "version" => "0.1.0",
+      "author" => "Test Developer",
+      "license" => "MIT",
+      "description" => "A test plugin.",
+      "entryPoints" => {
+        "service" => "Service.qml",
+        "barWidget" => "BarWidget.qml",
+        "panel" => "Panel.qml"
+      }
+    ) + "\n")
+    write_marketplace_files(source, id:)
+  end
+
+  def write_marketplace_files(source, id:)
+    File.write(File.join(source, "README.md"), <<~MARKDOWN)
+      # Test Plugin
+
+      ## Install
+
+      `omarchy plugin add https://github.com/Example/test-plugin.git --enable`
+
+      ## Remove
+
+      `omarchy plugin remove #{id}`
+
+      ## Dependencies
+
+      No external dependencies.
+    MARKDOWN
+    File.write(File.join(source, "LICENSE"), "MIT License\n")
+  end
 
   def with_environment(values)
     previous = {}

@@ -8,10 +8,6 @@ require "tmpdir"
 
 module OmarchyUI
   class CLI
-    DEVELOPMENT_ENTRIES = %w[
-      .git .github .gitattributes .gitignore audit build dist docs qml-source spec test tests vendor
-    ].freeze
-
     def self.run(arguments, out: $stdout, err: $stderr)
       new(out:, err:).run(arguments)
     end
@@ -27,11 +23,12 @@ module OmarchyUI
       when "run" then run_file(arguments)
       when "new" then new_project(arguments)
       when "bundle" then bundle_project(arguments)
+      when "publish" then publish(arguments)
       when "push" then push(arguments)
       when "validate" then validate(arguments)
       when "version", "--version", "-v" then @out.puts(OmarchyUI::VERSION); 0
       else
-        @err.puts("Usage: omarchy_ui <new NAME [--plugin]|run FILE|bundle [DIRECTORY]|push [DIRECTORY]|validate [DIRECTORY]|version>")
+        @err.puts("Usage: omarchy_ui <new NAME [--plugin] [--github USER]|run FILE|bundle [DIRECTORY]|publish [DIRECTORY] --repo OWNER/REPO --category CATEGORY --tags TAGS [--create] [--submit]|push [DIRECTORY]|validate [DIRECTORY]|version>")
         command.nil? ? 0 : 64
       end
     rescue Interrupt
@@ -72,11 +69,14 @@ module OmarchyUI
 
     def new_project(arguments)
       plugin = !arguments.delete("--plugin").nil?
+      github_user = extract_option!(arguments, "--github")
       name = arguments.shift || raise(ArgumentError, "new requires a project name")
-      raise ArgumentError, "new accepts a name and optional --plugin" unless arguments.empty?
+      raise ArgumentError, "new accepts a name, --plugin, and --github USER" unless arguments.empty?
+      raise ArgumentError, "--github is only valid with --plugin" if github_user && !plugin
       destination = File.expand_path(slug(name))
       kind = plugin ? :plugin : :application
-      Generator.new(path: destination, name: name, kind:, author: default_author).create
+      github_user ||= default_github_user if plugin
+      Generator.new(path: destination, name: name, kind:, author: default_author, github_user:).create
       label = plugin ? "Omarchy-compliant plugin" : "self-contained Omarchy application"
       @out.puts("Created #{label} in #{destination}")
       0
@@ -93,6 +93,30 @@ module OmarchyUI
       ENV["USER"].to_s.strip.then { |user| user.empty? ? "Omarchy UI Developer" : user }
     rescue SystemCallError
       "Omarchy UI Developer"
+    end
+
+    def default_github_user
+      configured = ENV["OMARCHY_UI_GITHUB_USER"].to_s.strip
+      return configured unless configured.empty?
+
+      output, _error, status = Open3.capture3("gh", "api", "user", "--jq", ".login")
+      login = output.to_s.strip
+      return login if status.success? && !login.empty?
+
+      raise ArgumentError,
+        "plugin generation needs --github USER or OMARCHY_UI_GITHUB_USER (gh auth login can provide it automatically)"
+    rescue Errno::ENOENT
+      raise ArgumentError, "plugin generation needs --github USER or OMARCHY_UI_GITHUB_USER"
+    end
+
+    def extract_option!(arguments, name)
+      index = arguments.index(name)
+      return nil unless index
+
+      value = arguments[index + 1]
+      raise ArgumentError, "#{name} requires a value" if value.nil? || value.start_with?("--")
+      arguments.slice!(index, 2)
+      value
     end
 
     def slug(value)
@@ -129,8 +153,10 @@ module OmarchyUI
         bundle_ruby_entrypoint(source, destination, entrypoint:)
         Runtime.install_package(destination, compiled: true)
       end
+      prune_bundled_ruby_sources(destination, entrypoint:)
       plugin = config ? config.plugin? : File.file?(File.join(destination, "manifest.json"))
       if plugin
+        PluginPackage.validate!(destination)
         raise ArgumentError, "bundled plugin validation failed" unless system("omarchy", "plugin", "validate", destination)
         @out.puts("Bundled plugin in #{destination}")
         return 0
@@ -167,11 +193,15 @@ module OmarchyUI
     def application_entries(source, config: ProjectConfig.load(source))
       generated = Runtime::GENERATED_ENTRIES + %w[run Commons Ui]
       generated.concat([ProjectConfig::FILE_NAME, "manifest.json"]) if config
-      Dir.children(source).reject { |entry| DEVELOPMENT_ENTRIES.include?(entry) || generated.include?(entry) }
+      Dir.children(source).reject do |entry|
+        (PluginPackage::DEVELOPMENT_ENTRIES + PluginPackage::SOURCE_CONTROL_ENTRIES).include?(entry) ||
+          generated.include?(entry)
+      end
     end
 
     def package_entries(source)
-      excluded = DEVELOPMENT_ENTRIES + Runtime::LEGACY_METADATA_FILES
+      excluded = PluginPackage::DEVELOPMENT_ENTRIES + PluginPackage::SOURCE_CONTROL_ENTRIES +
+        Runtime::LEGACY_METADATA_FILES
       Dir.children(source).reject { |entry| excluded.include?(entry) }
     end
 
@@ -182,6 +212,33 @@ module OmarchyUI
 
       QmlCompiler.verify!(source)
       true
+    end
+
+    def publish(arguments)
+      repository = extract_option!(arguments, "--repo")
+      category = extract_option!(arguments, "--category")
+      tags = extract_option!(arguments, "--tags").to_s.split(",")
+      create = !arguments.delete("--create").nil?
+      submit = !arguments.delete("--submit").nil?
+      source = File.expand_path(arguments.shift || Dir.pwd)
+      raise ArgumentError, "publish accepts one directory and publish options" unless arguments.empty?
+      config = ProjectConfig.load(source)
+      raise ArgumentError, "publish requires an Omarchy UI plugin project" unless config&.plugin?
+
+      with_staged_project(source) do |staging|
+        raise ArgumentError, "staged plugin validation failed" unless system("omarchy", "plugin", "validate", staging)
+        PluginPublisher.publish!(
+          package: staging,
+          source:,
+          repository:,
+          category:,
+          tags:,
+          create:,
+          submit:,
+          out: @out
+        )
+      end
+      0
     end
 
     def push(arguments)
@@ -248,6 +305,8 @@ module OmarchyUI
           Runtime.install_package(staging, compiled: true)
         end
       end
+      prune_bundled_ruby_sources(staging, entrypoint: "main.rb") if File.file?(File.join(staging, "manifest.json"))
+      PluginPackage.validate!(staging) if File.file?(File.join(staging, "manifest.json"))
       staging
     rescue StandardError
       FileUtils.remove_entry(staging) if staging && File.exist?(staging)
@@ -259,6 +318,17 @@ module OmarchyUI
       destination_entrypoint = File.join(destination, entrypoint)
       FileUtils.mkdir_p(File.dirname(destination_entrypoint))
       File.write(destination_entrypoint, SourceBundle.new(source_entrypoint, root: source).call)
+    end
+
+    def prune_bundled_ruby_sources(destination, entrypoint: "main.rb")
+      kept = File.expand_path(entrypoint, destination)
+      Dir.glob(File.join(destination, "**", "*.rb"), File::FNM_DOTMATCH).each do |path|
+        FileUtils.rm_f(path) unless File.expand_path(path) == kept
+      end
+      directories = Dir.glob(File.join(destination, "**", "*"), File::FNM_DOTMATCH)
+        .select { |path| File.directory?(path) && !File.symlink?(path) }
+        .sort_by { |path| -path.count(File::SEPARATOR) }
+      directories.each { |path| Dir.rmdir(path) if Dir.empty?(path) }
     end
 
     def activate_plugin(plugin_id)

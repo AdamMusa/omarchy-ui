@@ -191,6 +191,7 @@ module OmarchyUI
     def validate_plugin!
       %i[id author license description].each { |key| required_string!(key) }
       raise ArgumentError, "invalid plugin id" unless VALID_ID.match?(@data[:id])
+      raise ArgumentError, "plugin entrypoint must be main.rb" unless entrypoint == "main.rb"
 
       widget = @data[:bar_widget]
       raise ArgumentError, "plugin project config is missing bar widget metadata" unless widget.is_a?(Hash)

@@ -10,6 +10,7 @@ zui_lib=$zui_source_dir/lib
 ruby -I"$zui_lib" -Ilib test/adapter_test.rb
 ruby -I"$zui_lib" -Ilib test/cli_test.rb
 ruby -I"$zui_lib" -Ilib test/framework_boundary_test.rb
+ruby -I"$zui_lib" -Ilib test/plugin_publisher_test.rb
 scripts/sync-zui-examples.rb --check
 
 mapfile -t showcase_apps < <(find examples -mindepth 1 -maxdepth 1 -type d -exec test -f '{}/app.rb' \; -print | sort)

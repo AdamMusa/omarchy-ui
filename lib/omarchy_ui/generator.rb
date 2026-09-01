@@ -5,12 +5,17 @@ require "fileutils"
 module OmarchyUI
   class Generator
     PROJECT_KINDS = %i[application plugin].freeze
+    GITHUB_USER = /\A(?!-)[A-Za-z0-9-]{1,39}(?<!-)\z/
 
-    def initialize(path:, name: nil, kind: :application, plugin_id: nil, author: nil)
+    def initialize(path:, name: nil, kind: :application, plugin_id: nil, author: nil, github_user: nil)
       @path = File.expand_path(path)
       @name = name || File.basename(@path).split(/[-_]/).map(&:capitalize).join(" ")
       @kind = kind.to_sym
-      @plugin_id = plugin_id || "local.#{project_slug}"
+      @github_user = github_user.to_s.strip
+      if plugin? && !GITHUB_USER.match?(@github_user)
+        raise ArgumentError, "plugin generation needs a valid GitHub username"
+      end
+      @plugin_id = plugin_id || "io.github.#{@github_user.downcase}.#{project_slug}"
       @author = author.to_s.strip.empty? ? "Omarchy UI Developer" : author.to_s.strip
       raise ArgumentError, "unsupported project kind: #{@kind}" unless PROJECT_KINDS.include?(@kind)
     end
@@ -157,6 +162,23 @@ module OmarchyUI
 
         The interface and behavior are authored entirely in Ruby. Omarchy UI generates QML only
         as a temporary build input, compiles it, and ships no handwritten QML source.
+
+        ## Install
+
+        ```bash
+        omarchy plugin add https://github.com/#{@github_user}/#{project_slug}.git --enable
+        ```
+
+        ## Remove
+
+        ```bash
+        omarchy plugin remove #{@plugin_id}
+        ```
+
+        ## Dependencies
+
+        - Omarchy Quattro on x86-64 Linux
+        - No additional runtime dependency in the generated starter
 
         ## Validate
 
