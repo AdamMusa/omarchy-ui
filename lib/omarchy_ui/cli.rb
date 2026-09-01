@@ -8,6 +8,10 @@ require "tmpdir"
 
 module OmarchyUI
   class CLI
+    DEVELOPMENT_ENTRIES = %w[
+      .git .github .gitattributes .gitignore audit build dist docs qml-source spec test tests vendor
+    ].freeze
+
     def self.run(arguments, out: $stdout, err: $stderr)
       new(out:, err:).run(arguments)
     end
@@ -123,7 +127,7 @@ module OmarchyUI
       unless precompiled
         config.write_manifest(destination) if config&.plugin?
         bundle_ruby_entrypoint(source, destination, entrypoint:)
-        Runtime.install_package(destination, compiled: !config.nil?)
+        Runtime.install_package(destination, compiled: true)
       end
       plugin = config ? config.plugin? : File.file?(File.join(destination, "manifest.json"))
       if plugin
@@ -161,18 +165,20 @@ module OmarchyUI
     end
 
     def application_entries(source, config: ProjectConfig.load(source))
-      generated = Runtime::GENERATED_ENTRIES + Runtime::AUDIT_FILES + %w[run Commons Ui]
+      generated = Runtime::GENERATED_ENTRIES + %w[run Commons Ui]
       generated.concat([ProjectConfig::FILE_NAME, "manifest.json"]) if config
-      Dir.children(source).reject { |entry| %w[.git dist].include?(entry) || generated.include?(entry) }
+      Dir.children(source).reject { |entry| DEVELOPMENT_ENTRIES.include?(entry) || generated.include?(entry) }
     end
 
     def package_entries(source)
-      Dir.children(source).reject { |entry| %w[.git dist].include?(entry) }
+      excluded = DEVELOPMENT_ENTRIES + Runtime::LEGACY_METADATA_FILES
+      Dir.children(source).reject { |entry| excluded.include?(entry) }
     end
 
     def compiled_package?(source)
-      report = File.join(source, QmlCompiler::REPORT)
-      return false unless File.file?(report)
+      compiled_root = File.join(source, QmlCompiler::COMPILED_ROOT, "Bundles")
+      shims = QmlCompiler::ENTRY_TYPES.keys.any? { |entry| File.file?(File.join(source, entry)) }
+      return false unless File.directory?(compiled_root) && shims
 
       QmlCompiler.verify!(source)
       true
@@ -239,7 +245,7 @@ module OmarchyUI
         entrypoint = config&.entrypoint || "main.rb"
         if File.file?(File.join(staging, entrypoint))
           bundle_ruby_entrypoint(source, staging, entrypoint:)
-          Runtime.install_package(staging, compiled: !config.nil?)
+          Runtime.install_package(staging, compiled: true)
         end
       end
       staging

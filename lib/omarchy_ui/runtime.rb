@@ -15,17 +15,15 @@ module OmarchyUI
     SHELL_COMPONENT_ROOT = File.expand_path("../../qml", __dir__)
     SHELL_COMPONENTS = %w[DesktopStage.qml Positioned.qml].freeze
     FILES = (ADAPTER_FILES + %w[ControlNode.qml]).freeze
-    AUDIT_FILES = %w[
+    LEGACY_METADATA_FILES = %W[
+      #{TREE_SHAKE_REPORT}
+      #{QmlCompiler::REPORT} #{QmlCompiler::CHECKSUM} #{QmlCompiler::PROVENANCE}
       omarchy-ui-runtime.sha256 runtime-provenance.json RUNTIME_PROVENANCE.md
     ].freeze
     GENERATED_ENTRIES = (ADAPTER_FILES + ZUI_GENERATED_ENTRIES + [
-      TREE_SHAKE_REPORT,
       QmlCompiler::COMPILED_ROOT,
-      QmlCompiler::REPORT,
-      QmlCompiler::CHECKSUM,
-      QmlCompiler::PROVENANCE,
       "omarchy-ui-runtime"
-    ]).freeze
+    ] + LEGACY_METADATA_FILES).freeze
 
     def executable
       override = ENV["OMARCHY_UI_RUNTIME"]
@@ -53,29 +51,17 @@ module OmarchyUI
         generated = File.join(path, entry)
         File.directory?(generated) ? FileUtils.remove_entry(generated) : FileUtils.rm_f(generated)
       end
-      report = install_tree_shaken_zui(path, project:)
+      install_tree_shaken_zui(path, project:)
       ADAPTER_FILES.each do |file|
         FileUtils.cp(File.join(framework_root, file), File.join(path, file))
       end
-      File.write(File.join(path, TREE_SHAKE_REPORT), JSON.pretty_generate({
-        "zui_version" => Zui::VERSION,
-        "components" => report.components.map(&:to_s),
-        "before_bytes" => report.before_bytes,
-        "after_bytes" => report.after_bytes,
-        "saved_bytes" => report.saved_bytes,
-        "warnings" => report.warnings
-      }) + "\n")
 
       if File.file?(BUNDLED)
         destination = File.join(path, "omarchy-ui-runtime")
         FileUtils.cp(BUNDLED, destination)
         FileUtils.chmod(0o755, destination)
       end
-      AUDIT_FILES.each do |file|
-        source = File.join(framework_root, "vendor", "runtime", "x86_64-linux", file)
-        FileUtils.cp(source, File.join(path, file)) if File.file?(source)
-      end
-      QmlCompiler.compile!(path) if compiled
+      QmlCompiler.compile!(path, entry_files: package_entry_files(path)) if compiled
       path
     end
 
@@ -96,6 +82,21 @@ module OmarchyUI
         FileUtils.cp_r(entries, destination) unless entries.empty?
         return report
       end
+    end
+
+    def package_entry_files(path)
+      manifest_path = File.join(path, "manifest.json")
+      return ["App.qml"] unless File.file?(manifest_path)
+
+      manifest = JSON.parse(File.read(manifest_path))
+      entries = manifest.fetch("entryPoints").values.map(&:to_s).uniq
+      unknown = entries - QmlCompiler::ENTRY_TYPES.keys
+      raise ArgumentError, "unsupported manifest QML entry points: #{unknown.join(', ')}" unless unknown.empty?
+      raise ArgumentError, "manifest has no QML entry points" if entries.empty?
+
+      entries
+    rescue JSON::ParserError, KeyError, TypeError => error
+      raise ArgumentError, "invalid plugin manifest: #{error.message}"
     end
 
     def install_shell_components(qml)

@@ -43,7 +43,14 @@ class CLITest < Minitest::Test
       source = File.join(directory, "source")
       tools = File.join(directory, "bin")
       FileUtils.mkdir_p([home, source, tools, File.join(source, ".git")])
-      File.write(File.join(source, "manifest.json"), JSON.generate("id" => "test.plugin"))
+      File.write(File.join(source, "manifest.json"), JSON.generate(
+        "id" => "test.plugin",
+        "entryPoints" => {
+          "service" => "Service.qml",
+          "barWidget" => "BarWidget.qml",
+          "panel" => "Panel.qml"
+        }
+      ))
       File.write(File.join(source, "main.rb"), "# plugin\n")
       File.write(File.join(source, ".git", "config"), "secret metadata\n")
       omarchy = File.join(tools, "omarchy")
@@ -57,9 +64,13 @@ class CLITest < Minitest::Test
         assert_equal 0, status
         assert File.file?(File.join(destination, "main.rb"))
         assert File.file?(File.join(destination, "Service.qml"))
-        assert File.file?(File.join(destination, "ControlNode.qml"))
-        assert File.file?(File.join(destination, "Components", "Builtins", "Container.qml"))
-        assert File.file?(File.join(destination, OmarchyUI::Runtime::TREE_SHAKE_REPORT))
+        refute File.exist?(File.join(destination, "App.qml"))
+        refute File.exist?(File.join(destination, "ControlNode.qml"))
+        refute File.exist?(File.join(destination, "Components"))
+        OmarchyUI::QmlCompiler.verify!(destination)
+        OmarchyUI::Runtime::LEGACY_METADATA_FILES.each do |file|
+          refute File.exist?(File.join(destination, file))
+        end
         refute File.exist?(File.join(destination, "Desktop.qml"))
         assert File.executable?(File.join(destination, "omarchy-ui-runtime"))
         refute File.exist?(File.join(destination, "vendor")), "plugins use the shared native runtime"
@@ -70,7 +81,7 @@ class CLITest < Minitest::Test
     end
   end
 
-  def test_push_preserves_a_verified_precompiled_package
+  def test_push_preserves_a_metadata_free_precompiled_package
     Dir.mktmpdir do |directory|
       home = File.join(directory, "home")
       source = File.join(directory, "source")
@@ -78,13 +89,25 @@ class CLITest < Minitest::Test
       module_path = "OmarchyUI/Bundles/Btest"
       module_directory = File.join(source, module_path)
       FileUtils.mkdir_p([home, source, tools, module_directory])
-      File.write(File.join(source, "manifest.json"), JSON.generate("id" => "test.compiled"))
+      File.write(File.join(source, "manifest.json"), JSON.generate(
+        "id" => "test.compiled",
+        "entryPoints" => {
+          "service" => "Service.qml",
+          "barWidget" => "BarWidget.qml",
+          "panel" => "Panel.qml"
+        }
+      ))
       File.write(File.join(source, "main.rb"), "# compiled plugin\n")
-      OmarchyUI::QmlCompiler::ENTRY_TYPES.each_key do |entry|
-        File.write(File.join(source, entry), "import QtQuick\nItem {}\n")
+      OmarchyUI::QmlCompiler::ENTRY_TYPES.reject { |entry, _type| entry == "App.qml" }.each do |entry, type|
+        File.write(File.join(source, entry), <<~QML)
+          import QtQuick
+          import "#{module_path}" as Compiled
+
+          Compiled.#{type} {}
+        QML
       end
       File.write(File.join(module_directory, "qmldir"), "module OmarchyUI.Bundles.Btest\n")
-      artifacts = %w[libbundle.so libbundleplugin.so].map do |name|
+      artifacts = %w[libomarchy_ui_bundle_btest.so libomarchy_ui_bundle_btestplugin.so].map do |name|
         path = File.join(module_path, name)
         absolute = File.join(source, path)
         File.binwrite(absolute, "compiled artifact: #{name}\n")
@@ -94,21 +117,18 @@ class CLITest < Minitest::Test
           "bytes" => File.size(absolute)
         }
       end
-      report = {
-        "format" => "qt-aot-qml-module",
-        "format_version" => OmarchyUI::QmlCompiler::FORMAT_VERSION,
-        "module_path" => module_path,
-        "artifacts" => artifacts
-      }
-      File.write(File.join(source, OmarchyUI::QmlCompiler::REPORT), JSON.generate(report))
-      File.write(File.join(source, OmarchyUI::QmlCompiler::CHECKSUM), "package checksum marker\n")
+      File.write(File.join(source, OmarchyUI::QmlCompiler::REPORT), "legacy metadata\n")
+      File.write(File.join(source, OmarchyUI::QmlCompiler::CHECKSUM), "legacy checksum\n")
+      FileUtils.mkdir_p(File.join(source, "audit"))
+      File.write(File.join(source, "audit", "README.md"), "legacy audit\n")
 
       omarchy = File.join(tools, "omarchy")
       File.write(omarchy, <<~SH)
         #!/bin/sh
-        test -f "$3/#{OmarchyUI::QmlCompiler::REPORT}" || exit 2
-        test -f "$3/#{module_path}/libbundle.so" || exit 3
+        test ! -e "$3/#{OmarchyUI::QmlCompiler::REPORT}" || exit 2
+        test -f "$3/#{module_path}/libomarchy_ui_bundle_btest.so" || exit 3
         test ! -e "$3/ControlNode.qml" || exit 4
+        test ! -e "$3/audit" || exit 5
       SH
       FileUtils.chmod(0o755, omarchy)
 
@@ -120,9 +140,12 @@ class CLITest < Minitest::Test
         )
         destination = File.join(home, ".config/omarchy/plugins/test.compiled")
         assert_equal 0, status
-        assert_equal report, JSON.parse(File.read(File.join(destination, OmarchyUI::QmlCompiler::REPORT)))
-        assert File.file?(File.join(destination, module_path, "libbundleplugin.so"))
+        verified = OmarchyUI::QmlCompiler.verify!(destination)
+        assert_equal artifacts, verified.fetch("artifacts")
+        assert File.file?(File.join(destination, module_path, "libomarchy_ui_bundle_btestplugin.so"))
         refute File.exist?(File.join(destination, "ControlNode.qml"))
+        refute File.exist?(File.join(destination, "audit"))
+        refute File.exist?(File.join(destination, OmarchyUI::QmlCompiler::REPORT))
       end
     end
   end
@@ -221,9 +244,17 @@ class CLITest < Minitest::Test
         config_path = File.join(project, "config.rb")
         configured = File.read(config_path).sub('slug "system-status"', 'slug "system-monitor"')
         File.write(config_path, configured)
+        %w[.github audit docs qml-source test].each do |entry|
+          FileUtils.mkdir_p(File.join(project, entry))
+          File.write(File.join(project, entry, "development-only.txt"), "not packaged\n")
+        end
         status = OmarchyUI::CLI.run(["bundle", project], out: output, err: StringIO.new)
         bundle = File.join(project, "dist", "system-monitor")
         assert_equal 0, status
+        assert_equal %w[
+          BarWidget.qml LICENSE OmarchyUI Panel.qml README.md Service.qml components main.rb
+          manifest.json omarchy-ui-runtime
+        ].sort, Dir.children(bundle).sort
         assert File.file?(File.join(bundle, "manifest.json"))
         refute File.exist?(File.join(bundle, "config.rb"))
         bundled_manifest = JSON.parse(File.read(File.join(bundle, "manifest.json")))
@@ -233,8 +264,8 @@ class CLITest < Minitest::Test
         assert File.file?(File.join(bundle, "Service.qml"))
         assert File.file?(File.join(bundle, "Panel.qml"))
         assert File.file?(File.join(bundle, "BarWidget.qml"))
-        assert File.file?(File.join(bundle, "App.qml"))
-        assert_equal %w[App.qml BarWidget.qml Panel.qml Service.qml],
+        refute File.exist?(File.join(bundle, "App.qml"))
+        assert_equal %w[BarWidget.qml Panel.qml Service.qml],
           Dir.glob(File.join(bundle, "**", "*.qml")).map { |path| path.delete_prefix("#{bundle}/") }.sort
         refute File.exist?(File.join(bundle, "ControlNode.qml"))
         refute File.exist?(File.join(bundle, "Components"))
@@ -242,15 +273,13 @@ class CLITest < Minitest::Test
         refute File.exist?(File.join(bundle, "Theme"))
         refute File.exist?(File.join(bundle, "Fonts"))
         assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
-        report = JSON.parse(File.read(File.join(bundle, OmarchyUI::Runtime::TREE_SHAKE_REPORT)))
-        assert_includes report.fetch("components"), "text"
-        assert_operator report.fetch("saved_bytes"), :>, 0
-        compiled = JSON.parse(File.read(File.join(bundle, OmarchyUI::QmlCompiler::REPORT)))
+        OmarchyUI::Runtime::LEGACY_METADATA_FILES.each do |file|
+          refute File.exist?(File.join(bundle, file))
+        end
+        compiled = OmarchyUI::QmlCompiler.verify!(bundle)
         assert_equal "qt-aot-qml-module", compiled.fetch("format")
         assert_equal OmarchyUI::QmlCompiler::FORMAT_VERSION, compiled.fetch("format_version")
-        assert_match(/\A6\./, compiled.fetch("qt_version"))
-        assert_equal %w[App.qml BarWidget.qml Panel.qml Service.qml], compiled.fetch("entry_shims").sort
-        assert_operator compiled.fetch("source_files"), :>, 4
+        assert_equal %w[BarWidget.qml Panel.qml Service.qml], compiled.fetch("entry_shims").sort
         module_path = File.join(bundle, compiled.fetch("module_path"))
         assert File.file?(File.join(module_path, "qmldir"))
         refute File.read(File.join(module_path, "qmldir")).end_with?("\n\n")
@@ -261,12 +290,7 @@ class CLITest < Minitest::Test
           assert_equal artifact.fetch("sha256"), Digest::SHA256.file(artifact_path).hexdigest
           assert_equal artifact.fetch("bytes"), File.size(artifact_path)
         end
-        checksum = File.read(File.join(bundle, OmarchyUI::QmlCompiler::CHECKSUM))
-        compiled.fetch("artifacts").each { |artifact| assert_includes checksum, artifact.fetch("sha256") }
-        provenance = File.read(File.join(bundle, OmarchyUI::QmlCompiler::PROVENANCE))
-        assert_includes provenance, compiled.fetch("module_uri")
-        assert_includes provenance, "sha256sum --check #{OmarchyUI::QmlCompiler::CHECKSUM}"
-        OmarchyUI::QmlCompiler::ENTRY_TYPES.each do |entry, type|
+        OmarchyUI::QmlCompiler::ENTRY_TYPES.reject { |entry, _type| entry == "App.qml" }.each do |entry, type|
           shim = File.read(File.join(bundle, entry))
           assert_operator shim.bytesize, :<, 160
           expected_import = type == "App" ? compiled.fetch("module_uri") : %Q("#{compiled.fetch('module_path')}")
@@ -374,7 +398,14 @@ class CLITest < Minitest::Test
       tools = File.join(directory, "bin")
       FileUtils.mkdir_p([source, tools])
       File.write(File.join(source, "main.rb"), "# app\n")
-      File.write(File.join(source, "manifest.json"), JSON.generate("id" => "test.sample"))
+      File.write(File.join(source, "manifest.json"), JSON.generate(
+        "id" => "test.sample",
+        "entryPoints" => {
+          "service" => "Service.qml",
+          "barWidget" => "BarWidget.qml",
+          "panel" => "Panel.qml"
+        }
+      ))
       File.write(File.join(source, "ControlNode.qml"), "stale generated file\n")
       omarchy = File.join(tools, "omarchy")
       File.write(omarchy, "#!/bin/sh\ntest -x \"$3/omarchy-ui-runtime\"\n")
@@ -385,9 +416,14 @@ class CLITest < Minitest::Test
         bundle = File.join(source, "dist", "sample-plugin")
         assert_equal 0, status
         assert File.executable?(File.join(bundle, "omarchy-ui-runtime"))
-        assert File.file?(File.join(bundle, "ControlNode.qml"))
-        assert File.file?(File.join(bundle, "Components", "Builtins", "Container.qml"))
-        assert File.file?(File.join(bundle, OmarchyUI::Runtime::TREE_SHAKE_REPORT))
+        assert File.file?(File.join(bundle, "Service.qml"))
+        refute File.exist?(File.join(bundle, "App.qml"))
+        refute File.exist?(File.join(bundle, "ControlNode.qml"))
+        refute File.exist?(File.join(bundle, "Components"))
+        OmarchyUI::Runtime::LEGACY_METADATA_FILES.each do |file|
+          refute File.exist?(File.join(bundle, file))
+        end
+        OmarchyUI::QmlCompiler.verify!(bundle)
         refute File.exist?(File.join(bundle, "Desktop.qml"))
         refute File.exist?(File.join(bundle, "run"))
         refute File.exist?(File.join(bundle, "Commons"))

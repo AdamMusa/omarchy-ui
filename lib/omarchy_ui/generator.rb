@@ -124,6 +124,9 @@ module OmarchyUI
 
         A pure Ruby desktop application built with Zui and the Omarchy UI host.
 
+        The interface and behavior are authored entirely in Ruby. Omarchy UI generates QML only
+        as a temporary build input, compiles it, and ships no handwritten QML source.
+
         ## Run
 
         ```bash
@@ -140,7 +143,9 @@ module OmarchyUI
         ```
 
         Omarchy UI tree-shakes and compiles the UI, then generates the complete self-contained
-        application package required by Omarchy.
+        application package required by Omarchy. The package contains the bundled Ruby program,
+        native runtime, compiled Qt module, and one generated `App.qml` loader shim—no build reports
+        or generated QML source tree.
       MARKDOWN
     end
 
@@ -149,6 +154,9 @@ module OmarchyUI
         # #{@name}
 
         A pure Ruby Omarchy plugin built with Omarchy UI and Zui.
+
+        The interface and behavior are authored entirely in Ruby. Omarchy UI generates QML only
+        as a temporary build input, compiles it, and ships no handwritten QML source.
 
         ## Validate
 
@@ -171,6 +179,9 @@ module OmarchyUI
         Write the plugin interface and behavior in Ruby under `main.rb` and `components/`.
         Public plugin identity and release metadata live in `config.rb`. Omarchy UI tree-shakes and
         compiles the UI, then generates and validates the complete Omarchy-compatible plugin package.
+        The package contains the bundled Ruby program, native runtime, compiled Qt module, manifest,
+        and only the generated loader shims named by that manifest—no build reports, audit folder,
+        tests, or generated QML source tree.
       MARKDOWN
     end
 

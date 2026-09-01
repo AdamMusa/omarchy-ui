@@ -101,8 +101,7 @@ class FrameworkBoundaryTest < Minitest::Test
       assert_includes installed_control_node, '"desktop_stage", "positioned", "row"'
       assert_includes installed_control_node,
                       '"file://" + bridge.projectDir + "/" + source'
-      assert_equal File.read(File.join(ROOT, "vendor", "runtime", "x86_64-linux", "runtime-provenance.json")),
-                   File.read(File.join(directory, "runtime-provenance.json"))
+      refute File.exist?(File.join(directory, "runtime-provenance.json"))
       assert File.file?(File.join(directory, "Components", "Builtins", "Container.qml"))
       assert File.file?(File.join(directory, "Components", "Builtins", "Column.qml"))
       assert File.file?(File.join(directory, "Components", "Builtins", "Text.qml"))
@@ -111,10 +110,9 @@ class FrameworkBoundaryTest < Minitest::Test
       assert File.file?(File.join(directory, "Components", "Builtins", "Positioned.qml"))
       refute File.exist?(File.join(directory, "Components", "Builtins", "ModelView3d.qml"))
       refute File.exist?(File.join(directory, "Desktop.qml"))
-      report = JSON.parse(File.read(File.join(directory, OmarchyUI::Runtime::TREE_SHAKE_REPORT)))
-      assert_equal Zui::VERSION, report.fetch("zui_version")
-      assert_includes report.fetch("components"), "button"
-      assert_operator report.fetch("saved_bytes"), :>, 0
+      OmarchyUI::Runtime::LEGACY_METADATA_FILES.each do |file|
+        refute File.exist?(File.join(directory, file))
+      end
     end
   end
 

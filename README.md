@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Omarchy UI 0.0.9" src="https://img.shields.io/badge/Omarchy_UI-0.0.9-b7ff5a?style=flat-square&labelColor=111711">
+  <img alt="Omarchy UI 0.0.10" src="https://img.shields.io/badge/Omarchy_UI-0.0.10-b7ff5a?style=flat-square&labelColor=111711">
   <img alt="Ruby 3.1 or newer" src="https://img.shields.io/badge/Ruby-3.1%2B-cc342d?style=flat-square&logo=ruby&logoColor=white">
   <img alt="Zui 0.0.10" src="https://img.shields.io/badge/Zui-0.0.10-7ee14b?style=flat-square&labelColor=111711">
   <img alt="241 components" src="https://img.shields.io/badge/components-241-75d943?style=flat-square&labelColor=111711">
@@ -328,20 +328,19 @@ Create the distributable package from the project root:
 omarchy_ui bundle
 ```
 
-Omarchy UI assembles the Ruby source and assets, Omarchy entry points, native host, checksummed
-runtime, and only the Zui components used by the project. It then AOT-compiles the generated QML into
-a content-addressed Qt module and discards the generated component, control, theme, and font source
-tree. Applications receive a direct launcher; plugins must pass Omarchy validation before the
-command succeeds. Omarchy UI pins Zui 0.0.10 so the compiled UI matches the Zui core embedded in the
-deterministic mruby runtime.
+Omarchy UI assembles the bundled Ruby program and required assets, native runtime, manifest, and only
+the Zui components used by the project. It AOT-compiles the generated QML into a content-addressed Qt
+module, then discards the generated component, control, theme, and font source tree. Applications
+receive a direct launcher; plugins must pass Omarchy validation before the command succeeds. Omarchy
+UI pins Zui 0.0.10 so the compiled UI matches the Zui core embedded in the deterministic mruby
+runtime.
 
-Current Omarchy manifests resolve entry points by filename, so a package retains four minimal loader
-files: `App.qml`, `Service.qml`, `Panel.qml`, and `BarWidget.qml`. They contain only an import and a
-compiled type instance; the application interface is stored in native `.so` artifacts. The package
-also includes `omarchy-ui-qml-bundle.json` with the module URI and exact Qt version, plus
-`omarchy-ui-qml-bundle.sha256` for artifact verification. `QML_PROVENANCE.md` explains the native
-artifacts for package reviewers. Compiled packages should be built against the Qt version shipped by
-their target Omarchy release.
+Current Omarchy entry points resolve by filename, so a package retains only the required generated
+loader shims. Applications keep `App.qml`; standard plugins keep `Service.qml`, `Panel.qml`, and
+`BarWidget.qml`. Each shim contains only an import and a compiled type instance. The application
+interface is authored in Ruby and stored in native `.so` artifacts. Distributable packages do not
+include generated QML source, build reports, audit/provenance folders, checksums, tests, or CI files.
+Compiled packages should be built against the Qt version shipped by their target Omarchy release.
 
 The source `config.rb` is the build configuration. Omarchy UI generates plugin manifests from it;
 developers never maintain a separate manifest.
@@ -416,7 +415,7 @@ Omarchy process bridge ───────────────── embed
           ▼
 Tree-shaken Zui host + component catalog
           │
-          │ bundle: Qt AOT module + four loader shims
+          │ bundle: Qt AOT module + required loader shims
           │
           ▼
 App window · Omarchy panel · Omarchy bar widget

@@ -30,19 +30,19 @@ referenced built-in component adapters, and their renderer dependencies. Omarchy
 UI then overlays its four host files (`App.qml`, `Service.qml`, `Panel.qml`, and
 `BarWidget.qml`) and AOT-compiles the complete generated graph into a
 content-addressed Qt module. The generated component, control, theme, and font
-source tree is discarded after compilation. `zui-tree-shake.json` records the
-selected component set for review and deterministic regeneration.
+source tree is discarded after compilation.
 
 Omarchy currently requires filesystem entry-point names. The distributable
-therefore retains four minimal QML loader shims that instantiate the compiled
-host types; application UI source is not shipped as QML files.
+therefore retains only the minimal QML loader shims required by the manifest.
+Applications keep `App.qml`; standard plugins keep `Service.qml`, `Panel.qml`, and
+`BarWidget.qml`. These generated files only instantiate compiled host types;
+application UI source is authored in Ruby and is not shipped as QML.
 
-`omarchy-ui-qml-bundle.json` records the module URI, source fingerprint, exact Qt
-version, source counts, artifact sizes, and SHA-256 digests. The adjacent
-`omarchy-ui-qml-bundle.sha256` file can be checked with `sha256sum --check`.
-`QML_PROVENANCE.md` presents the same build identity in a reviewer-friendly form.
-Omarchy UI generates the CMake project and invokes the Qt toolchain internally;
-application repositories do not maintain build scripts or QML packaging rules.
+Omarchy UI generates the CMake project and invokes the Qt toolchain internally.
+The distributable contains the bundled Ruby program, native runtime, compiled Qt
+module, required loader shims, and project-owned runtime assets. It omits generated
+QML source, build reports, checksum/provenance sidecars, audit folders, tests, and
+CI configuration.
 
 This separation lets the same Ruby component tree run through a conventional
 Qt host on Linux/macOS or through the Omarchy/Quickshell host without placing

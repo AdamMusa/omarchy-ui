@@ -4,7 +4,6 @@ require "digest"
 require "fileutils"
 require "json"
 require "open3"
-require "pathname"
 require "tmpdir"
 
 module OmarchyUI
@@ -22,16 +21,17 @@ module OmarchyUI
     CHECKSUM = "omarchy-ui-qml-bundle.sha256"
     PROVENANCE = "QML_PROVENANCE.md"
 
-    def self.compile!(path)
-      new(path).compile!
+    def self.compile!(path, entry_files: ENTRY_TYPES.keys)
+      new(path, entry_files:).compile!
     end
 
     def self.verify!(path)
       new(path).verify!
     end
 
-    def initialize(path)
+    def initialize(path, entry_files: nil)
       @path = File.expand_path(path)
+      @entry_types = entry_files ? select_entry_types(entry_files) : nil
     end
 
     def compile!
@@ -61,66 +61,107 @@ module OmarchyUI
         ))
         configure!(tools.fetch(:qt_cmake), source, build)
         build!(tools.fetch(:cmake), build)
-        deploy!(
-          build:,
-          module_path:,
-          target:,
-          uri:,
-          fingerprint:,
-          qml_files:,
-          resources:,
-          source:,
-          expected_qt_version: qt_version
-        )
+        deploy!(build:, module_path:, target:, uri:, expected_qt_version: qt_version)
       end
     end
 
     def verify!
-      report_path = File.join(@path, REPORT)
-      raise ArgumentError, "compiled QML report is missing: #{report_path}" unless File.file?(report_path)
-
-      report = JSON.parse(File.read(report_path))
-      unless report["format"] == "qt-aot-qml-module" && report["format_version"] == FORMAT_VERSION
-        raise ArgumentError, "unsupported compiled QML package format"
+      entry_types = packaged_entry_types
+      module_path, module_uri = packaged_module
+      entry_types.each do |entry, type|
+        shim = File.read(File.join(@path, entry)).strip
+        expected = entry_shim(module_path, type, uri: module_uri).strip
+        raise ArgumentError, "invalid compiled QML entry shim: #{entry}" unless shim == expected
       end
-      ENTRY_TYPES.each_key do |entry|
-        raise ArgumentError, "compiled QML entry shim is missing: #{entry}" unless File.file?(File.join(@path, entry))
-      end
-      module_path = safe_relative_path(report.fetch("module_path"))
-      raise ArgumentError, "compiled QML qmldir is missing" unless File.file?(File.join(@path, module_path, "qmldir"))
 
-      artifacts = report.fetch("artifacts")
-      raise ArgumentError, "compiled QML package must contain two libraries" unless artifacts.length == 2
-      artifacts.each do |artifact|
-        relative = safe_relative_path(artifact.fetch("path"))
-        unless relative.start_with?("#{module_path}/") && relative.end_with?(".so")
-          raise ArgumentError, "compiled QML artifact is outside its module: #{relative}"
-        end
+      segment = File.basename(module_path)
+      target = "omarchy_ui_bundle_#{segment.downcase}"
+      artifact_names = ["lib#{target}.so", "lib#{target}plugin.so"]
+      module_directory = File.join(@path, module_path)
+      expected_module_entries = (artifact_names + ["qmldir"]).sort
+      unless Dir.children(module_directory).sort == expected_module_entries
+        raise ArgumentError, "compiled QML module contains unexpected files"
+      end
+      artifacts = artifact_names.map do |name|
+        relative = File.join(module_path, name)
         absolute = File.join(@path, relative)
-        raise ArgumentError, "compiled QML artifact is missing: #{relative}" unless File.file?(absolute)
-        unless File.size(absolute) == artifact.fetch("bytes") &&
-            Digest::SHA256.file(absolute).hexdigest == artifact.fetch("sha256")
-          raise ArgumentError, "compiled QML artifact checksum mismatch: #{relative}"
-        end
+        {
+          "path" => relative,
+          "sha256" => Digest::SHA256.file(absolute).hexdigest,
+          "bytes" => File.size(absolute)
+        }
       end
-      report
-    rescue JSON::ParserError, KeyError, TypeError => error
-      raise ArgumentError, "invalid compiled QML report: #{error.message}"
+      {
+        "format" => "qt-aot-qml-module",
+        "format_version" => FORMAT_VERSION,
+        "module_uri" => module_uri,
+        "module_path" => module_path,
+        "entry_shims" => entry_types.keys,
+        "artifacts" => artifacts
+      }
     end
 
     private
 
-    def safe_relative_path(path)
-      value = path.to_s
-      clean = File.expand_path(value, @path)
-      unless !value.empty? && !Pathname.new(value).absolute? && clean.start_with?("#{@path}/")
-        raise ArgumentError, "unsafe compiled QML path: #{value.inspect}"
+    def select_entry_types(entry_files)
+      entries = Array(entry_files).map(&:to_s).uniq
+      unknown = entries - ENTRY_TYPES.keys
+      raise ArgumentError, "unsupported compiled QML entries: #{unknown.join(', ')}" unless unknown.empty?
+      raise ArgumentError, "compiled QML package needs at least one entry point" if entries.empty?
+
+      entries.to_h { |entry| [entry, ENTRY_TYPES.fetch(entry)] }
+    end
+
+    def packaged_entry_types
+      selected = if File.file?(File.join(@path, "manifest.json"))
+        manifest = JSON.parse(File.read(File.join(@path, "manifest.json")))
+        select_entry_types(manifest.fetch("entryPoints").values)
+      else
+        select_entry_types(ENTRY_TYPES.keys.select { |entry| File.file?(File.join(@path, entry)) })
       end
-      clean.delete_prefix("#{@path}/")
+      actual = ENTRY_TYPES.keys.select { |entry| File.file?(File.join(@path, entry)) }
+      unless actual.sort == selected.keys.sort
+        raise ArgumentError, "compiled QML package contains unexpected entry shims"
+      end
+      selected
+    rescue JSON::ParserError, KeyError, TypeError => error
+      raise ArgumentError, "invalid plugin manifest: #{error.message}"
+    end
+
+    def packaged_module
+      compiled_root = File.join(@path, COMPILED_ROOT)
+      unless File.directory?(compiled_root) && !File.symlink?(compiled_root) &&
+          Dir.children(compiled_root) == ["Bundles"]
+        raise ArgumentError, "compiled QML root must contain only the Bundles directory"
+      end
+      bundles = File.join(compiled_root, "Bundles")
+      directories = if File.directory?(bundles) && !File.symlink?(bundles)
+        Dir.children(bundles).sort.filter_map do |entry|
+          path = File.join(bundles, entry)
+          path if File.directory?(path) && !File.symlink?(path)
+        end
+      else
+        []
+      end
+      raise ArgumentError, "compiled QML package must contain exactly one module" unless directories.length == 1
+
+      directory = directories.first
+      module_path = directory.delete_prefix("#{@path}/")
+      qmldir = File.join(directory, "qmldir")
+      unless File.file?(qmldir) && !File.symlink?(qmldir)
+        raise ArgumentError, "compiled QML qmldir is missing"
+      end
+      module_uri = File.read(qmldir)[/^module\s+(\S+)\s*$/, 1]
+      raise ArgumentError, "compiled QML module declaration is missing" unless module_uri
+      unless File.join(*module_uri.split(".")) == module_path
+        raise ArgumentError, "compiled QML module path does not match its URI"
+      end
+
+      [module_path, module_uri]
     end
 
     def validate_sources!
-      missing = ENTRY_TYPES.keys.reject { |entry| File.file?(File.join(@path, entry)) }
+      missing = @entry_types.keys.reject { |entry| File.file?(File.join(@path, entry)) }
       missing << "ControlNode.qml" unless File.file?(File.join(@path, "ControlNode.qml"))
       return if missing.empty?
 
@@ -163,7 +204,7 @@ module OmarchyUI
 
     def stage_sources(destination)
       FileUtils.mkdir_p(destination)
-      SOURCE_ENTRIES.each do |entry|
+      (@entry_types.keys + SOURCE_ENTRIES.drop(ENTRY_TYPES.length)).each do |entry|
         source = File.join(@path, entry)
         next unless File.exist?(source)
 
@@ -281,8 +322,7 @@ module OmarchyUI
       raise ArgumentError, "#{label} failed#{detail.empty? ? '' : ":\n#{detail}"}"
     end
 
-    def deploy!(build:, module_path:, target:, uri:, fingerprint:, qml_files:, resources:, source:,
-      expected_qt_version:)
+    def deploy!(build:, module_path:, target:, uri:, expected_qt_version:)
       built_module = File.join(build, module_path)
       artifact_names = ["lib#{target}.so", "lib#{target}plugin.so", "qmldir"]
       missing = artifact_names.reject { |name| File.file?(File.join(built_module, name)) }
@@ -304,38 +344,10 @@ module OmarchyUI
       File.write(qmldir, File.read(qmldir).rstrip + "\n")
 
       SOURCE_ENTRIES.each { |entry| remove_generated(File.join(@path, entry)) }
-      ENTRY_TYPES.each do |entry, type|
+      @entry_types.each do |entry, type|
         File.write(File.join(@path, entry), entry_shim(module_path, type, uri:))
       end
-
-      artifact_paths = artifact_names.filter_map do |name|
-        next if name == "qmldir"
-
-        relative = File.join(module_path, name)
-        absolute = File.join(@path, relative)
-        {
-          "path" => relative,
-          "sha256" => Digest::SHA256.file(absolute).hexdigest,
-          "bytes" => File.size(absolute)
-        }
-      end
-      report = {
-        "format" => "qt-aot-qml-module",
-        "format_version" => FORMAT_VERSION,
-        "qt_version" => qt_version,
-        "module_uri" => uri,
-        "module_path" => module_path,
-        "source_fingerprint" => fingerprint,
-        "source_files" => qml_files.length,
-        "source_bytes" => (qml_files + resources).sum { |file| File.size(File.join(source, file)) },
-        "entry_shims" => ENTRY_TYPES.keys,
-        "artifacts" => artifact_paths
-      }
-      File.write(File.join(@path, REPORT), JSON.pretty_generate(report) + "\n")
-      checksums = artifact_paths.map { |artifact| "#{artifact.fetch('sha256')}  #{artifact.fetch('path')}" }
-      File.write(File.join(@path, CHECKSUM), checksums.join("\n") + "\n")
-      File.write(File.join(@path, PROVENANCE), provenance(report))
-      report
+      verify!
     end
 
     def remove_generated(path)
@@ -352,35 +364,5 @@ module OmarchyUI
       QML
     end
 
-    def provenance(report)
-      artifacts = report.fetch("artifacts").map do |artifact|
-        "- `#{artifact.fetch('path')}` — `#{artifact.fetch('sha256')}`"
-      end.join("\n")
-      <<~MARKDOWN
-        # Compiled QML provenance
-
-        Omarchy UI generated this package's native Qt module from the tree-shaken Zui and
-        Omarchy host QML graph. Generated QML source contents were discarded after AOT compilation.
-
-        - Format: `#{report.fetch('format')}` version #{report.fetch('format_version')}
-        - Qt: `#{report.fetch('qt_version')}`
-        - Module: `#{report.fetch('module_uri')}`
-        - Source fingerprint: `#{report.fetch('source_fingerprint')}`
-
-        ## Artifacts
-
-        #{artifacts}
-
-        Verify the packaged libraries from the plugin directory:
-
-        ```bash
-        sha256sum --check #{CHECKSUM}
-        ```
-
-        `App.qml`, `Service.qml`, `Panel.qml`, and `BarWidget.qml` are the minimal loader shims
-        required by Omarchy's file-based entry-point contract. Application UI lives in the compiled
-        module recorded by `#{REPORT}`.
-      MARKDOWN
-    end
   end
 end
