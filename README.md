@@ -357,6 +357,19 @@ include generated QML source, build reports, audit/provenance folders, checksums
 They also omit `config.rb` and Ruby files already folded into `main.rb`.
 Compiled packages should be built against the Qt version shipped by their target Omarchy release.
 
+The bundled `main.rb` is the complete auditable Ruby source input for the generated UI. Rebuild and
+compare every shipped loader, native QML module, and runtime byte-for-byte with:
+
+```bash
+ruby script/verify-plugin-package.rb /path/to/plugin --output verification.json
+```
+
+The verifier starts from that thin package, discards its derived UI/runtime artifacts, rebuilds them
+with the pinned Omarchy UI and Zui versions, and fails unless every derived SHA-256 digest is exact.
+The central plugin-verification workflow runs the same check for published plugin commits and signs
+the resulting report with a GitHub artifact attestation; distribution repositories remain limited
+to the files needed to run the plugin.
+
 The source `config.rb` is the build configuration. Omarchy UI generates plugin manifests from it;
 developers never maintain a separate manifest.
 

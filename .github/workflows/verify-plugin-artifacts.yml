@@ -1,0 +1,107 @@
+name: Verify published plugin artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/verify-plugin-artifacts.yml
+      - lib/omarchy_ui/artifact_verifier.rb
+      - lib/omarchy_ui/qml_compiler.rb
+      - lib/omarchy_ui/runtime.rb
+      - script/verify-plugin-package.rb
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  verify:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux@sha256:84cd9ef000b3cff245ec028e87965b84724f4bf1cc63fc2741ba927b88515ed6
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Storage Horizon
+            slug: storage-horizon
+            repository: AdamMusa/omarchy-storage-horizon
+            ref: b81771bbe87e5d8ac108217b56da3bc107c29b30
+          - name: Layer Atlas
+            slug: layer-atlas
+            repository: AdamMusa/omarchy-layer-atlas
+            ref: 92cdd271e2ffaa38d20affbc0edbcef7de6e7b39
+          - name: Plugin Pulse
+            slug: plugin-pulse
+            repository: AdamMusa/omarchy-plugin-pulse
+            ref: 383fccb927c5c3ab6c36488d93463d675b573053
+          - name: Env Bridge
+            slug: env-bridge
+            repository: AdamMusa/omarchy-env-bridge
+            ref: 37a90183941b4b5a0feddeed2ea27c648439d90a
+          - name: Boot Trace
+            slug: boot-trace
+            repository: AdamMusa/omarchy-boot-trace
+            ref: 69043cc34190d3829f9ddcfcbb1b1817c3feb9d8
+          - name: Portal Doctor
+            slug: portal-doctor
+            repository: AdamMusa/omarchy-portal-doctor
+            ref: 1228ee895e1f78d9b8edf8503ed4d7f980c7d01a
+          - name: Config Prism
+            slug: config-prism
+            repository: AdamMusa/omarchy-config-prism
+            ref: 1614e4da64c914419388ad211024af03e4789c06
+          - name: Omarchy Phone
+            slug: omarchy-phone
+            repository: AdamMusa/omarchy-phone
+            ref: 5b4d275b555abb9e3fed3100ee14af5e83fc0a82
+          - name: Reminder Sprite
+            slug: reminder-sprite
+            repository: AdamMusa/reminder-sprite
+            ref: b82499e0d0a274ea806e500412f2882102c8af5d
+
+    steps:
+      - name: Check out verifier
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Check out exact plugin commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: ${{ matrix.repository }}
+          ref: ${{ matrix.ref }}
+          path: plugin
+
+      - name: Install pinned Omarchy build environment
+        shell: bash
+        run: |
+          sed -i '1cServer = https://archive.archlinux.org/repos/2026/08/28/$repo/os/$arch' /etc/pacman.d/mirrorlist
+          sed -i '2,$d' /etc/pacman.d/mirrorlist
+          pacman -Syy --noconfirm
+          pacman -S --noconfirm --needed ruby qt6-declarative cmake ninja git curl
+          curl --location --fail --silent --show-error \
+            --output /tmp/quickshell.pkg.tar.zst \
+            https://pkgs.omarchy.org/stable/x86_64/quickshell-git-0.3.0.r20.g28771c7-2-x86_64.pkg.tar.zst
+          echo '048cc4a3d54bd164b8589f756eb075f0688d9bd24949b734a5edb4e217b8ba30  /tmp/quickshell.pkg.tar.zst' | sha256sum --check --strict
+          pacman -U --noconfirm /tmp/quickshell.pkg.tar.zst
+          gem install --no-document bundler --version 4.0.18
+          gem install --no-document zui --version 0.0.10
+
+      - name: Rebuild and compare every derived artifact
+        run: >-
+          ruby script/verify-plugin-package.rb plugin
+          --output ${{ matrix.slug }}-verification.json
+
+      - name: Sign GitHub artifact attestation
+        uses: actions/attest@daf44fb950173508f38bd2406030372c1d1162b1
+        with:
+          subject-path: ${{ matrix.slug }}-verification.json
+
+      - name: Upload verification report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.slug }}-verification
+          path: ${{ matrix.slug }}-verification.json
+          if-no-files-found: error
