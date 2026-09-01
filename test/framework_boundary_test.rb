@@ -124,6 +124,13 @@ class FrameworkBoundaryTest < Minitest::Test
     assert_includes service, 'root.rootId("desktop")'
     assert_includes service, 'surfaceName: "desktop"'
     assert_includes service, "ControlNode {"
+    assert_includes service, "function playPause(): string"
+    assert_includes service, 'root.sendEvent("desktop", desktopId, "shortcut"'
+
+    desktop_stage = File.read(File.join(ROOT, "qml", "DesktopStage.qml"))
+    assert_includes desktop_stage, "DragHandler {"
+    assert_includes desktop_stage, 'window.send("drag_end"'
+    assert_includes desktop_stage, "width - stage.width"
   end
 
   def test_adapter_uses_the_generated_zui_package_at_runtime

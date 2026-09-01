@@ -510,4 +510,16 @@ Item {
     surfaceName: "desktop"
     controlId: root.rootId(surfaceName)
   }
+
+  IpcHandler {
+    target: root.manifest && root.manifest.id ? String(root.manifest.id) : "omarchy-ui"
+
+    function playPause(): string {
+      var desktopId = root.rootId("desktop")
+      if (desktopId === "") return "not-ready"
+      return root.sendEvent("desktop", desktopId, "shortcut", { name: "play_pause" })
+        ? "ok"
+        : "not-ready"
+    }
+  }
 }
