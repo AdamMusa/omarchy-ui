@@ -29,27 +29,27 @@ jobs:
           - name: Storage Horizon
             slug: storage-horizon
             repository: AdamMusa/omarchy-storage-horizon
-            ref: b81771bbe87e5d8ac108217b56da3bc107c29b30
+            ref: 624aa57afc67db32d41d76c901ff7f4ac053b7f8
           - name: Layer Atlas
             slug: layer-atlas
             repository: AdamMusa/omarchy-layer-atlas
-            ref: 92cdd271e2ffaa38d20affbc0edbcef7de6e7b39
+            ref: 2ccd824755e4b9c3cca9ce9eaeed7ebaa9a59eaa
           - name: Plugin Pulse
             slug: plugin-pulse
             repository: AdamMusa/omarchy-plugin-pulse
-            ref: 383fccb927c5c3ab6c36488d93463d675b573053
+            ref: c11d6593b091924953cb2a4bc8c2c5fb67d7d75b
           - name: Env Bridge
             slug: env-bridge
             repository: AdamMusa/omarchy-env-bridge
-            ref: 37a90183941b4b5a0feddeed2ea27c648439d90a
+            ref: 80e7195c585c68b33d461650d7eee0939f17e41b
           - name: Boot Trace
             slug: boot-trace
             repository: AdamMusa/omarchy-boot-trace
-            ref: 69043cc34190d3829f9ddcfcbb1b1817c3feb9d8
+            ref: 556473cf37ca4cd5b7046dae0d577079fc45e933
           - name: Portal Doctor
             slug: portal-doctor
             repository: AdamMusa/omarchy-portal-doctor
-            ref: 1228ee895e1f78d9b8edf8503ed4d7f980c7d01a
+            ref: ca007acde63c3b56294f1f16dbe034c597944bc7
           - name: Config Prism
             slug: config-prism
             repository: AdamMusa/omarchy-config-prism
@@ -86,8 +86,16 @@ jobs:
             https://pkgs.omarchy.org/stable/x86_64/quickshell-git-0.3.0.r20.g28771c7-2-x86_64.pkg.tar.zst
           echo '048cc4a3d54bd164b8589f756eb075f0688d9bd24949b734a5edb4e217b8ba30  /tmp/quickshell.pkg.tar.zst' | sha256sum --check --strict
           pacman -U --noconfirm /tmp/quickshell.pkg.tar.zst
-          gem install --no-document bundler --version 4.0.18
-          gem install --no-document zui --version 0.0.10
+          curl --location --fail --silent --show-error \
+            --output /tmp/bundler-4.0.18.gem \
+            https://rubygems.org/downloads/bundler-4.0.18.gem
+          curl --location --fail --silent --show-error \
+            --output /tmp/zui-0.0.10.gem \
+            https://rubygems.org/downloads/zui-0.0.10.gem
+          echo '02d9a17429de1847b4e0c9f27a9ee4b20c0a74c0a641b4e77195d6019e3618ac  /tmp/bundler-4.0.18.gem' | sha256sum --check --strict
+          echo 'ceec71d836c396b9944c85d5f472d34f14596a28a6dbf0c0b4687a01031627c0  /tmp/zui-0.0.10.gem' | sha256sum --check --strict
+          gem install --local --no-document /tmp/bundler-4.0.18.gem
+          gem install --local --no-document /tmp/zui-0.0.10.gem
 
       - name: Rebuild and compare every derived artifact
         run: >-
