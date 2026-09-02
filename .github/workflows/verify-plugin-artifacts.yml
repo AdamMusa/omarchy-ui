@@ -53,7 +53,7 @@ jobs:
           - name: Config Prism
             slug: config-prism
             repository: AdamMusa/omarchy-config-prism
-            ref: 1614e4da64c914419388ad211024af03e4789c06
+            ref: 7a5a456326499a4c6173cdb717dabd502f91610e
           - name: Omarchy Phone
             slug: omarchy-phone
             repository: AdamMusa/omarchy-phone
